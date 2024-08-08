@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import './ClienteForm.css';
 
 const ClienteForm = () => {
   const [cliente, setCliente] = useState({
@@ -29,23 +30,20 @@ const ClienteForm = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div>
-        <label>Nome</label>
-        <input type="text" name="nome" value={cliente.nome} onChange={handleChange} required />
+      <div className="cadastro-clientes-container">
+        <h1>Cadastro de Clientes</h1>
+        <div className="cadastro-form">
+            <label>Nome</label>
+            <input type="text" name="nome" value={cliente.nome} onChange={handleChange} required />
+            <label>Email</label>
+            <input type="email" name="email" value={cliente.email} onChange={handleChange} required />
+            <label>Telefone</label>
+            <input type="text" name="telefone" value={cliente.telefone} onChange={handleChange} />
+            <label>Endereço</label>
+            <input type="text" name="endereco" value={cliente.endereco} onChange={handleChange} />
+        </div>
+        <button type="submit">Criar Cliente</button>
       </div>
-      <div>
-        <label>Email</label>
-        <input type="email" name="email" value={cliente.email} onChange={handleChange} required />
-      </div>
-      <div>
-        <label>Telefone</label>
-        <input type="text" name="telefone" value={cliente.telefone} onChange={handleChange} />
-      </div>
-      <div>
-        <label>Endereço</label>
-        <input type="text" name="endereco" value={cliente.endereco} onChange={handleChange} />
-      </div>
-      <button type="submit">Criar Cliente</button>
     </form>
   );
 };

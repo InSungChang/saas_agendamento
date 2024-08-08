@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import './LoginPage.css';
 
 const LoginPage = ({ onLogin }) => {
     const [email, setEmail] = useState('');
@@ -19,8 +20,8 @@ const LoginPage = ({ onLogin }) => {
     };
 
     return (
-        <div>
-            <h2>Login</h2>
+        <div className="login-container">
+            <h1>Login</h1>
             <form onSubmit={handleLogin}>
                 <div>
                     <label>Email:</label>

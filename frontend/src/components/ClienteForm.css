@@ -1,0 +1,60 @@
+/* Estilo geral da página */
+.cadastro-clientes-container {
+    font-family: Arial, sans-serif;
+    background-color: #F5F5F5; /* Cinza Claro */
+    color: #333; /* Texto em cinza escuro */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  /* Título do formulário */
+  .cadastro-clientes-container h1 {
+    color: #333; /* Texto em cinza escuro */
+    margin-top: 20px;
+    font-size: 28px;
+    text-align: center;
+  }
+  
+  /* Formulário de cadastro */
+  .cadastro-form {
+    background-color: #FFFFFF; /* Branco */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 600px;
+    width: 100%;
+    margin: 20px;
+  }
+  
+  /* Estilo dos campos de entrada */
+  .cadastro-form input[type="text"],
+  .cadastro-form input[type="email"],
+  .cadastro-form input[type="tel"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #D3D3D3; /* Cinza Escuro */
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  /* Botão de envio */
+  .cadastro-form button {
+    background-color: #98FF98; /* Verde Menta */
+    color: #333; /* Texto em cinza escuro */
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+    margin-top: 10px;
+  }
+  
+  .cadastro-form button:hover {
+    background-color: #87E0A1; /* Verde Menta mais escuro */
+  }  

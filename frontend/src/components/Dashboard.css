@@ -1,0 +1,65 @@
+/* Estilo geral da página */
+.dashboard-container {
+  font-family: Arial, sans-serif;
+  background-color: #F5F5F5; /* Cinza Claro */
+  color: #333; /* Texto em cinza escuro */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Título do dashboard */
+.dashboard-container h1 {
+  color: #333; /* Texto em cinza escuro */
+  margin-top: 20px;
+  font-size: 28px;
+  text-align: center;
+}
+
+/* Navegação */
+nav {
+  margin: 20px;
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+}
+
+nav ul li {
+  margin: 10px 0;
+}
+
+nav a {
+  display: block;
+  background-color: #98FF98; /* Verde Menta */
+  color: #333; /* Texto em cinza escuro */
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 4px;
+  width: 200px;
+  text-align: center;
+  font-size: 16px;
+}
+
+nav a:hover {
+  background-color: #87E0A1; /* Verde Menta mais escuro */
+}
+
+/* Seção de conteúdo */
+.dashboard-content {
+  background-color: #FFFFFF; /* Branco */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 800px;
+  width: 100%;
+  margin: 20px;
+}
+
+.dashboard-content p {
+  text-align: center;
+}
