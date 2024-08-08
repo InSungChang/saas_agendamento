@@ -1,16 +1,16 @@
 import React from 'react';
 
+import { Link } from 'react-router-dom';
+
 const Dashboard = () => {
   return (
     <div>
       <h1>Bem-vindo ao Dashboard</h1>
       <nav>
         <ul>
-          <li><a href="/usuarios">Cadastro de Usuários</a></li>
-          <li><a href="/clientes">Gerenciamento de Clientes</a></li>
-          <li><a href="/agendamentos">Agendamentos</a></li>
-          <li><a href="/relatorios">Relatórios</a></li>
-          <li><a href="/configuracoes">Configurações</a></li>
+          <li><Link to="/clientes">Cadastro de Clientes</Link></li>
+          <li><Link to="/usuarios">Cadastro de Usuários</Link></li>          
+          {/* Adicione outros links de navegação aqui */}
         </ul>
       </nav>
     </div>
