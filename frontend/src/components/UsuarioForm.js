@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // Importar useNavigate
 import './UsuarioForm.css'; 
 
 const UsuarioForm = () => {
@@ -10,6 +11,9 @@ const UsuarioForm = () => {
     senha: ''
   });
   
+  const [message, setMessage] = useState(''); // Estado para armazenar a mensagem de sucesso ou erro
+  const navigate = useNavigate(); // Criar a instância de navigate
+
   const [clientes, setClientes] = useState([]); // Estado para armazenar a lista de clientes
 
   useEffect(() => {
@@ -40,9 +44,20 @@ const UsuarioForm = () => {
     try {
       const response = await axios.post('http://localhost:5000/api/usuarios', usuario);
       console.log(response.data);
+      setMessage('Usuário cadastrado com sucesso!'); // Definir a mensagem de sucesso
+      // Redirecionar após um breve intervalo para permitir que o usuário veja a mensagem
+      setTimeout(() => {
+        navigate('/dashboard'); // Redirecionar para a página de dashboard
+      }, 2000); // Esperar 2 segundos
     } catch (err) {
       console.error('Erro ao criar usuário:', err);
+      setMessage('Erro ao cadastrar usuário. Tente novamente mais tarde.'); // Mensagem de erro
     }
+  };
+
+  const handleCancel = () => {
+    // Redirecionar para a página inicial ou dashboard
+    navigate('/dashboard');
   };
 
   return (
@@ -67,6 +82,8 @@ const UsuarioForm = () => {
           <input type="password" name="senha" value={usuario.senha} onChange={handleChange} required />
         </div>
         <button type="submit">Criar Usuário</button>
+        <button className="sair-button" type="button" onClick={handleCancel}>Sair</button> {/* Botão Sair */}
+        {message && <p>{message}</p>} {/* Exibir a mensagem de sucesso ou erro */}
       </div>
     </form>
   );
