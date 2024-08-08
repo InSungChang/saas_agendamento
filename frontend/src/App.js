@@ -17,6 +17,7 @@ const App = () => {
     <div>
       {token ? (
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/clientes" element={<ClienteForm />} />
           <Route path="/usuarios" element={<UsuarioForm />} />
