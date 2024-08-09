@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import UsuarioForm from './components/UsuarioForm';
+import AlterarUsuarioForm from './components/AlterarUsuarioForm';
 import ClienteForm from './components/ClienteForm';
 
 const App = () => {
@@ -21,6 +22,7 @@ const App = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/clientes" element={<ClienteForm />} />
           <Route path="/usuarios" element={<UsuarioForm />} />
+          <Route path="/alterarUsuarios" element={<AlterarUsuarioForm />} />
           <Route path="/" element={<Dashboard />} />
         </Routes>
       ) : (
