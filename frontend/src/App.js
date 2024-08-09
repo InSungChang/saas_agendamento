@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import UsuarioForm from './components/UsuarioForm';
 import AlterarUsuarioForm from './components/AlterarUsuarioForm';
 import ClienteForm from './components/ClienteForm';
+import AlterarClienteForm from './components/AlterarClienteForm';
 
 const App = () => {
   const [token, setToken] = React.useState(null);
@@ -21,6 +22,7 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/clientes" element={<ClienteForm />} />
+          <Route path="/alterarClientes" element={<AlterarClienteForm />} />
           <Route path="/usuarios" element={<UsuarioForm />} />
           <Route path="/alterarUsuarios" element={<AlterarUsuarioForm />} />
           <Route path="/" element={<Dashboard />} />

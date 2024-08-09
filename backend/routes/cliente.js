@@ -20,4 +20,29 @@ router.get('/clientes', async (req, res) => {
     }
 });
 
+// Rota para obter um cliente específico
+router.get('/clientes/:id', async (req, res) => {
+    const {
+        id
+    } = req.params;
+    try {
+        const [results] = await db.promise().query('SELECT * FROM clientes WHERE cliente_id = ?', [id]);
+        if (results.length > 0) {
+            res.json(results[0]);
+        } else {
+            res.status(404).json({
+                error: 'Cliente não encontrado'
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar cliente:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar cliente'
+        });
+    }
+});
+
+// Rota para atualizar um usuário
+router.put('/clientes/:id', clienteController.updateCliente);
+
 module.exports = router;
