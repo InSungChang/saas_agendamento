@@ -6,7 +6,7 @@ import Dashboard from './components/Dashboard';
 import UsuarioForm from './components/UsuarioForm';
 import ConsultarAlterarExcluirUsuarioForm from './components/ConsultarAlterarExcluirUsuarioForm';
 import ClienteForm from './components/ClienteForm';
-import AlterarClienteForm from './components/AlterarClienteForm';
+import ConsultarAlterarExcluirClienteForm from './components/ConsultarAlterarExcluirClienteForm';
 
 const App = () => {
   const [token, setToken] = React.useState(null);
@@ -22,7 +22,7 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/clientes" element={<ClienteForm />} />
-          <Route path="/alterarClientes" element={<AlterarClienteForm />} />
+          <Route path="/ConsultarAlterarExcluirClientes" element={<ConsultarAlterarExcluirClienteForm />} />
           <Route path="/usuarios" element={<UsuarioForm />} />
           <Route path="/consultarAlterarExcluirUsuarios" element={<ConsultarAlterarExcluirUsuarioForm />} />
           <Route path="/" element={<Dashboard />} />
