@@ -31,7 +31,7 @@ const Dashboard = () => {
           <li><Link to="/clientes">Cadastro de Clientes</Link></li>
           <li><Link to="/alterarClientes">Alteração de Clientes</Link></li>
           <li><Link to="/usuarios">Cadastro de Usuários</Link></li>
-          <li><Link to="/alterarUsuarios">Alteração de Usuários</Link></li>
+          <li><Link to="/consultarAlterarExcluirUsuarios">Consultar, Alterar e Excluir Usuários</Link></li>
           {/* Adicione outros links de navegação aqui */}
         </ul>
       </nav>

@@ -45,4 +45,7 @@ router.get('/usuarios/:id', async (req, res) => {
 // Rota para atualizar um usuário
 router.put('/usuarios/:id', usuarioController.updateUsuario);
 
+// Rota para deletar um usuário
+router.delete('/usuarios/:id', usuarioController.deleteUsuario);
+
 module.exports = router;

@@ -4,7 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import UsuarioForm from './components/UsuarioForm';
-import AlterarUsuarioForm from './components/AlterarUsuarioForm';
+import ConsultarAlterarExcluirUsuarioForm from './components/ConsultarAlterarExcluirUsuarioForm';
 import ClienteForm from './components/ClienteForm';
 import AlterarClienteForm from './components/AlterarClienteForm';
 
@@ -24,7 +24,7 @@ const App = () => {
           <Route path="/clientes" element={<ClienteForm />} />
           <Route path="/alterarClientes" element={<AlterarClienteForm />} />
           <Route path="/usuarios" element={<UsuarioForm />} />
-          <Route path="/alterarUsuarios" element={<AlterarUsuarioForm />} />
+          <Route path="/consultarAlterarExcluirUsuarios" element={<ConsultarAlterarExcluirUsuarioForm />} />
           <Route path="/" element={<Dashboard />} />
         </Routes>
       ) : (
