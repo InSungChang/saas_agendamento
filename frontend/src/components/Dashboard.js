@@ -28,10 +28,12 @@ const Dashboard = () => {
       <h1>Bem-vindo ao Dashboard</h1>
       <nav>
         <ul>
-          <li><Link to="/clientes">Cadastro de Clientes</Link></li>
-          <li><Link to="/consultarAlterarExcluirClientes">Consultar, Alterar e Excluir Clientes</Link></li>
+          <li><Link to="/empresas">Cadastro das Empresas</Link></li>
+          <li><Link to="/consultarAlterarExcluirEmpresas">Consultar, Alterar e Excluir Empresas</Link></li>
           <li><Link to="/usuarios">Cadastro de Usuários</Link></li>
           <li><Link to="/consultarAlterarExcluirUsuarios">Consultar, Alterar e Excluir Usuários</Link></li>
+          <li><Link to="/clientes">Cadastro de Clientes</Link></li>
+          <li><Link to="/consultarAlterarExcluirClientes">Consultar, Alterar e Excluir Clientes</Link></li>
           {/* Adicione outros links de navegação aqui */}
         </ul>
       </nav>

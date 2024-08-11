@@ -1,0 +1,115 @@
+/* Estilo geral da página */
+.alterar-empresa-container {
+  font-family: Arial, sans-serif;
+  background-color: #F5F5F5; /* Cinza Claro */
+  color: #333; /* Texto em cinza escuro */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Título do formulário */
+.alterar-empresa-container h1 {
+  color: #333; /* Texto em cinza escuro */
+  margin-top: 20px;
+  font-size: 28px;
+  text-align: center;
+}
+
+/* Container da pesquisa */
+.search-container {
+  margin: 20px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.search-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.search-container input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 0px;
+  border: 1px solid #D3D3D3; /* Cinza Escuro */
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Formulário de alteração */
+.alterar-form {
+  background-color: #FFFFFF; /* Branco */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  max-width: 600px;
+  width: 100%;
+  margin: 10px;
+}
+
+/* Estilo dos campos de entrada */
+.alterar-form input[type="text"],
+.alterar-form input[type="email"],
+.alterar-form input[type="password"],
+.alterar-form input[type="number"],
+.alterar-form select {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #D3D3D3; /* Cinza Escuro */
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Botão de envio */
+.alterar-form button {
+  background-color: #98FF98; /* Verde Menta */
+  color: #333; /* Texto em cinza escuro */
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.alterar-form button:hover {
+  background-color: #87E0A1; /* Verde Menta mais escuro */
+}
+
+/* Botão cancelar */
+.cancel-button {
+  background-color: #f44336;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.cancel-button:hover {
+  background-color: #d32f2f;
+}
+
+.delete-button {
+  background-color: yellow;
+  color: red;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.delete-button:hover {
+  background-color: yellow;
+}

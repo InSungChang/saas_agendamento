@@ -11,9 +11,11 @@ const AlterarUsuarioForm = () => {
     nome: '',
     email: '',
     senha: ''
- */    cliente_id: '',
+ */    
+    empresa_id: '',
     nome: '',
-    email: ''
+    email: '',
+    papel: 'funcionario'
   });
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,9 +42,10 @@ const AlterarUsuarioForm = () => {
         nome: '',
         email: '',
         senha: '' */
-        cliente_id: '',
+        empresa_id: '',
         nome: '',
-        email: ''
+        email: '',
+        papel: 'funcionario'
       });
     }
   }, [usuarioSelecionado]);
@@ -72,9 +75,10 @@ const AlterarUsuarioForm = () => {
 
     // Crie um novo objeto sem o campo `senha`
     const usuarioAtualizado = {
-    cliente_id: usuario.cliente_id,
+    empresa_id: usuario.empresa_id,
     nome: usuario.nome,
-    email: usuario.email
+    email: usuario.email,
+    papel: usuario.papel
     };
 
     try {
@@ -114,9 +118,10 @@ const AlterarUsuarioForm = () => {
         nome: '',
         email: '',
         senha: '' */
-        cliente_id: '',
+        empresa_id: '',
         nome: '',
-        email: ''
+        email: '',
+        papel: ''
       });
 
       setTimeout(() => {
@@ -151,18 +156,18 @@ const AlterarUsuarioForm = () => {
           >
             <option value="">Selecione um usuário</option>
             {filteredUsuarios.map(usuario => (
-              <option key={usuario.usuario_id} value={usuario.usuario_id}>
+              <option key={usuario.id} value={usuario.id}>
                 {usuario.nome}
               </option>
             ))}
           </select>
           {usuarioSelecionado && (
             <>
-              <label>ID do Cliente</label>
+              <label>ID da Empresa</label>
               <input
                 type="number"
-                name="cliente_id"
-                value={usuario.cliente_id}
+                name="empresa_id"
+                value={usuario.empresa_id}
                 onChange={handleChange}
                 required
               />
@@ -190,6 +195,12 @@ const AlterarUsuarioForm = () => {
                 onChange={handleChange}
                 required
               /> */}
+              <label>Papel</label> {/* Novo campo para selecionar o papel */}
+              <select name="papel" value={usuario.papel} onChange={handleChange} required>
+                <option value="">Selecione um papel</option>
+                <option value="admin">Admin</option>
+                <option value="funcionario">Funcionário</option>
+              </select>
             </>
           )}
         </div>

@@ -7,6 +7,7 @@ const AlterarClienteForm = () => {
   const [clientes, setClientes] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState('');
   const [cliente, setCliente] = useState({
+    empresa_id: '',
     nome: '',
     email: '',
     telefone: '',
@@ -33,6 +34,7 @@ const AlterarClienteForm = () => {
     } else {
       // Resetar dados do cliente se nenhum cliente estiver selecionado
       setCliente({
+        empresa_id: '',
         nome: '',
         email: '',
         telefone: '',
@@ -66,6 +68,7 @@ const AlterarClienteForm = () => {
 
     // Crie um novo objeto sem o campo `senha`
     const clienteAtualizado = {
+    empresa_id: cliente.empresa_id,
     nome: cliente.nome,
     email: cliente.email,
     telefone: cliente.telefone,
@@ -105,6 +108,7 @@ const AlterarClienteForm = () => {
       fetchClientes();
 
       setCliente({
+        empresa_id: '',
         nome: '',
         email: '',
         telefone: '',
@@ -143,13 +147,21 @@ const AlterarClienteForm = () => {
           >
             <option value="">Selecione um cliente</option>
             {filteredClientes.map(cliente => (
-              <option key={cliente.cliente_id} value={cliente.cliente_id}>
+              <option key={cliente.id} value={cliente.id}>
                 {cliente.nome}
               </option>
             ))}
           </select>
           {clienteSelecionado && (
             <>
+              <label>ID da Empresa</label>
+              <input
+                type="number"
+                name="empresa_id"
+                value={cliente.empresa_id}
+                onChange={handleChange}
+                required
+              />
               <label>Nome</label>
               <input
                 type="text"

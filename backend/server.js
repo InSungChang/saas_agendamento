@@ -6,6 +6,7 @@ const db = require('./config/db');
 const authRoutes = require('./routes/auth');
 const clienteRoutes = require('./routes/cliente');
 const usuarioRoutes = require('./routes/usuario');
+const empresaRoutes = require('./routes/empresa');
 
 /* console.log('DB_HOST:', process.env.DB_HOST);
 console.log('DB_USER:', process.env.DB_USER);
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/api', clienteRoutes);
 app.use('/api', usuarioRoutes);
+app.use('/api', empresaRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

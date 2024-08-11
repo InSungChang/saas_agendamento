@@ -29,8 +29,8 @@ exports.login = (req, res) => {
         }
 
         const user = results[0];
-        const isPasswordValid = bcrypt.compareSync(senha, user.senha);
-        
+        const isPasswordValid = bcrypt.compareSync(senha, user.senha);    
+
         if (!isPasswordValid) {
             return res.status(401).send('Senha incorreta');
         }

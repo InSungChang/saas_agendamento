@@ -5,8 +5,8 @@ const Cliente = require('../models/Cliente');
 const saltRounds = 10;
 
 exports.createCliente = (req, res) => {
-  const { nome, email, telefone, endereco } = req.body;
-  const novoCliente = { nome, email, telefone, endereco };
+  const { empresa_id, nome, email, telefone, endereco } = req.body;
+  const novoCliente = { empresa_id, nome, email, telefone, endereco };
 
   Cliente.create(novoCliente, (err, result) => {
     if (err) {
@@ -18,12 +18,12 @@ exports.createCliente = (req, res) => {
 
 exports.updateCliente = async (req, res) => {
   const { id } = req.params;
-  const { nome, email, telefone, endereco } = req.body;
+  const { empresa_id, nome, email, telefone, endereco } = req.body;
 
   try {
     const [result] = await db.promise().query(
-      'UPDATE clientes SET nome = ?, email = ?, telefone = ?, endereco = ? WHERE cliente_id = ?',
-      [nome, email, telefone, endereco, id]
+      'UPDATE clientes SET empresa_id = ?, nome = ?, email = ?, telefone = ?, endereco = ? WHERE id = ?',
+      [empresa_id, nome, email, telefone, endereco, id]
     );
     
     if (result.affectedRows > 0) {
@@ -41,7 +41,7 @@ exports.deleteCliente = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [result] = await db.promise().query('DELETE FROM clientes WHERE cliente_id = ?', [id]);
+    const [result] = await db.promise().query('DELETE FROM clientes WHERE id = ?', [id]);
 
     if (result.affectedRows > 0) {
       res.json({ message: 'Cliente deletado com sucesso' });
