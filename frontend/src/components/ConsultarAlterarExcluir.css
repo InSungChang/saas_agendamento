@@ -1,5 +1,5 @@
 /* Estilo geral da página */
-.alterar-usuario-container {
+.alterar-container {
   font-family: Arial, sans-serif;
   background-color: #F5F5F5; /* Cinza Claro */
   color: #333; /* Texto em cinza escuro */
@@ -12,7 +12,7 @@
 }
 
 /* Título do formulário */
-.alterar-usuario-container h1 {
+.alterar-container h1 {
   color: #333; /* Texto em cinza escuro */
   margin-top: 20px;
   font-size: 28px;
@@ -100,7 +100,7 @@
 }
 
 .delete-button {
-  background-color: yellow;
+  background-color: #f3f375;
   color: red;
   padding: 10px 20px;
   border: none;
@@ -111,5 +111,5 @@
 }
 
 .delete-button:hover {
-  background-color: yellow;
+  background-color: #d2d26e;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './ConsultarAlterarExcluirEmpresaForm.css';
+import './ConsultarAlterarExcluir.css';
 
 const AlterarEmpresaForm = () => {
   const [empresas, setEmpresas] = useState([]);
@@ -127,7 +127,7 @@ const AlterarEmpresaForm = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="alterar-empresa-container">
+      <div className="alterar-container">
         <h1>Consultar / Alterar / Excluir Empresa</h1>
         <div className="search-container">
           <label>Pesquisar Empresa:</label>
