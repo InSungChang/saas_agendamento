@@ -24,6 +24,7 @@ CREATE TABLE clientes (
     nome VARCHAR(100) NOT NULL,
     telefone VARCHAR(20),
     email VARCHAR(100),
+    endereco VARCHAR(255),
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (empresa_id) REFERENCES empresas(id)
 );
