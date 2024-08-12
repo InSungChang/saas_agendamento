@@ -13,12 +13,14 @@ const UsuarioForm = () => {
   });
   
   const [message, setMessage] = useState(''); // Estado para armazenar a mensagem de sucesso ou erro
+  const [messageType, setMessageType] = useState(''); // Estado para armazenar o tipo de mensagem
   const navigate = useNavigate(); // Criar a instância de navigate
-
+  const [loading, setLoading] = useState(false); // Estado de carregamento
   const [empresas, setEmpresas] = useState([]); // Estado para armazenar a lista de empresas
 
   useEffect(() => {
     console.log('Buscando empresas...');
+    setLoading(true);
     axios.get('http://localhost:5000/api/empresas')
       .then(response => {
         console.log('Dados brutos da API:', response);
@@ -28,7 +30,9 @@ const UsuarioForm = () => {
       })
       .catch(error => {
         console.error('Erro ao buscar empresas:', error);
-        alert('Não foi possível carregar a lista de empresas. Verifique o console para mais detalhes.');
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
@@ -42,17 +46,28 @@ const UsuarioForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await axios.post('http://localhost:5000/api/usuarios', usuario);
       console.log(response.data);
       setMessage('Usuário cadastrado com sucesso!'); // Definir a mensagem de sucesso
+      setMessageType('success');
       // Redirecionar após um breve intervalo para permitir que o usuário veja a mensagem
       setTimeout(() => {
         navigate('/dashboard'); // Redirecionar para a página de dashboard
       }, 2000); // Esperar 2 segundos
     } catch (err) {
       console.error('Erro ao criar usuário:', err);
-      setMessage('Erro ao cadastrar usuário. Tente novamente mais tarde.'); // Mensagem de erro
+      if (err.response && err.response.status === 409) {
+        // Status 409 Conflict indica que o e-mail já existe no banco de dados
+        setMessage('Este e-mail já está cadastrado. Por favor, use outro e-mail.');
+        setMessageType('error');
+      } else {
+        setMessage('Erro ao cadastrar usuário. Tente novamente mais tarde.');
+        setMessageType('error');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,7 +77,12 @@ const UsuarioForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="usuario-form">
+      {message && (
+        <div className={`floating-message ${messageType}`}>
+          {message}
+        </div>
+      )}
       <div className="cadastro-usuarios-container">
         <h1>Cadastro de Usuários</h1>
         <div className="cadastro-form">
@@ -76,11 +96,11 @@ const UsuarioForm = () => {
             ))}
           </select>
           <label>Nome</label>
-          <input type="text" name="nome" value={usuario.nome} onChange={handleChange} required />
+          <input type="text" name="nome" value={usuario.nome} onChange={handleChange} placeholder="Digite o nome do usuário" required />
           <label>Email</label>
-          <input type="email" name="email" value={usuario.email} onChange={handleChange} required />
+          <input type="email" name="email" value={usuario.email} onChange={handleChange} placeholder="Digite o email" required />
           <label>Senha</label>
-          <input type="password" name="senha" value={usuario.senha} onChange={handleChange} required />
+          <input type="password" name="senha" value={usuario.senha} onChange={handleChange} placeholder="Digite uma senha" required />
           <label>Papel</label> {/* Novo campo para selecionar o papel */}
           <select name="papel" value={usuario.papel} onChange={handleChange} required>
             <option value="">Selecione um papel</option>
@@ -88,9 +108,18 @@ const UsuarioForm = () => {
             <option value="funcionario">Funcionário</option>
           </select>
         </div>
-        <button type="submit">Criar Usuário</button>
-        <button className="sair-button" type="button" onClick={handleCancel}>Sair</button> {/* Botão Sair */}
-        {message && <p>{message}</p>} {/* Exibir a mensagem de sucesso ou erro */}
+        <button className="criar-button" type="submit" disabled={loading}>
+          {loading ? 'Carregando...' : 'Criar Usuário'}
+        </button>
+        <button 
+          className="sair-button" 
+          type="button" 
+          onClick={handleCancel}
+          disabled={loading}
+        >
+          Sair
+        </button>        
+        {message && <p className="message success">{message}</p>}
       </div>
     </form>
   );

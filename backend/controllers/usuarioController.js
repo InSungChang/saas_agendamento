@@ -10,6 +10,10 @@ exports.createUsuario = (req, res) => {
 
   Usuario.create(novoUsuario, (err, result) => {
     if (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        // Captura o erro de duplicidade de e-mail e responde com status 409
+        return res.status(409).send({ message: 'Este e-mail já está cadastrado.' });
+      }
       return res.status(500).send({ message: 'Erro ao criar usuário', error: err });
     }
     res.status(201).send({ message: 'Usuário criado com sucesso', usuarioId: result.insertId });

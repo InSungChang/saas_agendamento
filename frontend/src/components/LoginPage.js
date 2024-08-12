@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import './LoginPage.css';
@@ -32,9 +33,9 @@ const LoginPage = ({ onLogin }) => {
     };
 
     return (
-        <div className="login-container">
-            <h1>Login</h1>
-            <form onSubmit={handleLogin}>
+        <form onSubmit={handleLogin}>
+            <div className="login-container">
+                <h1>Login</h1>
                 <div>
                     <label>Email:</label>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -42,11 +43,11 @@ const LoginPage = ({ onLogin }) => {
                 <div>
                     <label>Senha:</label>
                     <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
-                </div>
-                <button type="submit">Entrar</button>
-            </form>
-            {message && <p>{message}</p>}
-        </div>
+                </div>                
+                <button className="entrar-button" type="submit">Entrar</button>
+                {message && <p>{message}</p>}
+            </div>
+        </form>
     );
 }
 

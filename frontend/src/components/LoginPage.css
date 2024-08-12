@@ -1,58 +1,58 @@
+
 /* Estilo geral da página */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #F5F5F5; /* Cinza Claro */
-    color: #333; /* Texto em cinza escuro */
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  
-  /* Container do formulário de login */
-  .login-container {
-    background-color: #FFFFFF; /* Branco */
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    max-width: 400px;
-    width: 100%;
-  }
-  
-  /* Título do formulário */
-  .login-container h1 {
-    color: #333; /* Texto em cinza escuro */
-    margin-bottom: 20px;
-    font-size: 24px;
-    text-align: center;
-  }
-  
-  /* Estilo dos campos de entrada */
-  input[type="email"],
-  input[type="password"] {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #D3D3D3; /* Cinza Escuro */
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-  
-  /* Botão de login */
-  button {
-    background-color: #98FF98; /* Verde Menta */
-    color: #333; /* Texto em cinza escuro */
-    border: none;
-    padding: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 16px;
-    margin-top: 10px;
-  }
-  
-  button:hover {
-    background-color: #87E0A1; /* Verde Menta mais escuro */
-  }  
+  font-family: Arial, sans-serif;
+  background-color: #F5F5F5; /* Cinza Claro */
+  color: #333; /* Texto em cinza escuro */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Container do formulário de login */
+.login-container {
+  background-color: #FFFFFF; /* Branco */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 400px;
+  width: 100%;
+}
+
+/* Título do formulário */
+.login-container h1 {
+  color: #333; /* Texto em cinza escuro */
+  margin-bottom: 20px;
+  font-size: 24px;
+  text-align: center;
+}
+
+/* Estilo dos campos de entrada */
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #D3D3D3; /* Cinza Escuro */
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.entrar-button {
+  background-color: #98FF98; /* Verde Menta */
+  color: #333; /* Texto em cinza escuro */
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.entrar-button:hover {
+  background-color: #87E0A1; /* Verde Menta mais escuro */
+}  
