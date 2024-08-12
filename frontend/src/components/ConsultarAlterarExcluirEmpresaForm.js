@@ -185,7 +185,7 @@ const AlterarEmpresaForm = () => {
             </>
           )}
         </div>
-        <button type="submit">Atualizar Empresa</button>
+        <button type="submit" className="atualizar-button">Atualizar Empresa</button>
         <button type="button" className="delete-button" onClick={handleDelete}>Excluir Empresa</button>
         <button type="button" className="cancel-button" onClick={handleCancel}>Cancelar</button>
         {message && <p>{message}</p>}

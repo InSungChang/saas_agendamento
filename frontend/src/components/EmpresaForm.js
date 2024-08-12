@@ -74,7 +74,7 @@ const EmpresaForm = () => {
             <label>Endereço</label>
             <input type="text" name="endereco" value={empresa.endereco} onChange={handleChange} placeholder="Digite o endereço"/>
         </div>
-        <button type="submit" disabled={loading}>{loading ? 'Carregando...' : 'Criar Empresa'}</button>
+        <button className="criar-button" type="submit" disabled={loading}>{loading ? 'Carregando...' : 'Criar Empresa'}</button>
         <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
         {message && <p className="message success">{message}</p>} {/* Exibe mensagem de sucesso */}
         {error && <p className="message error">{error}</p>} {/* Exibe mensagem de erro */}

@@ -1,0 +1,3 @@
+vai no terminal
+iniciar node server.js na pasta backend
+iniciar npm start na pasta frontend

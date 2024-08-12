@@ -104,7 +104,7 @@ const ClienteForm = () => {
             <label>Endereço</label>
             <input type="text" name="endereco" value={cliente.endereco} onChange={handleChange} placeholder="Digite o endereço" />
         </div>
-        <button className="criar-button" type="submit" disabled={loading}>{loading ? 'Carregando...' : 'Criar Cliente'}</button>
+        <button className="criar-button" disabled={loading}>{loading ? 'Carregando...' : 'Criar Cliente'}</button>
         <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
         {message && <p className="message success">{message}</p>}
         {error && <p className="message error">{error}</p>}
