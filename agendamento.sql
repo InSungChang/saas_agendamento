@@ -33,6 +33,7 @@ CREATE TABLE servicos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     empresa_id INT NOT NULL,
     nome VARCHAR(100) NOT NULL,
+    descricao TEXT,
     duracao INT NOT NULL, -- duração do serviço em minutos
     preco DECIMAL(10, 2) NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
