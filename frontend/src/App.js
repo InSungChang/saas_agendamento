@@ -11,6 +11,8 @@ import ConsultarAlterarExcluirUsuarioForm from './components/ConsultarAlterarExc
 import ClienteForm from './components/ClienteForm';
 import ConsultarAlterarExcluirClienteForm from './components/ConsultarAlterarExcluirClienteForm';
 import ServicoForm from './components/ServicoForm';
+import ProfissionalForm from './components/ProfissionalForm';
+import ProfissionalServicoForm from './components/ProfissionalServicoForm';
 
 const App = () => {
   const [token, setToken] = React.useState(null);
@@ -32,6 +34,8 @@ const App = () => {
           <Route path="/clientes" element={<ClienteForm />} />
           <Route path="/ConsultarAlterarExcluirClientes" element={<ConsultarAlterarExcluirClienteForm />} />
           <Route path="/servicos" element={<ServicoForm />} />
+          <Route path="/profissionais" element={<ProfissionalForm />} />
+          <Route path="/profissionaisServicos" element={<ProfissionalServicoForm />} />
           <Route path="/" element={<Dashboard />} />
         </Routes>
       ) : (

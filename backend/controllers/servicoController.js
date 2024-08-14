@@ -50,3 +50,4 @@ exports.deleteServico = async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar serviço' });
   }
 };
+

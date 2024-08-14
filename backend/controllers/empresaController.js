@@ -53,3 +53,4 @@ exports.deleteEmpresa = async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar empresa' });
   }
 };
+

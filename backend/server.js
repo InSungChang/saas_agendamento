@@ -8,6 +8,8 @@ const clienteRoutes = require('./routes/cliente');
 const usuarioRoutes = require('./routes/usuario');
 const empresaRoutes = require('./routes/empresa');
 const servicoRoutes = require('./routes/servico');
+const profissionalRoutes = require('./routes/profissional');
+const profissionalServicoRoutes = require('./routes/profissionalServico');
 
 /* console.log('DB_HOST:', process.env.DB_HOST);
 console.log('DB_USER:', process.env.DB_USER);
@@ -24,6 +26,8 @@ app.use('/api', clienteRoutes);
 app.use('/api', usuarioRoutes);
 app.use('/api', empresaRoutes);
 app.use('/api', servicoRoutes);
+app.use('/api', profissionalRoutes);
+app.use('/api', profissionalServicoRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
