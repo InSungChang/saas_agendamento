@@ -5,7 +5,9 @@ const db = require('../config/db');
 
 const clienteController = require('../controllers/clienteController');
 
-router.post('/clientes', clienteController.createCliente);
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/clientes', authMiddleware, clienteController.createCliente);
 
 // Rota para obter todos os clientes
 router.get('/clientes', async (req, res) => {

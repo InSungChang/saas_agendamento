@@ -4,29 +4,27 @@ const Cliente = require('../models/Cliente');
 const saltRounds = 10;
 
 exports.createCliente = (req, res) => {
-  const { nome, email, telefone, endereco } = req.body;
-  const empresa_id = req.user.empresa_id; // Usa o empresa_id do usuário logado
+  const { empresa_id, nome, email, telefone, endereco } = req.body;
   const novoCliente = { empresa_id, nome, email, telefone, endereco };
 
   Cliente.create(novoCliente, (err, result) => {
-      if (err) {
-          return res.status(500).send({ message: 'Erro ao criar cliente', error: err });
-      }
-      res.status(201).send({ message: 'Cliente criado com sucesso', clienteId: result.insertId });
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar cliente', error: err });
+    }
+    res.status(201).send({ message: 'Cliente criado com sucesso', clienteId: result.insertId });
   });
 };
 
 exports.updateCliente = async (req, res) => {
   const { id } = req.params;
-  const { nome, email, telefone, endereco } = req.body;
-  const empresa_id = req.user.empresa_id; // Obtém o empresa_id da sessão
+  const { empresa_id, nome, email, telefone, endereco } = req.body;
 
   try {
     const [result] = await db.promise().query(
       'UPDATE clientes SET empresa_id = ?, nome = ?, email = ?, telefone = ?, endereco = ? WHERE id = ?',
       [empresa_id, nome, email, telefone, endereco, id]
     );
-
+    
     if (result.affectedRows > 0) {
       res.json({ message: 'Cliente atualizado com sucesso' });
     } else {

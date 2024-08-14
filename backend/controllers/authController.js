@@ -35,9 +35,22 @@ exports.login = (req, res) => {
             return res.status(401).send('Senha incorreta');
         }
 
-        const token = jwt.sign({ id: user.usuario_id }, process.env.JWT_SECRET, {
+        // Armazena o empresa_id na sessão
+        /* req.session.empresa_id = user.empresa_id; */
+        
+/*         const token = jwt.sign({ id: user.usuario_id }, process.env.JWT_SECRET, {
             expiresIn: '1h'
         });
-        res.json({ token });
+        res.json({ token }); */
+
+        const token = jwt.sign({ 
+            id: user.usuario_id,
+            empresa_id: user.empresa_id,
+            nome: user.nome
+        }, process.env.JWT_SECRET, {
+            expiresIn: '1h'
+        });
+        res.json({ token, usuario: { id: user.usuario_id, nome: user.nome, empresa_id: user.empresa_id } });
+        
     });
 };
