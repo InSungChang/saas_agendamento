@@ -1,4 +1,3 @@
-const bcrypt = require('bcrypt');
 const db = require('../config/db');
 const Empresa = require('../models/Empresa');
 
@@ -49,8 +48,14 @@ exports.deleteEmpresa = async (req, res) => {
       res.status(404).json({ error: 'Empresa não encontrada' });
     }
   } catch (error) {
-    console.error('Erro ao deletar empresa:', error);
-    res.status(500).json({ error: 'Erro ao deletar empresa' });
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir a empresa. Existem registros de clientes vinculados a esta empresa.' 
+      });
+    } else {
+      console.error('Erro ao deletar empresa:', error);
+      res.status(500).json({ error: 'Erro ao deletar empresa' });
+    }
   }
 };
 

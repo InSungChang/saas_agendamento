@@ -13,6 +13,7 @@ const AlterarEmpresaForm = () => {
     endereco: ''
   });
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
@@ -23,13 +24,16 @@ const AlterarEmpresaForm = () => {
   useEffect(() => {
     if (empresaSelecionado) {
       // Buscar dados do empresa selecionado
-      axios.get(`http://localhost:5000/api/empresas/${empresaSelecionado}`)
-        .then(response => {
-          setEmpresa(response.data);
-        })
-        .catch(error => {
-          console.error('Erro ao buscar dados da empresa:', error);
-        });
+      axios.get(`http://localhost:5000/api/empresas/${empresaSelecionado}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      })
+      .then(response => {
+        setEmpresa(response.data);
+      })
+      .catch(error => {
+        console.error('Erro ao buscar dados da empresa:', error);
+        setMessage('Erro ao buscar dados da empresa.');
+      });
     } else {
       // Resetar dados do empresa se nenhum empresa estiver selecionado
       setEmpresa({
@@ -41,7 +45,7 @@ const AlterarEmpresaForm = () => {
     }
   }, [empresaSelecionado]);
 
-  const fetchEmpresas = () => {
+/*   const fetchEmpresas = () => {
     // Buscar todos os empresa
     axios.get('http://localhost:5000/api/empresas')
       .then(response => {
@@ -51,6 +55,19 @@ const AlterarEmpresaForm = () => {
         console.error('Erro ao buscar empresas:', error);
         alert('Não foi possível carregar a lista de empresa. Verifique o console para mais detalhes.');
       });
+  }; */
+
+  const fetchEmpresas = () => {
+    axios.get(`http://localhost:5000/api/empresas`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    .then(response => {
+        setEmpresas(response.data);
+    })
+    .catch(error => {
+        console.error('Erro ao buscar empresas:', error);
+        setMessage('Erro ao carregar lista das empresas.');
+    });
   };
 
   const handleChange = (e) => {
@@ -73,13 +90,18 @@ const AlterarEmpresaForm = () => {
     };
 
     try {
-      const response = await axios.put(`http://localhost:5000/api/empresas/${empresaSelecionado}`, empresaAtualizado);
+      const response = await axios.put(`http://localhost:5000/api/empresas/${empresaSelecionado}`, empresaAtualizado, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       console.log(response.data);
-      setMessage('Empresa atualizado com sucesso!');
+      setMessage('Empresa atualizada com sucesso!');
+      setMessageType('success');
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
     } catch (err) {
+      setMessageType('error');
+      setTimeout(() => setMessage(''), 3000);
       console.error('Erro ao atualizar empresa:', err);
       setMessage('Erro ao atualizar empresa. Tente novamente mais tarde.');
     }
@@ -95,9 +117,12 @@ const AlterarEmpresaForm = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/empresas/${empresaSelecionado}`);
-      setMessage('Empresa excluído com sucesso!');
-      
+      await axios.delete(`http://localhost:5000/api/empresas/${empresaSelecionado}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setMessage('Empresa excluída com sucesso!');
+      setMessageType('success');
+
       // Redefina o valor de `empresaSelecionado` antes de atualizar a lista de empresas
       setEmpresaSelecionado('');
 
@@ -117,7 +142,13 @@ const AlterarEmpresaForm = () => {
       
     } catch (err) {
       console.error('Erro ao excluir empresa:', err);
-      setMessage('Erro ao excluir empresa. Tente novamente mais tarde.');
+      setMessageType('error');
+
+      if (err.response && err.response.status === 400) {
+        setMessage(err.response.data.message);
+      } else {
+        setMessage('Erro ao excluir empresa. Tente novamente mais tarde.');
+      }
     }
   };
 
@@ -127,6 +158,11 @@ const AlterarEmpresaForm = () => {
 
   return (
     <form onSubmit={handleSubmit}>
+      {message && (
+        <div className={`floating-message ${messageType}`}>
+        {message}
+        </div>
+      )}
       <div className="alterar-container">
         <h1>Consultar / Alterar / Excluir Empresa</h1>
         <div className="search-container">

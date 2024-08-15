@@ -17,7 +17,8 @@ const EmpresaForm = () => {
   const [messageType, setMessageType] = useState(''); // Estado para armazenar o tipo de mensagem
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEmpresa({
@@ -25,7 +26,7 @@ const EmpresaForm = () => {
       [name]: value
     });
   };
-
+/* 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -47,6 +48,32 @@ const EmpresaForm = () => {
       setError('Erro ao cadastrar empresa. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
+    }
+  };
+ */  
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post(`${API_BASE_URL}/empresas`, empresa, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log(response.data);
+        setMessage('Empresa cadastrada com sucesso!');
+        setMessageType('success');
+        setTimeout(() => {
+            navigate('/dashboard');
+        }, 2000);
+    } catch (err) {
+        setMessage('Erro ao cadastrar empresa. Tente novamente mais tarde.');
+        setMessageType('error');
+        setTimeout(() => setMessage(''), 3000);
+        console.error('Erro ao criar empresa:', err);
+        setError('Erro ao cadastrar empresa. Tente novamente mais tarde.');
+    } finally {
+        setLoading(false);
     }
   };
 
