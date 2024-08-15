@@ -9,8 +9,19 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 router.post('/clientes', authMiddleware, clienteController.createCliente);
 
+router.get('/clientes', authMiddleware, async (req, res) => {
+    const empresa_id = req.user.empresa_id;
+    try {
+        const [results] = await db.promise().query('SELECT * FROM clientes WHERE empresa_id = ?', [empresa_id]);
+        res.json(results);
+    } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+        res.status(500).json({ error: 'Erro ao buscar clientes' });
+    }
+});
+
 // Rota para obter todos os clientes
-router.get('/clientes', async (req, res) => {
+router.get('/clientes', authMiddleware,  async (req, res) => {
     try {
         const [results] = await db.promise().query('SELECT * FROM clientes');
         res.json(results);
@@ -23,7 +34,7 @@ router.get('/clientes', async (req, res) => {
 });
 
 // Rota para obter um cliente específico
-router.get('/clientes/:id', async (req, res) => {
+router.get('/clientes/:id', authMiddleware, async (req, res) => {
     const {
         id
     } = req.params;
@@ -45,10 +56,10 @@ router.get('/clientes/:id', async (req, res) => {
 });
 
 // Rota para atualizar um cliente
-router.put('/clientes/:id', clienteController.updateCliente);
+router.put('/clientes/:id', authMiddleware, clienteController.updateCliente);
 
 // Rota para deletar um cliente
-router.delete('/clientes/:id', clienteController.deleteCliente);
+router.delete('/clientes/:id', authMiddleware, clienteController.deleteCliente);
 
 module.exports = router;
 

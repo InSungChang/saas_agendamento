@@ -14,26 +14,50 @@ const AlterarClienteForm = () => {
     endereco: ''
   });
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [empresas, setEmpresas] = useState([]); // Estado para armazenar a lista de empresas
-
-  useEffect(() => {
-    console.log('Buscando empresas...');
-    axios.get('http://localhost:5000/api/empresas')
-      .then(response => {
-        console.log('Dados brutos da API:', response);
-        const empresasData = response.data.empresas || response.data; 
-        console.log('Empresas:', empresasData);
-        setEmpresas(empresasData);
-      })
-      .catch(error => {
-        console.error('Erro ao buscar empresas:', error);
-        alert('Não foi possível carregar a lista de empresas. Verifique o console para mais detalhes.');
-      });
-  }, []);
+  const [usuarioLogado, setUsuarioLogado] = useState(null);
+  const [empresa, setEmpresa] = useState(null);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        axios.get('http://localhost:5000/api/usuario-logado', {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            setUsuarioLogado(response.data);
+            // Buscar informações da empresa
+            return axios.get(`http://localhost:5000/api/empresas/${response.data.empresa_id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        })
+        .then(empresaResponse => {
+            setEmpresa(empresaResponse.data);
+            fetchClientes(empresaResponse.data.empresa_id); // Buscar clientes da empresa
+        })
+        .catch(error => {
+            console.error('Erro ao obter usuário logado ou dados da empresa:', error);
+            setMessage('Erro ao obter informações do usuário ou empresaxxx.');
+        });
+    }
+  }, []);
+
+  const fetchClientes = (empresa_id) => {
+    axios.get(`http://localhost:5000/api/clientes`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    .then(response => {
+        setClientes(response.data);
+    })
+    .catch(error => {
+        console.error('Erro ao buscar clientes:', error);
+        setMessage('Erro ao carregar lista de clientes.');
+    });
+  };
 
   useEffect(() => {
     fetchClientes();
@@ -41,37 +65,26 @@ const AlterarClienteForm = () => {
 
   useEffect(() => {
     if (clienteSelecionado) {
-      // Buscar dados do cliente selecionado
-      axios.get(`http://localhost:5000/api/clientes/${clienteSelecionado}`)
+        axios.get(`http://localhost:5000/api/clientes/${clienteSelecionado}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
         .then(response => {
-          setCliente(response.data);
+            setCliente(response.data);
         })
         .catch(error => {
-          console.error('Erro ao buscar dados do cliente:', error);
+            console.error('Erro ao buscar dados do cliente:', error);
+            setMessage('Erro ao carregar dados do cliente.');
         });
     } else {
-      // Resetar dados do cliente se nenhum cliente estiver selecionado
-      setCliente({
-        empresa_id: '',
-        nome: '',
-        email: '',
-        telefone: '',
-        endereco: ''
-      });
+        setCliente({
+            empresa_id: '',
+            nome: '',
+            email: '',
+            telefone: '',
+            endereco: ''
+        });
     }
   }, [clienteSelecionado]);
-
-  const fetchClientes = () => {
-    // Buscar todos os cliente
-    axios.get('http://localhost:5000/api/clientes')
-      .then(response => {
-        setClientes(response.data);
-      })
-      .catch(error => {
-        console.error('Erro ao buscar clientes:', error);
-        alert('Não foi possível carregar a lista de cliente. Verifique o console para mais detalhes.');
-      });
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,13 +107,18 @@ const AlterarClienteForm = () => {
     };
 
     try {
-      const response = await axios.put(`http://localhost:5000/api/clientes/${clienteSelecionado}`, clienteAtualizado);
+      const response = await axios.put(`http://localhost:5000/api/clientes/${clienteSelecionado}`, clienteAtualizado, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       console.log(response.data);
       setMessage('Cliente atualizado com sucesso!');
+      setMessageType('success');
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
     } catch (err) {
+      setMessageType('error');
+      setTimeout(() => setMessage(''), 3000);
       console.error('Erro ao atualizar cliente:', err);
       setMessage('Erro ao atualizar cliente. Tente novamente mais tarde.');
     }
@@ -116,14 +134,16 @@ const AlterarClienteForm = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/clientes/${clienteSelecionado}`);
+      await axios.delete(`http://localhost:5000/api/clientes/${clienteSelecionado}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setMessage('Cliente excluído com sucesso!');
       
       // Redefina o valor de `clienteSelecionado` antes de atualizar a lista de clientes
       setClienteSelecionado('');
 
       // Atualize a lista de clientes
-      fetchClientes();
+      fetchClientes(usuarioLogado.empresa_id);
 
       setCliente({
         empresa_id: '',
@@ -149,6 +169,11 @@ const AlterarClienteForm = () => {
 
   return (
     <form onSubmit={handleSubmit}>
+      {message && (
+        <div className={`floating-message ${messageType}`}>
+        {message}
+        </div>
+      )}
       <div className="alterar-container">
         <h1>Consultar / Alterar / Excluir Cliente</h1>
         <div className="search-container">
@@ -156,6 +181,10 @@ const AlterarClienteForm = () => {
           <input type="text" value={searchTerm} onChange={handleSearch} placeholder="Buscar por nome" />
         </div>
         <div className="alterar-form">
+          <label>Usuário Logado</label>
+          <input type="text" value={usuarioLogado ? usuarioLogado.nome : 'Carregando...'} disabled />
+          <label>Empresa</label>
+          <input type="text" value={empresa ? empresa.nome : 'Carregando...'} disabled />
           <label>Selecionar Cliente</label>
           <select
             name="clienteSelecionado"
@@ -172,15 +201,6 @@ const AlterarClienteForm = () => {
           </select>
           {clienteSelecionado && (
             <>
-              <label>ID da Empresa</label>
-              < select name="empresa_id" value={cliente.empresa_id} onChange={handleChange} required>
-                <option value="">Selecione uma empresa</option>
-                {empresas.map(empresa => (
-                <option key={empresa.id} value={empresa.id}>
-                {empresa.nome}
-                </option>
-                ))}
-              </select>
               <label>Nome</label>
               <input
                 type="text"

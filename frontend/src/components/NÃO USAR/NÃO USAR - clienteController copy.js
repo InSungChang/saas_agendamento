@@ -1,5 +1,5 @@
-const db = require('../config/db');
-const Cliente = require('../models/Cliente');
+const db = require('../../../../backend/config/db');
+const Cliente = require('../../../../backend/models/Cliente');
 
 const saltRounds = 10;
 
