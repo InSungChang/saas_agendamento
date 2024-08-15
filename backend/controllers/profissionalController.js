@@ -46,8 +46,14 @@ exports.deleteProfissional = async (req, res) => {
       res.status(404).json({ error: 'Profissional não encontrado' });
     }
   } catch (error) {
-    console.error('Erro ao deletar profissional:', error);
-    res.status(500).json({ error: 'Erro ao deletar profissional' });
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este profissional. Existem registros vinculados a este profissional em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar profissional:', error);
+      res.status(500).json({ error: 'Erro ao deletar profissional' });
+    }
   }
 };
 

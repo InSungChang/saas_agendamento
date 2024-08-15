@@ -46,8 +46,14 @@ exports.deleteServico = async (req, res) => {
       res.status(404).json({ error: 'Serviço não encontrado' });
     }
   } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este serviço. Existem registros vinculados a este serviço em outros cadastros.' 
+      });
+    } else {
     console.error('Erro ao deletar serviço:', error);
     res.status(500).json({ error: 'Erro ao deletar serviço' });
+    }
   }
 };
 

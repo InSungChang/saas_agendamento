@@ -50,7 +50,7 @@ exports.deleteEmpresa = async (req, res) => {
   } catch (error) {
     if (error.code === 'ER_ROW_IS_REFERENCED_2') {
       res.status(400).json({ 
-        message: 'Não é possível excluir a empresa. Existem registros de clientes vinculados a esta empresa.' 
+        message: 'Não é possível excluir a empresa. Existem registros vinculados a esta empresa em outros cadastros.' 
       });
     } else {
       console.error('Erro ao deletar empresa:', error);

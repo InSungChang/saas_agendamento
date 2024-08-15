@@ -64,7 +64,13 @@ exports.deleteUsuario = async (req, res) => {
       res.status(404).json({ error: 'Usuário não encontrado' });
     }
   } catch (error) {
-    console.error('Erro ao deletar usuário:', error);
-    res.status(500).json({ error: 'Erro ao deletar usuário' });
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este usuário. Existem registros vinculados a este usuário em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar usuário:', error);
+      res.status(500).json({ error: 'Erro ao deletar usuário' });
+    }
   }
 };

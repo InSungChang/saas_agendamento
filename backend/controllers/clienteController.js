@@ -50,8 +50,14 @@ exports.deleteCliente = async (req, res) => {
       res.status(404).json({ error: 'Cliente não encontrado' });
     }
   } catch (error) {
-    console.error('Erro ao deletar cliente:', error);
-    res.status(500).json({ error: 'Erro ao deletar cliente' });
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este cliente. Existem registros vinculados a esta empresa em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar cliente:', error);
+      res.status(500).json({ error: 'Erro ao deletar cliente' });
+    }
   }
 };
 

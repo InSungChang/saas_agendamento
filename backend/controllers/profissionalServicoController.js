@@ -46,8 +46,14 @@ exports.deleteProfissionalServico = async (req, res) => {
       res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
     }
   } catch (error) {
-    console.error('Erro ao deletar associação profissional-serviço:', error);
-    res.status(500).json({ error: 'Erro ao deletar associação profissional-serviço' });
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir associação profissional-serviço. Existem registros vinculados a este profissional-serviços em outros cadastros.'
+      });
+    } else {
+      console.error('Erro ao deletar associação profissional-serviço:', error);
+      res.status(500).json({ error: 'Erro ao deletar associação profissional-serviço' });
+    }
   }
 };
 
