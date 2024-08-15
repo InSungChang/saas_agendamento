@@ -17,17 +17,18 @@ const ClienteForm = () => {
     const [error, setError] = useState(null);
     const [usuarioLogado, setUsuarioLogado] = useState(null);
     const [empresa, setEmpresa] = useState(null);
+    const API_BASE_URL = process.env.REACT_APP_API_URL;
 
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            axios.get('http://localhost:5000/api/usuario-logado', {
+            axios.get(`${API_BASE_URL}/usuario-logado`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             .then(response => {
                 setUsuarioLogado(response.data);
                 // Buscar informações da empresa
-                return axios.get(`http://localhost:5000/api/empresas/${response.data.empresa_id}`, {
+                return axios.get(`${API_BASE_URL}/empresas/${response.data.empresa_id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             })
@@ -54,7 +55,7 @@ const ClienteForm = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post('http://localhost:5000/api/clientes', cliente, {
+            const response = await axios.post(`${API_BASE_URL}/clientes`, cliente, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             console.log(response.data);

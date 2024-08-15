@@ -5,9 +5,11 @@ const db = require('../config/db');
 
 const profissionalController = require('../controllers/profissionalController');
 
-router.post('/profissionais', profissionalController.createProfissional);
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.get('/profissionais', async (req, res) => {
+router.post('/profissionais', authMiddleware, profissionalController.createProfissional);
+
+router.get('/profissionais', authMiddleware, async (req, res) => {
   try {
     const [results] = await db.promise().query('SELECT * FROM profissionais');
     res.json(results);
@@ -17,7 +19,7 @@ router.get('/profissionais', async (req, res) => {
   }
 });
 
-router.get('/profissionais/:id', async (req, res) => {
+router.get('/profissionais/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const [results] = await db.promise().query('SELECT * FROM profissionais WHERE id = ?', [id]);
@@ -32,9 +34,9 @@ router.get('/profissionais/:id', async (req, res) => {
   }
 });
 
-router.put('/profissionais/:id', profissionalController.updateProfissional);
+router.put('/profissionais/:id', authMiddleware, profissionalController.updateProfissional);
 
-router.delete('/profissionais/:id', profissionalController.deleteProfissional);
+router.delete('/profissionais/:id', authMiddleware, profissionalController.deleteProfissional);
 
 module.exports = router;
 

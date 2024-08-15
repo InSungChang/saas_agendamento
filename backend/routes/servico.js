@@ -5,9 +5,11 @@ const db = require('../config/db');
 
 const servicoController = require('../controllers/servicoController');
 
-router.post('/servicos', servicoController.createServico);
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.get('/servicos', async (req, res) => {
+router.post('/servicos', authMiddleware, servicoController.createServico);
+
+router.get('/servicos', authMiddleware, async (req, res) => {
   try {
     const [results] = await db.promise().query('SELECT * FROM servicos');
     res.json(results);
@@ -17,7 +19,7 @@ router.get('/servicos', async (req, res) => {
   }
 });
 
-router.get('/servicos/:id', async (req, res) => {
+router.get('/servicos/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     const [results] = await db.promise().query('SELECT * FROM servicos WHERE id = ?', [id]);
@@ -32,8 +34,8 @@ router.get('/servicos/:id', async (req, res) => {
   }
 });
 
-router.put('/servicos/:id', servicoController.updateServico);
+router.put('/servicos/:id', authMiddleware, servicoController.updateServico);
 
-router.delete('/servicos/:id', servicoController.deleteServico);
+router.delete('/servicos/:id', authMiddleware, servicoController.deleteServico);
 
 module.exports = router;

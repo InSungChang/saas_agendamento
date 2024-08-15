@@ -5,10 +5,12 @@ const db = require('../config/db');
 
 const usuarioController = require('../controllers/usuarioController');
 
-router.post('/usuarios', usuarioController.createUsuario);
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/usuarios', authMiddleware, usuarioController.createUsuario);
 
 // Rota para obter todos os usuarios
-router.get('/usuarios', async (req, res) => {
+router.get('/usuarios', authMiddleware, async (req, res) => {
     try {
         const [results] = await db.promise().query('SELECT * FROM usuarios');
         res.json(results);
@@ -21,7 +23,7 @@ router.get('/usuarios', async (req, res) => {
 });
 
 // Rota para obter um usuário específico
-router.get('/usuarios/:id', async (req, res) => {
+router.get('/usuarios/:id', authMiddleware, async (req, res) => {
     const {
         id
     } = req.params;
@@ -43,9 +45,9 @@ router.get('/usuarios/:id', async (req, res) => {
 });
 
 // Rota para atualizar um usuário
-router.put('/usuarios/:id', usuarioController.updateUsuario);
+router.put('/usuarios/:id', authMiddleware, usuarioController.updateUsuario);
 
 // Rota para deletar um usuário
-router.delete('/usuarios/:id', usuarioController.deleteUsuario);
+router.delete('/usuarios/:id', authMiddleware, usuarioController.deleteUsuario);
 
 module.exports = router;

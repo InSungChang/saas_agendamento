@@ -5,10 +5,12 @@ const db = require('../config/db');
 
 const empresaController = require('../controllers/empresaController');
 
-router.post('/empresas', empresaController.createEmpresa);
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/empresas', authMiddleware, empresaController.createEmpresa);
 
 // Rota para obter todas as empresa
-router.get('/empresas', async (req, res) => {
+router.get('/empresas', authMiddleware, async (req, res) => {
     try {
         const [results] = await db.promise().query('SELECT * FROM empresas');
         res.json(results);
@@ -21,7 +23,7 @@ router.get('/empresas', async (req, res) => {
 });
 
 // Rota para obter uma empresa específico
-router.get('/empresas/:id', async (req, res) => {
+router.get('/empresas/:id', authMiddleware, async (req, res) => {
     const {
         id
     } = req.params;
@@ -43,9 +45,9 @@ router.get('/empresas/:id', async (req, res) => {
 });
 
 // Rota para atualizar uma empresa
-router.put('/empresas/:id', empresaController.updateEmpresa);
+router.put('/empresas/:id', authMiddleware, empresaController.updateEmpresa);
 
 // Rota para deletar uma empresa
-router.delete('/empresas/:id', empresaController.deleteEmpresa);
+router.delete('/empresas/:id', authMiddleware, empresaController.deleteEmpresa);
 
 module.exports = router;
