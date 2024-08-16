@@ -37,6 +37,7 @@ const Dashboard = () => {
           <li><Link to="/servicos">Cadastro de Serviços</Link></li>
           <li><Link to="/profissionais">Cadastro de Profissionais</Link></li>
           <li><Link to="/profissionaisServicos">Cadastro de Profissionais X Serviços</Link></li>
+          <li><Link to="/disponibilidades">Cadastro de Disponibilidade dos Profissionais</Link></li>
           {/* Adicione outros links de navegação aqui */}
         </ul>
       </nav>

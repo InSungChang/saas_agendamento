@@ -13,6 +13,7 @@ import ConsultarAlterarExcluirClienteForm from './components/ConsultarAlterarExc
 import ServicoForm from './components/ServicoForm';
 import ProfissionalForm from './components/ProfissionalForm';
 import ProfissionalServicoForm from './components/ProfissionalServicoForm';
+import DisponibilidadeForm from './components/DisponibilidadeForm';
 
 const App = () => {
   const [token, setToken] = React.useState(null);
@@ -36,6 +37,7 @@ const App = () => {
           <Route path="/servicos" element={<ServicoForm />} />
           <Route path="/profissionais" element={<ProfissionalForm />} />
           <Route path="/profissionaisServicos" element={<ProfissionalServicoForm />} />
+          <Route path="/disponibilidades" element={<DisponibilidadeForm />} />
           <Route path="/" element={<Dashboard />} />
         </Routes>
       ) : (
