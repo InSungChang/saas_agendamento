@@ -8,6 +8,7 @@ const AgendamentoForm = () => {
   const [servicos, setServicos] = useState([]);
   const [profissionais, setProfissionais] = useState([]);
   const [disponibilidades, setDisponibilidades] = useState([]);
+  const navigate = useNavigate();
   const [agendamento, setAgendamento] = useState({
     empresa_id: '', // Será preenchido automaticamente
     cliente_id: '',
@@ -63,7 +64,12 @@ const AgendamentoForm = () => {
 
   const carregarDisponibilidades = (profissionalId) => {
     const token = localStorage.getItem('token');
-    axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, { headers: { Authorization: `Bearer ${token}` } })
+    /* const dataInicio = new Date().toISOString().split('T')[0];
+    const dataFim = new Date(Date.now() + diasExibicao * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; */
+
+    axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then(response => {
         console.log('Dados recebidos:', response.data);
         const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao);
@@ -72,30 +78,31 @@ const AgendamentoForm = () => {
       })
       .catch(error => {
         console.error('Erro ao carregar disponibilidades:', error);
-        setDisponibilidades([]); // Inicializa com array vazio em caso de erro
+        setDisponibilidades([]);
       });
   };
 
   const formatarDisponibilidades = (disponibilidades, dias) => {
     if (!disponibilidades || disponibilidades.length === 0) {
-      return []; // Retorna array vazio se não houver dados
+      return [];
     }
   
     const hoje = new Date();
     const disponibilidadesFormatadas = [];
   
+    const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  
     for (let i = 0; i < dias; i++) {
       const data = new Date(hoje);
       data.setDate(hoje.getDate() + i);
+      const diaSemana = diasSemana[data.getDay()];
   
-      const disponibilidadesDoDia = disponibilidades.filter(d => {
-        const diaSemana = data.getDay();
-        return d.dia_semana === diaSemana;
-      });
+      const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
   
       if (disponibilidadesDoDia.length > 0) {
         disponibilidadesFormatadas.push({
           data: data.toISOString().split('T')[0],
+          diaSemana: diaSemana,
           horarios: disponibilidadesDoDia.map(d => ({
             inicio: d.hora_inicio,
             fim: d.hora_fim
@@ -105,6 +112,10 @@ const AgendamentoForm = () => {
     }
   
     return disponibilidadesFormatadas;
+  };
+
+  const handleCancel = () => {
+    navigate('/dashboard');
   };
 
   const handleSubmit = async (e) => {
@@ -148,12 +159,18 @@ const AgendamentoForm = () => {
         </select>
 
         <label>Profissional</label>
-        <select name="profissional_id" value={agendamento.profissional_id} onChange={handleChange} required>
-          <option value="">Selecione um profissional</option>
-          {profissionais.map(profissional => (
-            <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
-          ))}
-        </select>
+        <select 
+          name="profissional_id" 
+          value={agendamento.profissional_id} 
+          onChange={handleChange} 
+          required
+          disabled={!agendamento.servico_id}
+        >
+        <option value="">Selecione um profissional</option>
+        {profissionais.map(profissional => (
+          <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
+        ))}
+      </select>
 
         <label>Dias de exibição</label>
         <select value={diasExibicao} onChange={(e) => setDiasExibicao(Number(e.target.value))}>
@@ -163,27 +180,28 @@ const AgendamentoForm = () => {
           <option value={30}>30 dias</option>
         </select>
 
-        <div className="disponibilidades-grid">
-          {disponibilidades.map((disp, index) => (
-            <div key={index} className="disponibilidade-item">
-              <p>{disp.data}</p>
-              <p>{agendamento.profissional_id && profissionais.find(p => p.id === parseInt(agendamento.profissional_id))?.nome}</p>
-              <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
-              {disp.horarios.map((horario, idx) => (
+      <div className="disponibilidades-grid">
+        {disponibilidades.map((disp, index) => (
+          <div key={index} className="disponibilidade-item">
+            <p>{disp.data} ({disp.diaSemana})</p>
+            <p>{agendamento.profissional_id && profissionais.find(p => p.id === parseInt(agendamento.profissional_id))?.nome}</p>
+            <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
+            {disp.horarios.map((horario, idx) => (
               <button 
                 key={idx} 
                 onClick={() => setAgendamento({...agendamento, data_horario_agendamento: `${disp.data} ${horario.inicio}`})}
               >
                 {`${horario.inicio} - ${horario.fim}`}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+      
         <button type="submit" className="agendar-button" disabled={loading}>
           {loading ? 'Agendando...' : 'Agendar'}
         </button>
+        <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
       </form>
     </div>
   );

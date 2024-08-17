@@ -56,6 +56,23 @@ router.get('/profissionais/:empresa_id', async (req, res) => {
   }
 });
 
+router.get('/profissionais-por-servico/:servico_id', authMiddleware, async (req, res) => {
+  const { servico_id } = req.params;
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query(
+      'SELECT p.* FROM profissionais p ' +
+      'JOIN profissional_servicos ps ON p.id = ps.profissional_id ' +
+      'WHERE ps.servico_id = ? AND p.empresa_id = ?',
+      [servico_id, empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar profissionais por serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissionais por serviço' });
+  }
+});
+
 router.put('/profissionais/:id', authMiddleware, profissionalController.updateProfissional);
 
 router.delete('/profissionais/:id', authMiddleware, profissionalController.deleteProfissional);
