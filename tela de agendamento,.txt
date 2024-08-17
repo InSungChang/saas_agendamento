@@ -1,0 +1,778 @@
+preciso criar uma tela de agendamento, onde devemos inserir os campos a seguir, a tela deverá ser fácil de manipular e intuitiva. se possível ser atraente para experiência do usuário.
+Campos no formulário de agendamento:
+campo empresa_id: mostrar empresa_id do usuário ativo no form e usar empresa_id para salvar registro no agendamento.
+campo cliente: listar clientes para seleção, mas somente os clientes da mesma empresa_id do usuário ativo.
+campo serviço: listar serviços para seleção, somente os serviços da mesma empresa_id do usuário ativo, esse campo vai servir para escolher os profissionais da tabela profissional_servicos que fazem serviço selecionado.
+campo profissional: listar profissionais, somente os profissionais da mesma empresa_id do usuário ativo e que fazem serviço conforme serviço escolhido do campo serviço, usar tabela profissional_servicos para filtrar e listar somente os profissionais que fazem o serviço escolhido para seleção.
+após seleção dos campos citados acima, exibir em seguida no formulário disponibilidade do profissional nos próximos 7 dias e ter um campo para selcionar quantidade de dias para exibição das disponibilidades, de 7 dias como padrão, 14 dias, 21 dias e 30 dias. deverá ser exibido em cada quadrado, o nome do profissional, nome do serviço, data, horário disponivel e o horário disponivel, deverá ser fracionado para 1 hora de duração em cada quadrado e acessar tabela de disponibilidade do profissional para checar hora_inicio, hora_fim e dia da semana do profissional escolhido. exemplo: se o profissional definiu na tabela de disponibilidade, nas segundas feiras das 8:00 até 18:00, deverá exibir no formulário os 10 horários disponíveis, nas segundas feiras, deverão aparecer 10 quadrados, 8:00, 9:00, 10:00, ... e por último 17:00 como disponíveis. nas terças feiras, se o profissional definiu na tabela de disponibilidade as terças feiras, deverão aparecer x quadrados e assim até ultimo dia da semana que o profissional definiu na tabela de disponibilidade.
+em cada quadrado de disponibilidade deverá ter botão de agendar para servir de criação de registro novo na tabela agendamentos. segue a estrutura da tabela de agendamentos.
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    empresa_id INT NOT NULL,
+    cliente_id INT NOT NULL,
+    profissional_id INT NOT NULL,
+    servico_id INT NOT NULL,
+    data_horario_agendamento DATETIME NOT NULL,
+    status ENUM('agendado', 'concluido', 'cancelado') DEFAULT 'agendado',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES empresas(id),
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (profissional_id) REFERENCES profissionais(id),
+    FOREIGN KEY (servico_id) REFERENCES servicos(id)
+
+estou inserindo para seguir a mesma lógica para criação e ajuste no backend e em seguida existem código de exemplos para criação de novo formulário para frontend.
+
+clienteController.js:
+const db = require('../config/db');
+const Cliente = require('../models/Cliente');
+
+const saltRounds = 10;
+
+exports.createCliente = (req, res) => {
+  const { nome, email, telefone, endereco } = req.body;
+  const empresa_id = req.user.empresa_id; // Usa o empresa_id do usuário logado
+  const novoCliente = { empresa_id, nome, email, telefone, endereco };
+
+  Cliente.create(novoCliente, (err, result) => {
+      if (err) {
+          return res.status(500).send({ message: 'Erro ao criar cliente', error: err });
+      }
+      res.status(201).send({ message: 'Cliente criado com sucesso', clienteId: result.insertId });
+  });
+};
+
+exports.updateCliente = async (req, res) => {
+  const { id } = req.params;
+  const { nome, email, telefone, endereco } = req.body;
+  const empresa_id = req.user.empresa_id; // Obtém o empresa_id da sessão
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE clientes SET empresa_id = ?, nome = ?, email = ?, telefone = ?, endereco = ? WHERE id = ?',
+      [empresa_id, nome, email, telefone, endereco, id]
+    );
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Cliente atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Cliente não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar cliente:', error);
+    res.status(500).json({ error: 'Erro ao atualizar cliente' });
+  }
+};
+
+exports.deleteCliente = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM clientes WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Cliente deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Cliente não encontrado' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este cliente. Existem registros vinculados a esta empresa em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar cliente:', error);
+      res.status(500).json({ error: 'Erro ao deletar cliente' });
+    }
+  }
+};
+
+servicoController.js:
+const db = require('../config/db');
+const Servico = require('../models/Servico');
+
+exports.createServico = (req, res) => {
+  const { empresa_id, nome, descricao, preco, duracao } = req.body;
+  const novoServico = { empresa_id, nome, descricao, preco, duracao };
+
+  Servico.create(novoServico, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar serviço', error: err });
+    }
+    res.status(201).send({ message: 'Serviço criado com sucesso', servicoId: result.insertId });
+  });
+};
+
+exports.updateServico = async (req, res) => {
+  const { id } = req.params;
+  const { empresa_id, nome, descricao, preco, duracao } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE servicos SET empresa_id = ?, nome = ?, descricao = ?, preco = ?, duracao = ? WHERE id = ?',
+      [empresa_id, nome, descricao, preco, duracao, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Serviço atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar serviço:', error);
+    res.status(500).json({ error: 'Erro ao atualizar serviço' });
+  }
+};
+
+exports.deleteServico = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM servicos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Serviço deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este serviço. Existem registros vinculados a este serviço em outros cadastros.' 
+      });
+    } else {
+    console.error('Erro ao deletar serviço:', error);
+    res.status(500).json({ error: 'Erro ao deletar serviço' });
+    }
+  }
+};
+
+profissionalController.js:
+const db = require('../config/db');
+const Profissional = require('../models/Profissional');
+
+exports.createProfissional = (req, res) => {
+  const { empresa_id, nome } = req.body;
+  const novoProfissional = { empresa_id, nome };
+
+  Profissional.create(novoProfissional, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar profissional', error: err });
+    }
+    res.status(201).send({ message: 'Profissional criado com sucesso', profissionalId: result.insertId });
+  });
+};
+
+exports.updateProfissional = async (req, res) => {
+  const { id } = req.params;
+  const { empresa_id, nome } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE profissionais SET empresa_id = ?, nome = ? WHERE id = ?',
+      [empresa_id, nome, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Profissional atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar profissional:', error);
+    res.status(500).json({ error: 'Erro ao atualizar profissional' });
+  }
+};
+
+exports.deleteProfissional = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM profissionais WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Profissional deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este profissional. Existem registros vinculados a este profissional em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar profissional:', error);
+      res.status(500).json({ error: 'Erro ao deletar profissional' });
+    }
+  }
+};
+
+profissionalServicoController.js:
+const db = require('../config/db');
+const ProfissionalServico = require('../models/ProfissionalServico');
+
+exports.createProfissionalServico = (req, res) => {
+  const { profissional_id, servico_id } = req.body;
+  const novoProfissionalServico = { profissional_id, servico_id };
+
+  ProfissionalServico.create(novoProfissionalServico, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar associação profissional-serviço', error: err });
+    }
+    res.status(201).send({ message: 'Associação profissional-serviço criada com sucesso', id: result.insertId });
+  });
+};
+
+exports.updateProfissionalServico = async (req, res) => {
+  const { id } = req.params;
+  const { profissional_id, servico_id } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE profissional_servicos SET profissional_id = ?, servico_id = ? WHERE id = ?',
+      [profissional_id, servico_id, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Associação profissional-serviço atualizada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar associação profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao atualizar associação profissional-serviço' });
+  }
+};
+
+exports.deleteProfissionalServico = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM profissional_servicos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Associação profissional-serviço deletada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir associação profissional-serviço. Existem registros vinculados a este profissional-serviços em outros cadastros.'
+      });
+    } else {
+      console.error('Erro ao deletar associação profissional-serviço:', error);
+      res.status(500).json({ error: 'Erro ao deletar associação profissional-serviço' });
+    }
+  }
+};
+
+cliente.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const clienteController = require('../controllers/clienteController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/clientes', authMiddleware, clienteController.createCliente);
+
+router.get('/clientes', authMiddleware, async (req, res) => {
+    const empresa_id = req.user.empresa_id;
+    try {
+        const [results] = await db.promise().query('SELECT * FROM clientes WHERE empresa_id = ?', [empresa_id]);
+        res.json(results);
+    } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+        res.status(500).json({ error: 'Erro ao buscar clientes' });
+    }
+});
+
+// Rota para obter todos os clientes
+router.get('/clientes', authMiddleware,  async (req, res) => {
+    try {
+        const [results] = await db.promise().query('SELECT * FROM clientes');
+        res.json(results);
+    } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar clientes'
+        });
+    }
+});
+
+// Rota para obter um cliente específico
+router.get('/clientes/:id', authMiddleware, async (req, res) => {
+    const {
+        id
+    } = req.params;
+    try {
+        const [results] = await db.promise().query('SELECT * FROM clientes WHERE id = ?', [id]);
+        if (results.length > 0) {
+            res.json(results[0]);
+        } else {
+            res.status(404).json({
+                error: 'Cliente não encontrado'
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar cliente:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar cliente'
+        });
+    }
+});
+
+// Rota para atualizar um cliente
+router.put('/clientes/:id', authMiddleware, clienteController.updateCliente);
+
+// Rota para deletar um cliente
+router.delete('/clientes/:id', authMiddleware, clienteController.deleteCliente);
+
+module.exports = router;
+
+servico.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const servicoController = require('../controllers/servicoController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/servicos', authMiddleware, servicoController.createServico);
+
+router.get('/servicos', authMiddleware, async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM servicos');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar serviços:', error);
+    res.status(500).json({ error: 'Erro ao buscar serviços' });
+  }
+});
+
+router.get('/servicos/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM servicos WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar serviço' });
+  }
+});
+
+router.put('/servicos/:id', authMiddleware, servicoController.updateServico);
+
+router.delete('/servicos/:id', authMiddleware, servicoController.deleteServico);
+
+module.exports = router;
+
+profissional.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const profissionalController = require('../controllers/profissionalController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/profissionais', authMiddleware, profissionalController.createProfissional);
+
+router.get('/profissionais', authMiddleware, async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissionais');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar profissionais:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissionais' });
+  }
+});
+
+router.get('/profissionais/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissionais WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissional' });
+  }
+});
+
+router.put('/profissionais/:id', authMiddleware, profissionalController.updateProfissional);
+
+router.delete('/profissionais/:id', authMiddleware, profissionalController.deleteProfissional);
+
+module.exports = router;
+
+profissionalServico.js:
+const express = require('express');
+const router = express.Router();
+
+const profissionalServicoController = require('../controllers/profissionalServicoController');
+
+router.post('/profissional-servicos', profissionalServicoController.createProfissionalServico);
+
+router.get('/profissional-servicos', async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissional_servicos');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar associações profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar associações profissional-serviço' });
+  }
+});
+
+router.get('/profissional-servicos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissional_servicos WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar associação profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar associação profissional-serviço' });
+  }
+});
+
+router.put('/profissional-servicos/:id', profissionalServicoController.updateProfissionalServico);
+
+router.delete('/profissional-servicos/:id', profissionalServicoController.deleteProfissionalServico);
+
+module.exports = router;
+
+e para criar os arquivos de controllers, models e routes para tabela agendamentos, seguir a mesma lógica dos códigos compartilhados, segue a estrutura da tabela agendamentos.
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    empresa_id INT NOT NULL,
+    cliente_id INT NOT NULL,
+    profissional_id INT NOT NULL,
+    servico_id INT NOT NULL,
+    data_horario_agendamento DATETIME NOT NULL,
+    status ENUM('agendado', 'concluido', 'cancelado') DEFAULT 'agendado',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES empresas(id),
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (profissional_id) REFERENCES profissionais(id),
+    FOREIGN KEY (servico_id) REFERENCES servicos(id)
+
+segue também tela de DisponibilidadeForm.js para servir de exemplo e lógica de programação para criação do novo formulário de chamado de agendamento. 
+
+DisponibilidadeForm.js:
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './DisponibilidadeForm.css';
+import { useNavigate } from 'react-router-dom';
+
+const DisponibilidadeForm = () => {
+  const [profissionalId, setProfissionalId] = useState('');
+  const [profissionais, setProfissionais] = useState([]);
+  const [disponibilidade, setDisponibilidade] = useState({
+    profissional_id: '',
+    dia_semana: '',
+    hora_inicio: '',
+    hora_fim: ''
+  });
+  const [disponibilidades, setDisponibilidades] = useState([]);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      axios.get(`${API_BASE_URL}/profissionais`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(response => setProfissionais(response.data))
+      .catch(error => {
+        console.error('Erro ao carregar lista de profissionais.', error);
+        setError('Erro ao carregar lista de profissionais.');
+      });
+    }
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (profissionalId && token) {
+      axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(response => setDisponibilidades(response.data))
+        .catch(error => {
+          console.error('Erro ao carregar disponibilidades.', error);
+          setError('Erro ao carregar disponibilidades.');
+        });
+    }
+  }, [profissionalId, API_BASE_URL]);
+
+  const handleProfissionalChange = (e) => {
+    setProfissionalId(e.target.value);
+    setDisponibilidade({ ...disponibilidade, profissional_id: e.target.value });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setDisponibilidade({
+      ...disponibilidade,
+      [name]: value
+    });
+  };
+
+  const handleCancel = () => {
+    navigate('/dashboard');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_BASE_URL}/disponibilidades`, disponibilidade, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Atualiza a lista de disponibilidades após a criação
+      const response = await axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDisponibilidades(response.data);
+      setMessage('Disponibilidade cadastrada com sucesso!');
+      setMessageType('success');
+    } catch (err) {
+      setMessage('Erro ao cadastrar disponibilidade.');
+      setMessageType('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_BASE_URL}/disponibilidades/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Atualiza a lista de disponibilidades após a exclusão
+      const response = await axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDisponibilidades(response.data);
+    } catch (err) {
+      setMessage('Erro ao excluir disponibilidade.');
+      setMessageType('error');
+    }
+  };
+
+  return (
+    <div className="disponibilidade-container">
+      {message && <div className={`floating-message ${messageType}`}>{message}</div>}
+      <form onSubmit={handleSubmit} className="disponibilidade-form">
+        <h1>Cadastro de disponibilidade</h1>
+        <label>Profissional</label>
+        <select name="profissional_id" value={profissionalId} onChange={handleProfissionalChange} required>
+          <option value="">Selecione um profissional</option>
+          {profissionais.map(profissional => (
+            <option key={profissional.id} value={profissional.id}>
+              {profissional.nome}
+            </option>
+          ))}
+        </select>
+
+        <label>Dia da Semana</label>
+        <select name="dia_semana" value={disponibilidade.dia_semana} onChange={handleChange} required>
+          <option value="">Selecione um dia</option>
+          <option value="0">Domingo</option>
+          <option value="1">Segunda-feira</option>
+          <option value="2">Terça-feira</option>
+          <option value="3">Quarta-feira</option>
+          <option value="4">Quinta-feira</option>
+          <option value="5">Sexta-feira</option>
+          <option value="6">Sábado</option>
+        </select>
+
+        <label>Hora de Início</label>
+        <input type="time" name="hora_inicio" value={disponibilidade.hora_inicio} onChange={handleChange} required />
+
+        <label>Hora de Fim</label>
+        <input type="time" name="hora_fim" value={disponibilidade.hora_fim} onChange={handleChange} required />
+
+        <button type="submit" className="criar-button" disabled={loading}>
+          {loading ? 'Carregando...' : 'Criar Disponibilidade'}
+        </button>
+      </form>
+
+      <div className="disponibilidades-list">
+        <h1>Disponibilidades</h1>
+        <ul>
+          {disponibilidades.map(d => (
+            <li key={d.id}>
+              <span>{`Dia: ${d.dia_semana}, Início: ${d.hora_inicio}, Fim: ${d.hora_fim}`}</span>
+              <button onClick={() => handleDelete(d.id)} className="delete-button">Excluir</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+      {error && <p className="message error">{error}</p>}
+    </div>
+  );
+};
+
+export default DisponibilidadeForm;
+
+DisponibilidadeForm.css:
+.disponibilidade-container {
+  font-family: Arial, sans-serif;
+  background-color: #F5F5F5; /* Cinza Claro */
+  color: #333; /* Texto em cinza escuro */
+  margin-top: 100px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+}
+
+.disponibilidade-form {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 30px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Título do formulário */
+.disponibilidade-container h1 {
+  color: #333; /* Texto em cinza escuro */
+  margin-top: 20px;
+  font-size: 28px;
+  text-align: center;
+}
+
+.disponibilidade-form label {
+  margin: 15px 0 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.disponibilidade-form select,
+.disponibilidade-form input[type="time"] {
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #d3d3d3;
+  border-radius: 6px;
+  width: 93%;
+  font-size: 16px;
+}
+
+.criar-button {
+  background-color: #007bff;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 16px;
+  width: 100%;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.criar-button:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+.disponibilidades-list {
+  margin-top: 30px;
+}
+
+.disponibilidades-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.disponibilidades-list li {
+  display: flex;
+  justify-content: space-between;
+  background-color: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+  transform: scale(1.05);
+}
+
+.floating-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.floating-message.success {
+  background-color: #28a745;
+  color: white;
+}
+
+.floating-message.error {
+  background-color: #dc3545;
+  color: white;
+}
+
+.sair-button {
+  background-color: #6c757d;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 15px;
+  width: 100%;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.sair-button:hover {
+  background-color: #5a6268;
+  transform: scale(1.05);
+}

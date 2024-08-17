@@ -17,11 +17,13 @@ const UsuarioForm = () => {
   const navigate = useNavigate(); // Criar a instância de navigate
   const [loading, setLoading] = useState(false); // Estado de carregamento
   const [empresas, setEmpresas] = useState([]); // Estado para armazenar a lista de empresas
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     console.log('Buscando empresas...');
     setLoading(true);
-    axios.get('http://localhost:5000/api/empresas')
+    const token = localStorage.getItem('token');
+    axios.get(`${API_BASE_URL}/empresas`, { headers: { Authorization: `Bearer ${token}` } })
       .then(response => {
         console.log('Dados brutos da API:', response);
         const empresasData = response.data.empresas || response.data; 
@@ -48,7 +50,10 @@ const UsuarioForm = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/usuarios', usuario);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_BASE_URL}/usuarios`, usuario, {
+          headers: { Authorization: `Bearer ${token}` }
+      });
       console.log(response.data);
       setMessage('Usuário cadastrado com sucesso!'); // Definir a mensagem de sucesso
       setMessageType('success');

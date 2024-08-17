@@ -22,9 +22,12 @@ const AlterarUsuarioForm = () => {
 
   const [empresas, setEmpresas] = useState([]); // Estado para armazenar a lista de empresas
 
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     console.log('Buscando empresas...');
-    axios.get('http://localhost:5000/api/empresas')
+    const token = localStorage.getItem('token');
+    axios.get(`${API_BASE_URL}/empresas`, { headers: { Authorization: `Bearer ${token}` } })
       .then(response => {
         console.log('Dados brutos da API:', response);
         const empresasData = response.data.empresas || response.data; 
@@ -46,7 +49,8 @@ const AlterarUsuarioForm = () => {
   useEffect(() => {
     if (usuarioSelecionado) {
       // Buscar dados do usuário selecionado
-      axios.get(`http://localhost:5000/api/usuarios/${usuarioSelecionado}`)
+      const token = localStorage.getItem('token');
+      axios.get(`${API_BASE_URL}/usuarios/${usuarioSelecionado}`, { headers: { Authorization: `Bearer ${token}` } })
         .then(response => {
           setUsuario(response.data);
         })
@@ -70,7 +74,8 @@ const AlterarUsuarioForm = () => {
 
   const fetchUsuarios = () => {
     // Buscar todos os usuários
-    axios.get('http://localhost:5000/api/usuarios')
+    const token = localStorage.getItem('token');
+    axios.get(`${API_BASE_URL}/usuarios`, { headers: { Authorization: `Bearer ${token}` } })
       .then(response => {
         setUsuarios(response.data);
       })
@@ -100,7 +105,9 @@ const AlterarUsuarioForm = () => {
     };
 
     try {
-      const response = await axios.put(`http://localhost:5000/api/usuarios/${usuarioSelecionado}`, usuarioAtualizado);
+      const response = await axios.put(`http://localhost:5000/api/usuarios/${usuarioSelecionado}`, usuarioAtualizado, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       console.log(response.data);
       setMessage('Usuário atualizado com sucesso!');
       setTimeout(() => {
@@ -122,7 +129,9 @@ const AlterarUsuarioForm = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/usuarios/${usuarioSelecionado}`);
+      await axios.delete(`http://localhost:5000/api/usuarios/${usuarioSelecionado}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setMessage('Usuário excluído com sucesso!');
       
       // Redefina o valor de `usuarioSelecionado` antes de atualizar a lista de usuários

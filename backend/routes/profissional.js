@@ -34,6 +34,17 @@ router.get('/profissionais/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Rota para buscar profissionais por empresa
+router.get('/profissionais/:empresa_id', async (req, res) => {
+  const empresa_id = req.params.empresa_id;
+  try {
+      const profissionais = await db.query('SELECT * FROM profissionais WHERE empresa_id = ?', [empresa_id]);
+      res.json(profissionais);
+  } catch (error) {
+      res.status(500).send('Erro ao buscar profissionais');
+  }
+});
+
 router.put('/profissionais/:id', authMiddleware, profissionalController.updateProfissional);
 
 router.delete('/profissionais/:id', authMiddleware, profissionalController.deleteProfissional);

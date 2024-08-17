@@ -17,11 +17,14 @@ const ProfissionalServicoForm = () => {
   const [profissionais, setProfissionais] = useState([]);
   const [servicos, setServicos] = useState([]);
 
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     setLoading(true);
+    const token = localStorage.getItem('token');
     Promise.all([
-      axios.get('http://localhost:5000/api/profissionais'),
-      axios.get('http://localhost:5000/api/servicos')
+      axios.get(`${API_BASE_URL}/profissionais`, { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get(`${API_BASE_URL}/servicos`, { headers: { Authorization: `Bearer ${token}` } })
     ])
       .then(([profissionaisResponse, servicosResponse]) => {
         console.log(profissionaisResponse.data);
@@ -49,7 +52,10 @@ const ProfissionalServicoForm = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/profissional-servicos', profissionalServico);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_BASE_URL}/profissional-servicos`, profissionalServico, {
+          headers: { Authorization: `Bearer ${token}` }
+      });
       console.log(response.data);
       setMessage('Associação profissional-serviço criada com sucesso!');
       setMessageType('success');

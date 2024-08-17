@@ -20,9 +20,12 @@ const ServicoForm = () => {
   const [error, setError] = useState(null);
   const [empresas, setEmpresas] = useState([]);
 
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     setLoading(true);
-    axios.get('http://localhost:5000/api/empresas')
+    const token = localStorage.getItem('token');
+    axios.get(`${API_BASE_URL}/empresas`, { headers: { Authorization: `Bearer ${token}` } })
       .then(response => {
         console.log('Dados brutos da API:', response);
         const empresasData = response.data.empresas || response.data;
@@ -72,7 +75,10 @@ const ServicoForm = () => {
         ...servico,
         preco: parseFloat(servico.preco).toFixed(2)
       };
-      const response = await axios.post('http://localhost:5000/api/servicos', servicoToSubmit);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_BASE_URL}/servicos`, servicoToSubmit, {
+          headers: { Authorization: `Bearer ${token}` }
+      });
       console.log(response.data);
       setMessage('Serviço cadastrado com sucesso!');
       setMessageType('success');

@@ -55,6 +55,17 @@ router.get('/clientes/:id', authMiddleware, async (req, res) => {
     }
 });
 
+// Rota para buscar clientes por empresa
+router.get('/clientes/:empresa_id', async (req, res) => {
+    const empresa_id = req.params.empresa_id;
+    try {
+        const clientes = await db.query('SELECT * FROM clientes WHERE empresa_id = ?', [empresa_id]);
+        res.json(clientes);
+    } catch (error) {
+        res.status(500).send('Erro ao buscar clientes');
+    }
+});
+
 // Rota para atualizar um cliente
 router.put('/clientes/:id', authMiddleware, clienteController.updateCliente);
 

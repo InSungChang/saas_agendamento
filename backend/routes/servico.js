@@ -34,6 +34,16 @@ router.get('/servicos/:id', authMiddleware, async (req, res) => {
   }
 });
 
+router.get('/servicos/:empresa_id', async (req, res) => {
+  const empresa_id = req.params.empresa_id;
+  try {
+      const servicos = await db.query('SELECT * FROM servicos WHERE empresa_id = ?', [empresa_id]);
+      res.json(servicos);
+  } catch (error) {
+      res.status(500).send('Erro ao buscar serviços');
+  }
+});
+
 router.put('/servicos/:id', authMiddleware, servicoController.updateServico);
 
 router.delete('/servicos/:id', authMiddleware, servicoController.deleteServico);
