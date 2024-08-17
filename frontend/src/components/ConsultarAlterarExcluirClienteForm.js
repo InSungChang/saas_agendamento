@@ -181,10 +181,10 @@ const AlterarClienteForm = () => {
           <input type="text" value={searchTerm} onChange={handleSearch} placeholder="Buscar por nome" />
         </div>
         <div className="alterar-form">
-          <label>Usuário Logado</label>
-          <input type="text" value={usuarioLogado ? usuarioLogado.nome : 'Carregando...'} disabled />
           <label>Empresa</label>
           <input type="text" value={empresa ? empresa.nome : 'Carregando...'} disabled />
+          <label>Usuário Logado</label>
+          <input type="text" value={usuarioLogado ? usuarioLogado.nome : 'Carregando...'} disabled />
           <label>Selecionar Cliente</label>
           <select
             name="clienteSelecionado"

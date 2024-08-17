@@ -9,13 +9,24 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 router.post('/servicos', authMiddleware, servicoController.createServico);
 
-router.get('/servicos', authMiddleware, async (req, res) => {
+/* router.get('/servicos', authMiddleware, async (req, res) => {
   try {
     const [results] = await db.promise().query('SELECT * FROM servicos');
     res.json(results);
   } catch (error) {
     console.error('Erro ao buscar serviços:', error);
     res.status(500).json({ error: 'Erro ao buscar serviços' });
+  }
+}); */
+
+router.get('/servicos', authMiddleware, async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+      const [results] = await db.promise().query('SELECT * FROM servicos WHERE empresa_id = ?', [empresa_id]);
+      res.json(results);
+  } catch (error) {
+      console.error('Erro ao buscar servicos:', error);
+      res.status(500).json({ error: 'Erro ao buscar servicos' });
   }
 });
 

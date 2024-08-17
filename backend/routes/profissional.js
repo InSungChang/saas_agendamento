@@ -9,13 +9,24 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 router.post('/profissionais', authMiddleware, profissionalController.createProfissional);
 
-router.get('/profissionais', authMiddleware, async (req, res) => {
+/* router.get('/profissionais', authMiddleware, async (req, res) => {
   try {
     const [results] = await db.promise().query('SELECT * FROM profissionais');
     res.json(results);
   } catch (error) {
     console.error('Erro ao buscar profissionais:', error);
     res.status(500).json({ error: 'Erro ao buscar profissionais' });
+  }
+}); */
+
+router.get('/profissionais', authMiddleware, async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+      const [results] = await db.promise().query('SELECT * FROM profissionais WHERE empresa_id = ?', [empresa_id]);
+      res.json(results);
+  } catch (error) {
+      console.error('Erro ao buscar profissionais:', error);
+      res.status(500).json({ error: 'Erro ao buscar profissionais' });
   }
 });
 
