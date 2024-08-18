@@ -24,17 +24,6 @@ const AgendamentoForm = () => {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
-  const handleExibirDisponibilidade = () => {
-    navigate('/disponibilidadesPage', { 
-      state: { 
-        disponibilidades, 
-        agendamento, 
-        profissionais, 
-        servicos 
-      } 
-    });
-  };
-
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -149,64 +138,71 @@ const AgendamentoForm = () => {
 
   return (
     <div className="agendamento-container">      
-      <h1>Filtro para agendamento</h1>
       {message && <div className={`floating-message ${messageType}`}>{message}</div>}
-      <form onSubmit={handleSubmit} className="agendamento-form">        
-        <div className="agendamento-form-header">          
-          <label>Cliente</label>        
-          <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
-            <option value="">Selecione um cliente</option>
-            {clientes.map(cliente => (
+      <form onSubmit={handleSubmit} className="agendamento-form">
+      <div className="agendamento-form-header">
+      <label>Cliente</label>        
+        <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
+          <option value="">Selecione um cliente</option>
+          {clientes.map(cliente => (
             <option key={cliente.id} value={cliente.id}>{cliente.nome}</option>
-            ))}
-          </select>
+          ))}
+        </select>
+      <label>Serviço</label>
+        <select name="servico_id" value={agendamento.servico_id} onChange={handleChange} required>
+          <option value="">Selecione um serviço</option>
+          {servicos.map(servico => (
+            <option key={servico.id} value={servico.id}>{servico.nome}</option>
+          ))}
+        </select>
 
-          <label>Serviço</label>
-          <select name="servico_id" value={agendamento.servico_id} onChange={handleChange} required>
-            <option value="">Selecione um serviço</option>
-            {servicos.map(servico => (
-              <option key={servico.id} value={servico.id}>{servico.nome}</option>
-            ))}
-          </select>
-
-          <label>Dias de exibição</label>
-          <select value={diasExibicao} onChange={(e) => setDiasExibicao(Number(e.target.value))}>
-            <option value={7}>7 dias</option>
-            <option value={14}>14 dias</option>
-            <option value={21}>21 dias</option>
-            <option value={30}>30 dias</option>
-          </select>
-
-          <label>Profissional</label>
-          <select 
-            name="profissional_id" 
-            value={agendamento.profissional_id} 
-            onChange={handleChange} 
-            required
-            disabled={!agendamento.servico_id}
-          >
+      <label>Dias de exibição</label>
+        <select value={diasExibicao} onChange={(e) => setDiasExibicao(Number(e.target.value))}>
+          <option value={7}>7 dias</option>
+          <option value={14}>14 dias</option>
+          <option value={21}>21 dias</option>
+          <option value={30}>30 dias</option>
+        </select>
+        <label>Profissional</label>
+        <select 
+          name="profissional_id" 
+          value={agendamento.profissional_id} 
+          onChange={handleChange} 
+          required
+          disabled={!agendamento.servico_id}
+        >
           <option value="">Selecione um profissional</option>
-             {profissionais.map(profissional => (
-             <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
-             ))}
-          </select>
-
-          <button 
-            type="button" 
-            onClick={handleExibirDisponibilidade} 
-            className="exibir-disponibilidade-button"
-            disabled={!agendamento.profissional_id}
-          >
-            Exibir Disponibilidade
-          </button>
-
-          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
-
-        </div>
-  
+          {profissionais.map(profissional => (
+            <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
+          ))}
+        </select>
+      </div>
+     
+      <div className="disponibilidades-grid">
+        {disponibilidades.map((disp, index) => (
+          <div key={index} className="disponibilidade-item">
+            <p>{disp.data} ({disp.diaSemana})</p>
+            <p>{agendamento.profissional_id && profissionais.find(p => p.id === parseInt(agendamento.profissional_id))?.nome}</p>
+            <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
+            {disp.horarios.map((horario, idx) => (
+              <button 
+                key={idx} 
+                onClick={() => setAgendamento({...agendamento, data_horario_agendamento: `${disp.data} ${horario.inicio}`})}
+              >
+                {`${horario.inicio} - ${horario.fim}`}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+      
+{/*         <button type="submit" className="agendar-button" disabled={loading}>
+          {loading ? 'Agendando...' : 'Agendar'}
+        </button>
+ */}        
+        <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
       </form>
     </div>
-    
   );
 };
 
