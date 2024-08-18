@@ -137,20 +137,18 @@ const AgendamentoForm = () => {
   };
 
   return (
-    <div className="agendamento-container">
+    <div className="agendamento-container">      
       {message && <div className={`floating-message ${messageType}`}>{message}</div>}
       <form onSubmit={handleSubmit} className="agendamento-form">
-        <h1>Novo Agendamento</h1>
-        
-        <label>Cliente</label>
+      <div className="agendamento-form-header">
+      <label>Cliente</label>        
         <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
           <option value="">Selecione um cliente</option>
           {clientes.map(cliente => (
             <option key={cliente.id} value={cliente.id}>{cliente.nome}</option>
           ))}
         </select>
-
-        <label>Serviço</label>
+      <label>Serviço</label>
         <select name="servico_id" value={agendamento.servico_id} onChange={handleChange} required>
           <option value="">Selecione um serviço</option>
           {servicos.map(servico => (
@@ -158,6 +156,13 @@ const AgendamentoForm = () => {
           ))}
         </select>
 
+      <label>Dias de exibição</label>
+        <select value={diasExibicao} onChange={(e) => setDiasExibicao(Number(e.target.value))}>
+          <option value={7}>7 dias</option>
+          <option value={14}>14 dias</option>
+          <option value={21}>21 dias</option>
+          <option value={30}>30 dias</option>
+        </select>
         <label>Profissional</label>
         <select 
           name="profissional_id" 
@@ -166,20 +171,13 @@ const AgendamentoForm = () => {
           required
           disabled={!agendamento.servico_id}
         >
-        <option value="">Selecione um profissional</option>
-        {profissionais.map(profissional => (
-          <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
-        ))}
-      </select>
-
-        <label>Dias de exibição</label>
-        <select value={diasExibicao} onChange={(e) => setDiasExibicao(Number(e.target.value))}>
-          <option value={7}>7 dias</option>
-          <option value={14}>14 dias</option>
-          <option value={21}>21 dias</option>
-          <option value={30}>30 dias</option>
+          <option value="">Selecione um profissional</option>
+          {profissionais.map(profissional => (
+            <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
+          ))}
         </select>
-
+      </div>
+     
       <div className="disponibilidades-grid">
         {disponibilidades.map((disp, index) => (
           <div key={index} className="disponibilidade-item">
@@ -198,9 +196,10 @@ const AgendamentoForm = () => {
         ))}
       </div>
       
-        <button type="submit" className="agendar-button" disabled={loading}>
+{/*         <button type="submit" className="agendar-button" disabled={loading}>
           {loading ? 'Agendando...' : 'Agendar'}
         </button>
+ */}        
         <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
       </form>
     </div>

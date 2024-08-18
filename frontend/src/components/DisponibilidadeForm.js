@@ -124,13 +124,13 @@ const DisponibilidadeForm = () => {
         <label>Dia da Semana</label>
         <select name="dia_semana" value={disponibilidade.dia_semana} onChange={handleChange} required>
           <option value="">Selecione um dia</option>
-          <option value="0">Domingo</option>
           <option value="1">Segunda-feira</option>
           <option value="2">Terça-feira</option>
           <option value="3">Quarta-feira</option>
           <option value="4">Quinta-feira</option>
           <option value="5">Sexta-feira</option>
           <option value="6">Sábado</option>
+          <option value="7">Domingo</option>
         </select>
 
         <label>Hora de Início</label>
