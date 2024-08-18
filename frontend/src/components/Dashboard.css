@@ -1,63 +1,71 @@
 /* Estilo geral da página */
 .dashboard-container {
   font-family: Arial, sans-serif;
-  background-color: #F5F5F5; /* Cinza Claro */
-  color: #333; /* Texto em cinza escuro */
+  background-color: #F5F5F5;
+  color: #333;
   margin: 0;
-  padding: 0;
+  padding: 20px;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
 }
 
 /* Título do dashboard */
 .dashboard-container h1 {
-  color: #333; /* Texto em cinza escuro */
-  margin-top: 20px;
+  color: #333;
+  margin-bottom: 20px;
   font-size: 28px;
   text-align: center;
 }
 
 /* Navegação */
 nav {
-  margin: 20px;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 20px;
 }
 
 nav ul {
   list-style: none;
   padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
 }
 
 nav ul li {
-  margin: 10px 0;
+  flex: 1 1 calc(33.333% - 10px);
+  min-width: 200px;
+  max-width: 300px;
 }
 
 nav a {
   display: block;
-  background-color: #98FF98; /* Verde Menta */
-  color: #333; /* Texto em cinza escuro */
+  background-color: #98FF98;
+  color: #333;
   text-decoration: none;
-  padding: 10px;
+  padding: 15px 10px;
   border-radius: 4px;
-  width: 200px;
   text-align: center;
   font-size: 16px;
+  transition: background-color 0.3s ease;
 }
 
 nav a:hover {
-  background-color: #87E0A1; /* Verde Menta mais escuro */
+  background-color: #87E0A1;
 }
 
 /* Seção de conteúdo */
 .dashboard-content {
-  background-color: #FFFFFF; /* Branco */
+  background-color: #FFFFFF;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  max-width: 800px;
   width: 100%;
-  margin: 20px;
+  max-width: 800px;
+  margin-bottom: 20px;
 }
 
 .dashboard-content p {
@@ -71,10 +79,50 @@ nav a:hover {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  margin-top: 20px;
-  width: 100%;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
 }
 
 .logout-button:hover {
   background-color: #d32f2f;
+}
+
+/* Media queries para responsividade */
+@media (max-width: 768px) {
+  nav ul li {
+    flex: 1 1 calc(50% - 10px);
+  }
+
+  .dashboard-container {
+    padding: 10px;
+  }
+
+  .dashboard-container h1 {
+    font-size: 24px;
+  }
+
+  nav a {
+    font-size: 14px;
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  nav ul li {
+    flex: 1 1 100%;
+  }
+
+  .dashboard-container h1 {
+    font-size: 20px;
+  }
+
+  nav a {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .logout-button {
+    width: 100%;
+    max-width: 300px;
+  }
 }
