@@ -49,10 +49,11 @@ router.get('/disponibilidades/profissionalservico/:profissional_id', authMiddlew
 
   try {
     const [results] = await db.promise().query(
-      `SELECT d.*, p.nome as profissional_nome
+       `SELECT d.*, s.nome as servico_nome
        FROM disponibilidades d
        JOIN profissionais p ON d.profissional_id = p.id
        JOIN profissional_servicos ps ON p.id = ps.profissional_id
+	     JOIN servicos s ON ps.servico_id = s.id
        WHERE ps.profissional_id = ?`,
       [profissional_id]
     );

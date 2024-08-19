@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const DisponibilidadePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { disponibilidades, agendamento, servicos } = location.state;
+  const { disponibilidades, agendamento, profissionais } = location.state;
 
   const handleVoltar = () => {
     navigate(-1);
@@ -18,7 +18,7 @@ const DisponibilidadePage = () => {
         {disponibilidades.map((disp, index) => (
           <div key={index} className="disponibilidade-item">
             <p>{disp.data} ({disp.diaSemana})</p>            
-            <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
+            <p>{agendamento.profissional_id && profissionais.find(s => s.id === parseInt(agendamento.profissional_id))?.nome}</p>
             {disp.horarios.map((horario, idx) => (
               <button 
                 key={idx} 
@@ -27,7 +27,7 @@ const DisponibilidadePage = () => {
                   console.log(`Horário selecionado: ${disp.data} ${horario.inicio}`);
                 }}
               >
-                {`${horario.profissional_nome} - ${horario.inicio} - ${horario.fim}`}
+                {`${horario.servico_nome} - ${horario.inicio} - ${horario.fim}`}
               </button>
             ))}
           </div>
