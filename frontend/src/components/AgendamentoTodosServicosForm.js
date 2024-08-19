@@ -121,6 +121,7 @@ const AgendamentoForm = () => {
           diaSemana: diaSemana,          
           horarios: disponibilidadesDoDia.map(d => ({
             servico_nome: d.servico_nome,
+            servico_duracao: d.servico_duracao,
             inicio: d.hora_inicio,
             fim: d.hora_fim
           }))

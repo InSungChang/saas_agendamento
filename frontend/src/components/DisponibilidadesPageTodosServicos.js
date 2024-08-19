@@ -27,7 +27,7 @@ const DisponibilidadePage = () => {
                   console.log(`Horário selecionado: ${disp.data} ${horario.inicio}`);
                 }}
               >
-                {`${horario.servico_nome} - ${horario.inicio} - ${horario.fim}`}
+                {`${horario.servico_nome} - Duração: ${horario.servico_duracao} - ${horario.inicio} - ${horario.fim}`}
               </button>
             ))}
           </div>

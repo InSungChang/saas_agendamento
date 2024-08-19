@@ -19,6 +19,7 @@ const DisponibilidadePage = () => {
           <div key={index} className="disponibilidade-item">
             <p>{disp.data} ({disp.diaSemana})</p>            
             <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
+            <p>Duração: {agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.duracao} Minutos</p>
             {disp.horarios.map((horario, idx) => (
               <button 
                 key={idx} 
