@@ -23,6 +23,46 @@ router.get('/disponibilidades/profissional/:profissional_id', authMiddleware, as
   }
 });
 
+// Rota para filtrar por serviço de todos os profissionais
+router.get('/disponibilidades/servico/:servico_id', authMiddleware, async (req, res) => {
+  const { servico_id } = req.params;
+
+  try {
+    const [results] = await db.promise().query(
+      `SELECT d.*, p.nome as profissional_nome
+       FROM disponibilidades d
+       JOIN profissionais p ON d.profissional_id = p.id
+       JOIN profissional_servicos ps ON p.id = ps.profissional_id
+       WHERE ps.servico_id = ?`,
+      [servico_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar disponibilidades por serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar disponibilidades por serviço' });
+  }
+});
+
+// Rota para filtrar por profissional de todos os serviços
+router.get('/disponibilidades/profissionalservico/:profissional_id', authMiddleware, async (req, res) => {
+  const { profissional_id } = req.params;
+
+  try {
+    const [results] = await db.promise().query(
+      `SELECT d.*, p.nome as profissional_nome
+       FROM disponibilidades d
+       JOIN profissionais p ON d.profissional_id = p.id
+       JOIN profissional_servicos ps ON p.id = ps.profissional_id
+       WHERE ps.profissional_id = ?`,
+      [profissional_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar disponibilidades por profissional x serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar disponibilidades por profissional x serviço' });
+  }
+});
+
 /* router.get('/disponibilidades/profissional/:profissional_id', authMiddleware, disponibilidadeController.getDisponibilidadesByProfissional); */
 
 router.delete('/disponibilidades/:id', authMiddleware, disponibilidadeController.deleteDisponibilidade);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './AgendamentoForm.css';
+import './AgendamentoTodosProfissionaisForm.css';
 import { useNavigate } from 'react-router-dom';
 
 const AgendamentoForm = () => {
@@ -25,7 +25,7 @@ const AgendamentoForm = () => {
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   const handleExibirDisponibilidade = () => {
-    navigate('/disponibilidadesPage', { 
+    navigate('/disponibilidadesPageTodosProfissionais', { 
       state: { 
         disponibilidades, 
         agendamento, 
@@ -59,11 +59,9 @@ const AgendamentoForm = () => {
 
     if (name === 'servico_id') {
       carregarProfissionaisPorServico(value);
+      carregarDisponibilidades(value); // Chame esta função quando o serviço for selecionado
     }
 
-    if (name === 'profissional_id') {
-      carregarDisponibilidades(value);
-    }
   };
 
   const carregarProfissionaisPorServico = (servicoId) => {
@@ -73,12 +71,17 @@ const AgendamentoForm = () => {
       .catch(error => console.error('Erro ao carregar profissionais por serviço:', error));
   };
 
-  const carregarDisponibilidades = (profissionalId) => {
+  const carregarDisponibilidades = (servicoId) => {
     const token = localStorage.getItem('token');
-    /* const dataInicio = new Date().toISOString().split('T')[0];
-    const dataFim = new Date(Date.now() + diasExibicao * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; */
 
-    axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+    console.log(servicoId);
+
+    if (!servicoId) {
+      console.error('Serviço não selecionado');
+      return;
+    }
+
+    axios.get(`${API_BASE_URL}/disponibilidades/servico/${servicoId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(response => {
@@ -98,6 +101,8 @@ const AgendamentoForm = () => {
       return [];
     }
   
+    console.log('Dados recebidos para formatar:', disponibilidades);
+
     const hoje = new Date();
     const disponibilidadesFormatadas = [];
   
@@ -113,8 +118,9 @@ const AgendamentoForm = () => {
       if (disponibilidadesDoDia.length > 0) {
         disponibilidadesFormatadas.push({
           data: data.toISOString().split('T')[0],
-          diaSemana: diaSemana,
+          diaSemana: diaSemana,          
           horarios: disponibilidadesDoDia.map(d => ({
+            profissional_nome: d.profissional_nome,
             inicio: d.hora_inicio,
             fim: d.hora_fim
           }))
@@ -149,7 +155,7 @@ const AgendamentoForm = () => {
 
   return (
     <div className="agendamento-container">      
-      <h1>Agendamento - Por Serviço e Profissional</h1>
+      <h1>Agendamento - Filtro Por Serviço</h1>
       {message && <div className={`floating-message ${messageType}`}>{message}</div>}
       <form onSubmit={handleSubmit} className="agendamento-form">        
         <div className="agendamento-form-header">          
@@ -177,25 +183,11 @@ const AgendamentoForm = () => {
             <option value={30}>30 dias</option>
           </select>
 
-          <label>Profissional</label>
-          <select 
-            name="profissional_id" 
-            value={agendamento.profissional_id} 
-            onChange={handleChange} 
-            required
-            disabled={!agendamento.servico_id}
-          >
-          <option value="">Selecione um profissional</option>
-             {profissionais.map(profissional => (
-             <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
-             ))}
-          </select>
-
           <button 
             type="button" 
             onClick={handleExibirDisponibilidade} 
             className="exibir-disponibilidade-button"
-            disabled={!agendamento.profissional_id}
+            disabled={!agendamento.servico_id}
           >
             Exibir Disponibilidade
           </button>

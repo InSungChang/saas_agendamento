@@ -38,7 +38,9 @@ const Dashboard = () => {
           <li><Link to="/profissionais">Cadastro de Profissionais</Link></li>
           <li><Link to="/profissionaisServicos">Cadastro de Profissionais X Serviços</Link></li>
           <li><Link to="/disponibilidades">Cadastro de Disponibilidade dos Profissionais</Link></li>
-          <li><Link to="/agendamentos">AGENDAMENTO</Link></li>
+          <li><Link to="/agendamentos">Agendamento por Serviço e Profissional</Link></li>
+          <li><Link to="/agendamentoTodosProfissionais">Agendamento por Serviço (Todos Profissionais)</Link></li>
+          <li><Link to="/agendamentoTodosServicos">Agendamento por Profissional (Todos Serviços)</Link></li>
           {/* Adicione outros links de navegação aqui */}
         </ul>
       </nav>

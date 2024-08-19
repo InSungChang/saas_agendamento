@@ -1,0 +1,478 @@
+no código atual AgendamentoForm.js e DisponibilidadesPage.js, eu preciso escolher um serviço e um profissional para exibir disponibilidades, agora preciso exibir todos os profissionais, exemplo, escolher "todos os profissionais", mas só podem ser exibidos se estiverem esses profissionais na tabela profissional_servicos e na tabela disponibilidades. vou compartilhar os routes que já estão funcionando escolhendo um serviço e um profissional. e não pode deixar de considerar empresa_id nessas tabelas, pois só podem exibir disponibilidades somente a empresa_id do usuário ativo.
+
+servico.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const servicoController = require('../controllers/servicoController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/servicos', authMiddleware, servicoController.createServico);
+
+/* router.get('/servicos', authMiddleware, async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM servicos');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar serviços:', error);
+    res.status(500).json({ error: 'Erro ao buscar serviços' });
+  }
+}); */
+
+router.get('/servicos', authMiddleware, async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+      const [results] = await db.promise().query('SELECT * FROM servicos WHERE empresa_id = ?', [empresa_id]);
+      res.json(results);
+  } catch (error) {
+      console.error('Erro ao buscar servicos:', error);
+      res.status(500).json({ error: 'Erro ao buscar servicos' });
+  }
+});
+
+router.get('/servicos/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM servicos WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar serviço' });
+  }
+});
+
+router.get('/servicos/:empresa_id', async (req, res) => {
+  const empresa_id = req.params.empresa_id;
+  try {
+      const servicos = await db.query('SELECT * FROM servicos WHERE empresa_id = ?', [empresa_id]);
+      res.json(servicos);
+  } catch (error) {
+      res.status(500).send('Erro ao buscar serviços');
+  }
+});
+
+router.put('/servicos/:id', authMiddleware, servicoController.updateServico);
+
+router.delete('/servicos/:id', authMiddleware, servicoController.deleteServico);
+
+module.exports = router;
+
+profissional.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const profissionalController = require('../controllers/profissionalController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/profissionais', authMiddleware, profissionalController.createProfissional);
+
+/* router.get('/profissionais', authMiddleware, async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissionais');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar profissionais:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissionais' });
+  }
+}); */
+
+router.get('/profissionais', authMiddleware, async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+      const [results] = await db.promise().query('SELECT * FROM profissionais WHERE empresa_id = ?', [empresa_id]);
+      res.json(results);
+  } catch (error) {
+      console.error('Erro ao buscar profissionais:', error);
+      res.status(500).json({ error: 'Erro ao buscar profissionais' });
+  }
+});
+
+router.get('/profissionais/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissionais WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissional' });
+  }
+});
+
+// Rota para buscar profissionais por empresa
+router.get('/profissionais/:empresa_id', async (req, res) => {
+  const empresa_id = req.params.empresa_id;
+  try {
+      const profissionais = await db.query('SELECT * FROM profissionais WHERE empresa_id = ?', [empresa_id]);
+      res.json(profissionais);
+  } catch (error) {
+      res.status(500).send('Erro ao buscar profissionais');
+  }
+});
+
+router.get('/profissionais-por-servico/:servico_id', authMiddleware, async (req, res) => {
+  const { servico_id } = req.params;
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query(
+      'SELECT p.* FROM profissionais p ' +
+      'JOIN profissional_servicos ps ON p.id = ps.profissional_id ' +
+      'WHERE ps.servico_id = ? AND p.empresa_id = ?',
+      [servico_id, empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar profissionais por serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissionais por serviço' });
+  }
+});
+
+router.put('/profissionais/:id', authMiddleware, profissionalController.updateProfissional);
+
+router.delete('/profissionais/:id', authMiddleware, profissionalController.deleteProfissional);
+
+module.exports = router;
+
+disponibilidade.js:
+const express = require('express');
+const router = express.Router();
+const disponibilidadeController = require('../controllers/disponibilidadeController');
+const authMiddleware = require('../middleware/authMiddleware');
+
+const db = require('../config/db');
+
+router.post('/disponibilidades', authMiddleware, disponibilidadeController.createDisponibilidade);
+
+// Nova rota para buscar disponibilidades por profissional e intervalo de datas
+router.get('/disponibilidades/profissional/:profissional_id', authMiddleware, async (req, res) => {
+  const { profissional_id } = req.params;
+
+  try {
+    const [results] = await db.promise().query(
+      'SELECT * FROM disponibilidades WHERE profissional_id = ?',
+      [profissional_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar disponibilidades:', error);
+    res.status(500).json({ error: 'Erro ao buscar disponibilidades' });
+  }
+});
+
+/* router.get('/disponibilidades/profissional/:profissional_id', authMiddleware, disponibilidadeController.getDisponibilidadesByProfissional); */
+
+router.delete('/disponibilidades/:id', authMiddleware, disponibilidadeController.deleteDisponibilidade);
+
+module.exports = router;
+
+profissionalServico.js:
+const express = require('express');
+const router = express.Router();
+
+const profissionalServicoController = require('../controllers/profissionalServicoController');
+
+router.post('/profissional-servicos', profissionalServicoController.createProfissionalServico);
+
+router.get('/profissional-servicos', async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissional_servicos');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar associações profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar associações profissional-serviço' });
+  }
+});
+
+router.get('/profissional-servicos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissional_servicos WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar associação profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar associação profissional-serviço' });
+  }
+});
+
+router.put('/profissional-servicos/:id', profissionalServicoController.updateProfissionalServico);
+
+router.delete('/profissional-servicos/:id', profissionalServicoController.deleteProfissionalServico);
+
+module.exports = router;
+
+AgendamentoForm.js:
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './AgendamentoForm.css';
+import { useNavigate } from 'react-router-dom';
+
+const AgendamentoForm = () => {
+  const [clientes, setClientes] = useState([]);
+  const [servicos, setServicos] = useState([]);
+  const [profissionais, setProfissionais] = useState([]);
+  const [disponibilidades, setDisponibilidades] = useState([]);
+  const navigate = useNavigate();
+  const [agendamento, setAgendamento] = useState({
+    empresa_id: '', // Será preenchido automaticamente
+    cliente_id: '',
+    servico_id: '',
+    profissional_id: '',
+    data_horario_agendamento: ''
+  });
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [diasExibicao, setDiasExibicao] = useState(7);
+  /* const navigate = useNavigate(); */
+
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+  const handleExibirDisponibilidade = () => {
+    navigate('/disponibilidadesPage', { 
+      state: { 
+        disponibilidades, 
+        agendamento, 
+        profissionais, 
+        servicos 
+      } 
+    });
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Carregar clientes, serviços e profissionais
+      axios.get(`${API_BASE_URL}/clientes`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => setClientes(response.data))
+        .catch(error => console.error('Erro ao carregar clientes:', error));
+
+      axios.get(`${API_BASE_URL}/servicos`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => setServicos(response.data))
+        .catch(error => console.error('Erro ao carregar serviços:', error));
+
+      axios.get(`${API_BASE_URL}/profissionais`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => setProfissionais(response.data))
+        .catch(error => console.error('Erro ao carregar profissionais:', error));
+    }
+  }, [API_BASE_URL]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setAgendamento({ ...agendamento, [name]: value });
+
+    if (name === 'servico_id') {
+      carregarProfissionaisPorServico(value);
+    }
+
+    if (name === 'profissional_id') {
+      carregarDisponibilidades(value);
+    }
+  };
+
+  const carregarProfissionaisPorServico = (servicoId) => {
+    const token = localStorage.getItem('token');
+    axios.get(`${API_BASE_URL}/profissionais-por-servico/${servicoId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(response => setProfissionais(response.data))
+      .catch(error => console.error('Erro ao carregar profissionais por serviço:', error));
+  };
+
+  const carregarDisponibilidades = (profissionalId) => {
+    const token = localStorage.getItem('token');
+    /* const dataInicio = new Date().toISOString().split('T')[0];
+    const dataFim = new Date(Date.now() + diasExibicao * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; */
+
+    axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(response => {
+        console.log('Dados recebidos:', response.data);
+        const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao);
+        console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
+        setDisponibilidades(disponibilidadesFormatadas);
+      })
+      .catch(error => {
+        console.error('Erro ao carregar disponibilidades:', error);
+        setDisponibilidades([]);
+      });
+  };
+
+  const formatarDisponibilidades = (disponibilidades, dias) => {
+    if (!disponibilidades || disponibilidades.length === 0) {
+      return [];
+    }
+  
+    const hoje = new Date();
+    const disponibilidadesFormatadas = [];
+  
+    const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  
+    for (let i = 0; i < dias; i++) {
+      const data = new Date(hoje);
+      data.setDate(hoje.getDate() + i);
+      const diaSemana = diasSemana[data.getDay()];
+  
+      const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
+  
+      if (disponibilidadesDoDia.length > 0) {
+        disponibilidadesFormatadas.push({
+          data: data.toISOString().split('T')[0],
+          diaSemana: diaSemana,
+          horarios: disponibilidadesDoDia.map(d => ({
+            inicio: d.hora_inicio,
+            fim: d.hora_fim
+          }))
+        });
+      }
+    }
+  
+    return disponibilidadesFormatadas;
+  };
+
+  const handleCancel = () => {
+    navigate('/dashboard');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_BASE_URL}/agendamentos`, agendamento, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage('Agendamento realizado com sucesso!');
+      setMessageType('success');
+    } catch (err) {
+      setMessage('Erro ao realizar agendamento.');
+      setMessageType('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="agendamento-container">      
+      <h1>Filtro para agendamento</h1>
+      {message && <div className={`floating-message ${messageType}`}>{message}</div>}
+      <form onSubmit={handleSubmit} className="agendamento-form">        
+        <div className="agendamento-form-header">          
+          <label>Cliente</label>        
+          <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
+            <option value="">Selecione um cliente</option>
+            {clientes.map(cliente => (
+            <option key={cliente.id} value={cliente.id}>{cliente.nome}</option>
+            ))}
+          </select>
+
+          <label>Serviço</label>
+          <select name="servico_id" value={agendamento.servico_id} onChange={handleChange} required>
+            <option value="">Selecione um serviço</option>
+            {servicos.map(servico => (
+              <option key={servico.id} value={servico.id}>{servico.nome}</option>
+            ))}
+          </select>
+
+          <label>Dias de exibição</label>
+          <select value={diasExibicao} onChange={(e) => setDiasExibicao(Number(e.target.value))}>
+            <option value={7}>7 dias</option>
+            <option value={14}>14 dias</option>
+            <option value={21}>21 dias</option>
+            <option value={30}>30 dias</option>
+          </select>
+
+          <label>Profissional</label>
+          <select 
+            name="profissional_id" 
+            value={agendamento.profissional_id} 
+            onChange={handleChange} 
+            required
+            disabled={!agendamento.servico_id}
+          >
+          <option value="">Selecione um profissional</option>
+             {profissionais.map(profissional => (
+             <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
+             ))}
+          </select>
+
+          <button 
+            type="button" 
+            onClick={handleExibirDisponibilidade} 
+            className="exibir-disponibilidade-button"
+            disabled={!agendamento.profissional_id}
+          >
+            Exibir Disponibilidade
+          </button>
+
+          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+
+        </div>
+  
+      </form>
+    </div>
+    
+  );
+};
+
+export default AgendamentoForm;
+
+DisponibilidadesPage.js:
+// DisponibilidadePage.js
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+const DisponibilidadePage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { disponibilidades, agendamento, profissionais, servicos } = location.state;
+
+  const handleVoltar = () => {
+    navigate(-1);
+  };
+
+  return (
+    <div className="disponibilidade-container">
+      <h2>Disponibilidades</h2>
+      <div className="disponibilidades-grid">
+        {disponibilidades.map((disp, index) => (
+          <div key={index} className="disponibilidade-item">
+            <p>{disp.data} ({disp.diaSemana})</p>
+            <p>{agendamento.profissional_id && profissionais.find(p => p.id === parseInt(agendamento.profissional_id))?.nome}</p>
+            <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
+            {disp.horarios.map((horario, idx) => (
+              <button 
+                key={idx} 
+                onClick={() => {
+                  // Aqui você pode implementar a lógica para selecionar o horário
+                  console.log(`Horário selecionado: ${disp.data} ${horario.inicio}`);
+                }}
+              >
+                {`${horario.inicio} - ${horario.fim}`}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+      <button onClick={handleVoltar} className="voltar-button">Voltar</button>
+    </div>
+  );
+};
+
+export default DisponibilidadePage;
+

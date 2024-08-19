@@ -16,6 +16,11 @@ import ProfissionalServicoForm from './components/ProfissionalServicoForm';
 import DisponibilidadeForm from './components/DisponibilidadeForm';
 import AgendamentoForm from './components/AgendamentoForm';
 import DisponibilidadesPage from './components/DisponibilidadesPage';
+import AgendamentoTodosProfissionaisForm from './components/AgendamentoTodosProfissionaisForm';
+import DisponibilidadesPageTodosProfissionais from './components/DisponibilidadesPageTodosProfissionais';
+import AgendamentoTodosServiosForm from './components/AgendamentoTodosServicosForm';
+import DisponibilidadesPageTodosServicos from './components/DisponibilidadesPageTodosServicos';
+
 
 const App = () => {
   const [token, setToken] = React.useState(null);
@@ -42,6 +47,10 @@ const App = () => {
           <Route path="/disponibilidades" element={<DisponibilidadeForm />} />
           <Route path="/agendamentos" element={<AgendamentoForm />} />
           <Route path="/disponibilidadesPage" element={<DisponibilidadesPage />} />
+          <Route path="/agendamentoTodosProfissionais" element={<AgendamentoTodosProfissionaisForm />} />
+          <Route path="/disponibilidadesPageTodosProfissionais" element={<DisponibilidadesPageTodosProfissionais />} />
+          <Route path="/agendamentoTodosServicos" element={<AgendamentoTodosServiosForm />} />
+          <Route path="/disponibilidadesPageTodosServicos" element={<DisponibilidadesPageTodosServicos />} />
           <Route path="/" element={<Dashboard />} />
         </Routes>
       ) : (

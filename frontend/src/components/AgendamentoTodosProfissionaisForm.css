@@ -7,6 +7,14 @@
   margin: 0 auto;
 }
 
+.agendamento-container h1 {
+  color: #333;
+  /* Texto em cinza escuro */
+  margin-top: 20px;
+  font-size: 28px;
+  text-align: center;
+}
+
 /* Estilizando o formulário */
 .agendamento-form {
   background-color: #f9f9f9;
@@ -30,7 +38,10 @@
   gap: 10px;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 100px;
+}
+
+.agendamento-form-header > * {
+  flex: 1 1 200px; /* Isso faz com que cada item (incluindo o botão) tenha uma largura base de 200px, mas possa crescer ou encolher conforme necessário */
 }
 
 /* Label e select */
@@ -144,20 +155,40 @@
   background-color: #f44336;
 }
 
-@media (min-width: 576px) {
-  .agendamento-form-header {
-    position: sticky;
-    top: 0;
-    background-color: #ffffff;
-    z-index: 100;
-    padding: 15px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: row;
-    gap: 10px;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 300px;    
-  }
+/* Adicione estes estilos ao final do seu arquivo AgendamentoForm.css */
+
+.exibir-disponibilidade-button {
+  width: 100%;
+  padding: 10px 20px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px; /* Adiciona um espaço acima do botão */
+  box-sizing: border-box; /* Garante que o padding não aumente a largura total */
+}
+
+.exibir-disponibilidade-button:hover {
+  background-color: #45a049;
+}
+
+.disponibilidade-container {
+  margin-top: 20px;
+}
+
+.voltar-button {
+  padding: 10px 20px;
+  margin-top: 20px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.voltar-button:hover {
+  background-color: #0b7dda;
 }
