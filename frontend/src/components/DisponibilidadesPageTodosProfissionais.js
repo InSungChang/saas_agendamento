@@ -24,11 +24,10 @@ const DisponibilidadePage = () => {
               <button 
                 key={idx} 
                 onClick={() => {
-                  // Aqui você pode implementar a lógica para selecionar o horário
-                  console.log(`Horário selecionado: ${disp.data} ${horario.inicio}`);
+                  console.log(`Horário selecionado: ${disp.data} ${horario.horario}`);
                 }}
               >
-                {`${horario.profissional_nome} - ${horario.inicio} - ${horario.fim}`}
+                {`${horario.profissional_nome} - ${horario.horario}`}
               </button>
             ))}
           </div>

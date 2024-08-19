@@ -73,36 +73,45 @@ const AgendamentoForm = () => {
 
   const carregarDisponibilidades = (servicoId) => {
     const token = localStorage.getItem('token');
-
+  
     console.log(servicoId);
-
+  
     if (!servicoId) {
       console.error('Serviço não selecionado');
       return;
     }
-
-    axios.get(`${API_BASE_URL}/disponibilidades/servico/${servicoId}`, {
+  
+    // Primeiro, buscar a duração do serviço
+    axios.get(`${API_BASE_URL}/servicos/${servicoId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(response => {
-        console.log('Dados recebidos:', response.data);
-        const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao);
-        console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
-        setDisponibilidades(disponibilidadesFormatadas);
+      .then(servicoResponse => {
+        const servicoDuracao = servicoResponse.data.duracao;
+  
+        // Agora, buscar as disponibilidades
+        return axios.get(`${API_BASE_URL}/disponibilidades/servico/${servicoId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(response => {
+            console.log('Dados recebidos:', response.data);
+            const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao, servicoDuracao);
+            console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
+            setDisponibilidades(disponibilidadesFormatadas);
+          });
       })
       .catch(error => {
         console.error('Erro ao carregar disponibilidades:', error);
         setDisponibilidades([]);
       });
   };
-
-  const formatarDisponibilidades = (disponibilidades, dias) => {
+  
+  const formatarDisponibilidades = (disponibilidades, dias, servicoDuracao) => {
     if (!disponibilidades || disponibilidades.length === 0) {
       return [];
     }
   
     console.log('Dados recebidos para formatar:', disponibilidades);
-
+  
     const hoje = new Date();
     const disponibilidadesFormatadas = [];
   
@@ -116,14 +125,31 @@ const AgendamentoForm = () => {
       const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
   
       if (disponibilidadesDoDia.length > 0) {
+        const horariosDisponiveis = [];
+  
+        disponibilidadesDoDia.forEach(d => {
+          const [horaInicio, minutoInicio] = d.hora_inicio.split(':').map(Number);
+          const [horaFim, minutoFim] = d.hora_fim.split(':').map(Number);
+  
+          let horarioAtual = new Date(data);
+          horarioAtual.setHours(horaInicio, minutoInicio, 0);
+  
+          const horarioFim = new Date(data);
+          horarioFim.setHours(horaFim, minutoFim, 0);
+  
+          while (horarioAtual.getTime() + servicoDuracao * 60000 <= horarioFim.getTime()) {
+            horariosDisponiveis.push({
+              profissional_nome: d.profissional_nome,
+              horario: horarioAtual.toTimeString().slice(0, 5)
+            });
+            horarioAtual = new Date(horarioAtual.getTime() + servicoDuracao * 60000);
+          }
+        });
+  
         disponibilidadesFormatadas.push({
           data: data.toISOString().split('T')[0],
-          diaSemana: diaSemana,          
-          horarios: disponibilidadesDoDia.map(d => ({
-            profissional_nome: d.profissional_nome,
-            inicio: d.hora_inicio,
-            fim: d.hora_fim
-          }))
+          diaSemana: diaSemana,
+          horarios: horariosDisponiveis
         });
       }
     }

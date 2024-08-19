@@ -11,6 +11,11 @@ const DisponibilidadePage = () => {
     navigate(-1);
   };
 
+  const handleSelecionarHorario = (data, horario) => {
+    console.log(`Horário selecionado: ${data} ${horario.inicio} - ${horario.fim}`);
+    // Aqui você pode implementar a lógica para selecionar o horário
+  };
+
   return (
     <div className="disponibilidade-container">
       <h2>Disponibilidades</h2>
@@ -24,10 +29,7 @@ const DisponibilidadePage = () => {
             {disp.horarios.map((horario, idx) => (
               <button 
                 key={idx} 
-                onClick={() => {
-                  // Aqui você pode implementar a lógica para selecionar o horário
-                  console.log(`Horário selecionado: ${disp.data} ${horario.inicio}`);
-                }}
+                onClick={() => handleSelecionarHorario(disp.data, horario)}
               >
                 {`${horario.inicio} - ${horario.fim}`}
               </button>

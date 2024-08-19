@@ -100,8 +100,6 @@ const AgendamentoForm = () => {
     if (!disponibilidades || disponibilidades.length === 0) {
       return [];
     }
-  
-    console.log('Dados recebidos para formatar:', disponibilidades);
 
     const hoje = new Date();
     const disponibilidadesFormatadas = [];
@@ -115,7 +113,7 @@ const AgendamentoForm = () => {
   
       const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
   
-      if (disponibilidadesDoDia.length > 0) {
+      /* if (disponibilidadesDoDia.length > 0) {
         disponibilidadesFormatadas.push({
           data: data.toISOString().split('T')[0],
           diaSemana: diaSemana,          
@@ -126,7 +124,38 @@ const AgendamentoForm = () => {
             fim: d.hora_fim
           }))
         });
-      }
+      } */
+
+        if (disponibilidadesDoDia.length > 0) {
+            const horariosPorServico = disponibilidadesDoDia.flatMap(d => {
+            const horariosDisponiveis = [];
+            const inicio = new Date(`2000-01-01T${d.hora_inicio}`);
+            const fim = new Date(`2000-01-01T${d.hora_fim}`);
+            const duracaoServico = d.servico_duracao;
+    
+            while (inicio < fim) {
+              const horarioFim = new Date(inicio.getTime() + duracaoServico * 60000);
+              if (horarioFim <= fim) {
+                horariosDisponiveis.push({
+                  servico_nome: d.servico_nome,
+                  servico_duracao: d.servico_duracao,
+                  inicio: inicio.toTimeString().slice(0, 5),
+                  fim: horarioFim.toTimeString().slice(0, 5)
+                });
+              }
+              inicio.setTime(inicio.getTime() + duracaoServico * 60000);
+            }
+    
+            return horariosDisponiveis;
+          });
+    
+          disponibilidadesFormatadas.push({
+            data: data.toISOString().split('T')[0],
+            diaSemana: diaSemana,
+            horarios: horariosPorServico
+          });
+        }    
+      
     }
   
     return disponibilidadesFormatadas;

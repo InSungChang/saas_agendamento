@@ -73,11 +73,9 @@ const AgendamentoForm = () => {
       .catch(error => console.error('Erro ao carregar profissionais por serviço:', error));
   };
 
-  const carregarDisponibilidades = (profissionalId) => {
+  /* const carregarDisponibilidades = (profissionalId) => {
     const token = localStorage.getItem('token');
-    /* const dataInicio = new Date().toISOString().split('T')[0];
-    const dataFim = new Date(Date.now() + diasExibicao * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; */
-
+  
     axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
@@ -91,9 +89,9 @@ const AgendamentoForm = () => {
         console.error('Erro ao carregar disponibilidades:', error);
         setDisponibilidades([]);
       });
-  };
+  }; */
 
-  const formatarDisponibilidades = (disponibilidades, dias) => {
+/*   const formatarDisponibilidades = (disponibilidades, dias) => {
     if (!disponibilidades || disponibilidades.length === 0) {
       return [];
     }
@@ -123,6 +121,74 @@ const AgendamentoForm = () => {
     }
   
     return disponibilidadesFormatadas;
+  }; */
+
+  const carregarDisponibilidades = (profissionalId) => {
+    const token = localStorage.getItem('token');
+    const servicoDuracao = servicos.find(s => s.id === parseInt(agendamento.servico_id))?.duracao;
+  
+    axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(response => {
+        console.log('Dados recebidos:', response.data);
+        const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao, servicoDuracao);
+        console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
+        setDisponibilidades(disponibilidadesFormatadas);
+      })
+      .catch(error => {
+        console.error('Erro ao carregar disponibilidades:', error);
+        setDisponibilidades([]);
+      });
+  };
+
+  const formatarDisponibilidades = (disponibilidades, dias, servicoDuracao) => {
+    if (!disponibilidades || disponibilidades.length === 0) {
+      return [];
+    }
+  
+    const hoje = new Date();
+    const disponibilidadesFormatadas = [];
+    const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  
+    for (let i = 0; i < dias; i++) {
+      const data = new Date(hoje);
+      data.setDate(hoje.getDate() + i);
+      const diaSemana = diasSemana[data.getDay()];
+  
+      const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
+  
+      if (disponibilidadesDoDia.length > 0) {
+        const horariosDistribuidos = distribuirHorarios(disponibilidadesDoDia[0], servicoDuracao);
+        
+        disponibilidadesFormatadas.push({
+          data: data.toISOString().split('T')[0],
+          diaSemana: diaSemana,
+          horarios: horariosDistribuidos
+        });
+      }
+    }
+  
+    return disponibilidadesFormatadas;
+  };
+  
+  const distribuirHorarios = (disponibilidade, servicoDuracao) => {
+    const horarios = [];
+    const inicio = new Date(`2000-01-01T${disponibilidade.hora_inicio}`);
+    const fim = new Date(`2000-01-01T${disponibilidade.hora_fim}`);
+  
+    while (inicio < fim) {
+      const horarioFim = new Date(inicio.getTime() + servicoDuracao * 60000);
+      if (horarioFim <= fim) {
+        horarios.push({
+          inicio: inicio.toTimeString().slice(0, 5),
+          fim: horarioFim.toTimeString().slice(0, 5)
+        });
+      }
+      inicio.setTime(inicio.getTime() + servicoDuracao * 60000);
+    }
+  
+    return horarios;
   };
 
   const handleCancel = () => {
