@@ -149,6 +149,9 @@ const AgendamentoForm = () => {
             return horariosDisponiveis;
           });
     
+          // Ordenar os horários
+          horariosPorServico.sort((a, b) => a.inicio.localeCompare(b.inicio));
+
           disponibilidadesFormatadas.push({
             data: data.toISOString().split('T')[0],
             diaSemana: diaSemana,

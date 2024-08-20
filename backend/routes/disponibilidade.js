@@ -33,7 +33,8 @@ router.get('/disponibilidades/servico/:servico_id', authMiddleware, async (req, 
        FROM disponibilidades d
        JOIN profissionais p ON d.profissional_id = p.id
        JOIN profissional_servicos ps ON p.id = ps.profissional_id
-       WHERE ps.servico_id = ?`,
+       WHERE ps.servico_id = ?
+       ORDER BY d.hora_inicio`,
       [servico_id]
     );
     res.json(results);
@@ -54,7 +55,8 @@ router.get('/disponibilidades/profissionalservico/:profissional_id', authMiddlew
        JOIN profissionais p ON d.profissional_id = p.id
        JOIN profissional_servicos ps ON p.id = ps.profissional_id
 	     JOIN servicos s ON ps.servico_id = s.id
-       WHERE ps.profissional_id = ?`,
+       WHERE ps.profissional_id = ?
+       ORDER BY d.hora_inicio`,
       [profissional_id]
     );
     res.json(results);

@@ -138,14 +138,19 @@ const AgendamentoForm = () => {
           horarioFim.setHours(horaFim, minutoFim, 0);
   
           while (horarioAtual.getTime() + servicoDuracao * 60000 <= horarioFim.getTime()) {
+            const horarioFim = new Date(horarioAtual.getTime() + servicoDuracao * 60000);
             horariosDisponiveis.push({
               profissional_nome: d.profissional_nome,
-              horario: horarioAtual.toTimeString().slice(0, 5)
+              horario: horarioAtual.toTimeString().slice(0, 5),
+              fim: horarioFim.toTimeString().slice(0, 5)
             });
             horarioAtual = new Date(horarioAtual.getTime() + servicoDuracao * 60000);
           }
         });
   
+        // Ordenar os horários disponíveis
+        horariosDisponiveis.sort((a, b) => a.horario.localeCompare(b.horario));
+
         disponibilidadesFormatadas.push({
           data: data.toISOString().split('T')[0],
           diaSemana: diaSemana,
