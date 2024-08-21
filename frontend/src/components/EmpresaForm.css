@@ -73,16 +73,6 @@
   transform: scale(1.05);
 }
 
-.cadastro-empresas-container .criar-button:active {
-  transform: scale(0.95);
-  background-color: #2a144f;
-}
-
-.cadastro-empresas-container .criar-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
 /* Botão de sair */
 .cadastro-empresas-container .sair-button {
   background-color: #7965a6;
@@ -102,11 +92,6 @@
 .cadastro-empresas-container .sair-button:hover {
   background-color: #512da8;
   transform: scale(1.05);
-}
-
-.cadastro-empresas-container .sair-button:active {
-  transform: scale(0.95);
-  background-color: #a92322;
 }
 
 /* Mensagens de feedback */

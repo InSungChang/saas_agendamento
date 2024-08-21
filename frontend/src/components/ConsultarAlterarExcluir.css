@@ -1,21 +1,23 @@
 /* Estilo geral da página */
 .alterar-container {
   font-family: Arial, sans-serif;
-  background-color: #FDF0F6; /* Rosa Claro */
+  background-color: #F5F5F5; /* Rosa Claro */
   color: #333; /* Texto em cinza escuro */
   margin: 0;
-  padding: 20px;
+  padding: 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
   box-sizing: border-box;
+  margin-top: 60px;
 }
 
 /* Título do formulário */
 .alterar-container h1 {
-  color: #c71585; /* Cor-de-rosa intenso */
-  margin-top: 20px;
+  color: #512da8; /* Cor-de-rosa intenso */
+  margin-top: 0px;
+  padding-top: 30px;
   font-size: 1.75rem;
   text-align: center;
 }
@@ -79,8 +81,8 @@
 }
 
 /* Botão de envio */
-.alterar-form .atualizar-button {
-  background-color: #c71585; /* Cor-de-rosa intenso */
+.alterar-container .atualizar-button {
+  background-color: #7965a6; /* Cor-de-rosa intenso */
   color: #fff;
   border: none;
   padding: 12px;
@@ -92,21 +94,22 @@
   margin-top: 10px;
   transition: background-color 0.3s ease, transform 0.2s ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 10px;
 }
 
-.alterar-form .atualizar-button:hover {
-  background-color: #a7116d;
+.alterar-container .atualizar-button:hover {
+  background-color: #512da8;
   transform: scale(1.05);
 }
 
-.alterar-form .atualizar-button:active {
+.alterar-container .atualizar-button:active {
   transform: scale(0.95);
-  background-color: #811354;
+  background-color: #512da8;
 }
 
 /* Botão cancelar */
-.alterar-form .cancel-button {
-  background-color: #ff6f61; /* Laranja suave */
+.alterar-container .cancel-button {
+  background-color: #7965a6; /* Laranja suave */
   color: #fff;
   padding: 12px;
   border: none;
@@ -120,18 +123,18 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.alterar-form .cancel-button:hover {
-  background-color: #e05d51;
+.alterar-container .cancel-button:hover {
+  background-color: #512da8;
   transform: scale(1.05);
 }
 
-.alterar-form .cancel-button:active {
+.alterar-container .cancel-button:active {
   transform: scale(0.95);
-  background-color: #b34b42;
+  background-color: #512da8;
 }
 
 /* Botão excluir */
-.alterar-form .delete-button {
+.alterar-container .delete-button {
   background-color: #ffc1e3; /* Rosa claro */
   color: #ff0000; /* Vermelho */
   padding: 12px;
@@ -146,12 +149,12 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.alterar-form .delete-button:hover {
+.alterar-container .delete-button:hover {
   background-color: #ffb3d6;
   transform: scale(1.05);
 }
 
-.alterar-form .delete-button:active {
+.alterar-container .delete-button:active {
   transform: scale(0.95);
   background-color: #e6a3c7;
 }

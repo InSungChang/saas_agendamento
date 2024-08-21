@@ -238,7 +238,7 @@ const AlterarClienteForm = () => {
         </div>
         <button type="submit" className="atualizar-button">Atualizar Cliente</button>
         <button type="button" className="delete-button" onClick={handleDelete}>Excluir Cliente</button>
-        <button type="button" className="cancel-button" onClick={handleCancel}>Cancelar</button>
+        <button type="button" className="cancel-button" onClick={handleCancel}>Sair</button>
         {message && <p>{message}</p>}
       </div>
     </form>
