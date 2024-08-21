@@ -1,84 +1,112 @@
-/* Estilo geral da página */
+/* Geral */
 .cadastro-empresas-container {
   font-family: Arial, sans-serif;
   background-color: #F5F5F5;
-  /* Cinza Claro */
   color: #333;
-  /* Texto em cinza escuro */
   margin: 0;
-  padding: 0;
+  padding: 20px;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
+  box-sizing: border-box;
 }
 
 /* Título do formulário */
 .cadastro-empresas-container h1 {
-  color: #333;
-  /* Texto em cinza escuro */
+  color: #512da8;
   margin-top: 20px;
-  font-size: 28px;
+  font-size: 1.75rem;
   text-align: center;
 }
 
 /* Formulário de cadastro */
 .cadastro-form {
   background-color: #FFFFFF;
-  /* Branco */
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
   max-width: 600px;
   width: 100%;
-  margin: 20px;
+  margin: 20px 0;
+  box-sizing: border-box;
 }
 
 /* Estilo dos campos de entrada */
+.cadastro-form label {
+  display: block;
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 5px;
+}
+
 .cadastro-form input[type="text"],
 .cadastro-form input[type="email"],
 .cadastro-form input[type="tel"] {
   width: 100%;
-  padding: 10px;
-  margin: 10px 0;
+  padding: 12px;
+  margin-bottom: 20px;
   border: 1px solid #D3D3D3;
-  /* Cinza Escuro */
   border-radius: 4px;
   box-sizing: border-box;
+  font-size: 0.875rem;
 }
 
 /* Botão de envio */
-.cadastro-form button {
-  background-color: #98FF98;
-  /* Verde Menta */
-  color: #333;
-  /* Texto em cinza escuro */
+.cadastro-empresas-container .criar-button {
+  background-color: #7965a6;
+  color: #fff;
   border: none;
-  padding: 10px;
+  padding: 12px;
   border-radius: 4px;
   cursor: pointer;
   width: 100%;
-  font-size: 16px;
+  font-size: 1rem;
+  font-weight: bold;
   margin-top: 10px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.cadastro-form button:hover {
-  background-color: #87E0A1;
-  /* Verde Menta mais escuro */
+.cadastro-empresas-container .criar-button:hover {
+  background-color: #512da8;
+  transform: scale(1.05);
 }
 
-.sair-button {
-  background-color: #f44336;
-  color: white;
-  padding: 10px 20px;
+.cadastro-empresas-container .criar-button:active {
+  transform: scale(0.95);
+  background-color: #2a144f;
+}
+
+.cadastro-empresas-container .criar-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Botão de sair */
+.cadastro-empresas-container .sair-button {
+  background-color: #7965a6;
+  color: #fff;
+  padding: 12px;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
-  margin-top: 20px;
+  width: 100%;
+  font-size: 1rem;
+  font-weight: bold;
+  margin-top: 10px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.sair-button:hover {
-  background-color: #d32f2f;
+.cadastro-empresas-container .sair-button:hover {
+  background-color: #512da8;
+  transform: scale(1.05);
+}
+
+.cadastro-empresas-container .sair-button:active {
+  transform: scale(0.95);
+  background-color: #a92322;
 }
 
 /* Mensagens de feedback */
@@ -87,6 +115,7 @@
   padding: 10px;
   border-radius: 4px;
   text-align: center;
+  font-size: 1rem;
 }
 
 .message.success {
@@ -137,8 +166,51 @@
   }
 }
 
-/* Botão desativado */
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+/* Media queries para responsividade */
+@media (max-width: 768px) {
+  .cadastro-empresas-container h1 {
+    font-size: 1.5rem;
+  }
+
+  .cadastro-form {
+    padding: 15px;
+    margin: 10px 0;
+  }
+
+  .cadastro-form input[type="text"],
+  .cadastro-form input[type="email"],
+  .cadastro-form input[type="tel"] {
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+
+  .criar-button,
+  .sair-button {
+    padding: 10px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cadastro-empresas-container h1 {
+    font-size: 1.25rem;
+  }
+
+  .cadastro-form {
+    padding: 10px;
+    margin: 5px 0;
+  }
+
+  .cadastro-form input[type="text"],
+  .cadastro-form input[type="email"],
+  .cadastro-form input[type="tel"] {
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+
+  .criar-button,
+  .sair-button {
+    padding: 8px;
+    font-size: 0.75rem;
+  }
 }

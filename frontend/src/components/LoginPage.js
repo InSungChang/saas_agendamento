@@ -39,7 +39,7 @@ const LoginPage = ({ onLogin }) => {
     return (
         <div className={`container ${isRegistering ? 'active' : ''}`} id="container">
             <div className="form-container sign-up">
-                <form>
+                <form className='form-acesso'>
                     <h1>Solicitar Acesso</h1>
                     <span>Via e-mail: changcriativo@gmail.com</span>
                     <span>WhatsApp: 41 99916-6567</span>
@@ -65,7 +65,7 @@ const LoginPage = ({ onLogin }) => {
                     <div className="toggle-panel toggle-left">
                         <h1>Bem vindo de volta!</h1>
                         <p>Insira seus dados pessoais para usar todos os recursos do site</p>
-                        <button className="hidden" onClick={toggleForm}>Para Logar</button>
+                        <button className="hidden" onClick={toggleForm}>Para Entrar</button>
                     </div>
                     <div className="toggle-panel toggle-right">
                         <h1>Olá,</h1>

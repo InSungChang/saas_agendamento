@@ -46,7 +46,7 @@
     box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
   }
   
-  .criar-button {
+  /* .criar-button {
     background-color: #007bff;
     color: #fff;
     border: none;
@@ -59,7 +59,7 @@
   
   .criar-button:hover {
     background-color: #0056b3;
-  }
+  } */
   
   .sair-button {
     background-color: #f44336;

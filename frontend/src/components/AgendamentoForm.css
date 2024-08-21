@@ -107,8 +107,7 @@
 }
 
 /* Estilizando os botões de agendamento e sair */
-.agendar-button,
-.sair-button {
+.agendar-button {
   padding: 10px 20px;
   margin-top: 20px;
   margin-right: 10px;
@@ -127,7 +126,7 @@
   background-color: #90caf9;
 }
 
-.sair-button {
+/* .sair-button {
   background-color: #d32f2f;
   color: white;
 }
@@ -135,6 +134,7 @@
 .sair-button:disabled {
   background-color: #ef9a9a;
 }
+ */
 
 /* Mensagem de sucesso ou erro */
 .floating-message {
