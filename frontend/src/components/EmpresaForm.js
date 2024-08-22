@@ -83,30 +83,30 @@ const EmpresaForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="empresa-form">
-      {message && (
-        <div className={`floating-message ${messageType}`}>
-          {message}
+    <div className="cadastro-empresas-container">
+      <h1>Cadastro das Empresas</h1>
+      <form onSubmit={handleSubmit} className="cadastro-form">
+        {message && (
+          <div className={`floating-message ${messageType}`}>
+            {message}
+          </div>
+        )}
+        <label>Nome</label>
+        <input type="text" name="nome" value={empresa.nome} onChange={handleChange} placeholder="Digite o nome da empresa" required />
+        <label>Email</label>
+        <input type="email" name="email" value={empresa.email} onChange={handleChange} placeholder="Digite o email" required />
+        <label>Telefone</label>
+        <input type="text" name="telefone" value={empresa.telefone} onChange={handleChange} placeholder="Digite o telefone"/>
+        <label>Endereço</label>
+        <input type="text" name="endereco" value={empresa.endereco} onChange={handleChange} placeholder="Digite o endereço"/>
+        <div className="button-container">
+          <button className="criar-button" type="submit" disabled={loading}>{loading ? 'Carregando...' : 'Criar Empresa'}</button>
+          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
         </div>
-      )}
-      <div className="cadastro-empresas-container">
-        <h1>Cadastro das Empresas</h1>
-        <div className="cadastro-form">
-            <label>Nome</label>
-            <input type="text" name="nome" value={empresa.nome} onChange={handleChange} placeholder="Digite o nome da empresa" required />
-            <label>Email</label>
-            <input type="email" name="email" value={empresa.email} onChange={handleChange} placeholder="Digite o email" required />
-            <label>Telefone</label>
-            <input type="text" name="telefone" value={empresa.telefone} onChange={handleChange} placeholder="Digite o telefone"/>
-            <label>Endereço</label>
-            <input type="text" name="endereco" value={empresa.endereco} onChange={handleChange} placeholder="Digite o endereço"/>
-        </div>
-        <button className="criar-button" type="submit" disabled={loading}>{loading ? 'Carregando...' : 'Criar Empresa'}</button>
-        <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
-        {message && <p className="message success">{message}</p>} {/* Exibe mensagem de sucesso */}
-        {error && <p className="message error">{error}</p>} {/* Exibe mensagem de erro */}
-      </div>
-    </form>
+      </form>
+      {message && <p className={`message ${messageType}`}>{message}</p>}
+      {error && <p className="message error">{error}</p>}
+    </div>
   );
 };
 

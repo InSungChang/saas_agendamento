@@ -27,8 +27,6 @@ const ProfissionalServicoForm = () => {
       axios.get(`${API_BASE_URL}/servicos`, { headers: { Authorization: `Bearer ${token}` } })
     ])
       .then(([profissionaisResponse, servicosResponse]) => {
-        console.log(profissionaisResponse.data);
-        console.log(servicosResponse.data);
         setProfissionais(profissionaisResponse.data);
         setServicos(servicosResponse.data);
       })
@@ -38,7 +36,7 @@ const ProfissionalServicoForm = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [API_BASE_URL]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,10 +51,9 @@ const ProfissionalServicoForm = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_BASE_URL}/profissional-servicos`, profissionalServico, {
-          headers: { Authorization: `Bearer ${token}` }
+      await axios.post(`${API_BASE_URL}/profissional-servicos`, profissionalServico, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      console.log(response.data);
       setMessage('Associação profissional-serviço criada com sucesso!');
       setMessageType('success');
       setTimeout(() => {
@@ -77,40 +74,40 @@ const ProfissionalServicoForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="profissional-servico-form">
-      {message && (
-        <div className={`floating-message ${messageType}`}>
-          {message}
+    <div className="cadastro-profissional-servico-container">
+      <h1>Associar Profissional a Serviço</h1>
+      <form onSubmit={handleSubmit} className="cadastro-form">
+        {message && (
+          <div className={`floating-message ${messageType}`}>
+            {message}
+          </div>
+        )}
+        <label>Profissional</label>
+        <select name="profissional_id" value={profissionalServico.profissional_id} onChange={handleChange} required>
+          <option value="">Selecione um profissional</option>
+          {profissionais.map(profissional => (
+            <option key={profissional.id} value={profissional.id}>
+              {profissional.nome}
+            </option>
+          ))}
+        </select>
+        <label>Serviço</label>
+        <select name="servico_id" value={profissionalServico.servico_id} onChange={handleChange} required>
+          <option value="">Selecione um serviço</option>
+          {servicos.map(servico => (
+            <option key={servico.id} value={servico.id}>
+              {servico.nome}
+            </option>
+          ))}
+        </select>
+        <div className="button-container">
+          <button className="criar-button" disabled={loading}>{loading ? 'Carregando...' : 'Criar Associação'}</button>
+          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
         </div>
-      )}
-      <div className="cadastro-profissional-servico-container">
-        <h1>Associar Profissional a Serviço</h1>
-        <div className="cadastro-form">
-          <label>Profissional</label>
-          <select name="profissional_id" value={profissionalServico.profissional_id} onChange={handleChange} required>
-            <option value="">Selecione um profissional</option>
-            {profissionais.map(profissional => (
-              <option key={profissional.id} value={profissional.id}>
-                {profissional.nome}
-              </option>
-            ))}
-          </select>
-          <label>Serviço</label>
-          <select name="servico_id" value={profissionalServico.servico_id} onChange={handleChange} required>
-            <option value="">Selecione um serviço</option>
-            {servicos.map(servico => (
-              <option key={servico.id} value={servico.id}>
-                {servico.nome}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button className="criar-button" disabled={loading}>{loading ? 'Carregando...' : 'Criar Associação'}</button>
-        <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
-        {message && <p className="message success">{message}</p>}
-        {error && <p className="message error">{error}</p>}
-      </div>
-    </form>
+      </form>
+      {message && <p className={`message ${messageType}`}>{message}</p>}
+      {error && <p className="message error">{error}</p>}
+    </div>
   );
 };
 

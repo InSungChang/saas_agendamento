@@ -139,9 +139,12 @@ const DisponibilidadeForm = () => {
         <label>Hora de Fim</label>
         <input type="time" name="hora_fim" value={disponibilidade.hora_fim} onChange={handleChange} required />
 
-        <button type="submit" className="criar-button" disabled={loading}>
-          {loading ? 'Carregando...' : 'Criar Disponibilidade'}
-        </button>
+        <div className="button-container">
+          <button type="submit" className="criar-button" disabled={loading}>
+            {loading ? 'Carregando...' : 'Criar Disponibilidade'}
+          </button>
+          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+        </div>  
       </form>
 
       <div className="disponibilidades-list">
@@ -155,7 +158,6 @@ const DisponibilidadeForm = () => {
           ))}
         </ul>
       </div>
-      <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
       {error && <p className="message error">{error}</p>}
     </div>
   );

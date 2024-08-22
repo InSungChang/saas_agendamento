@@ -6,42 +6,32 @@ import './ProfissionalForm.css';
 const ProfissionalForm = () => {
   const [profissional, setProfissional] = useState({
     empresa_id: '',
-    nome: ''
+    nome: '',
+    email: '',
+    telefone: '',
+    ativo: true
   });
 
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [empresas, setEmpresas] = useState([]);
+  const navigate = useNavigate();
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    setLoading(true);
     const token = localStorage.getItem('token');
     axios.get(`${API_BASE_URL}/empresas`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(response => {
-        console.log('Dados brutos da API:', response);
-        const empresasData = response.data.empresas || response.data;
-        console.log('Empresas:', empresasData);
-        setEmpresas(empresasData);
-      })
-      .catch(error => {
-        setError('Não foi possível carregar a lista de empresas. Tente novamente mais tarde.');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+      .then(response => setEmpresas(response.data.empresas || response.data))
+      .catch(() => setError('Não foi possível carregar a lista de empresas. Tente novamente mais tarde.'))
+      .finally(() => setLoading(false));
+  }, [API_BASE_URL]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfissional({
-      ...profissional,
-      [name]: value
-    });
+    setProfissional(prevState => ({ ...prevState, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -49,15 +39,12 @@ const ProfissionalForm = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_BASE_URL}/profissionais`, profissional, {
-          headers: { Authorization: `Bearer ${token}` }
+      await axios.post(`${API_BASE_URL}/profissionais`, profissional, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      console.log(response.data);
       setMessage('Profissional cadastrado com sucesso!');
       setMessageType('success');
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
+      setTimeout(() => navigate('/dashboard'), 2000);
     } catch (err) {
       setMessage('Erro ao cadastrar profissional. Tente novamente mais tarde.');
       setMessageType('error');
@@ -73,33 +60,39 @@ const ProfissionalForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="profissional-form">
-      {message && (
-        <div className={`floating-message ${messageType}`}>
-          {message}
+    <div className="cadastro-profissionais-container">
+      <h1>Cadastro de Profissionais</h1>
+      <form onSubmit={handleSubmit} className="cadastro-form">
+        {message && (
+          <div className={`floating-message ${messageType}`}>
+            {message}
+          </div>
+        )}
+        <label>Empresa</label>
+        <select name="empresa_id" value={profissional.empresa_id} onChange={handleChange} required>
+          <option value="">Selecione uma empresa</option>
+          {empresas.map(empresa => (
+            <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
+          ))}
+        </select>
+        <label>Nome</label>
+        <input type="text" name="nome" value={profissional.nome} onChange={handleChange} placeholder="Digite o nome do profissional" required />
+        <label>Email</label>
+        <input type="email" name="email" value={profissional.email} onChange={handleChange} placeholder="Digite o email do profissional" required />
+        <label>Telefone</label>
+        <input type="text" name="telefone" value={profissional.telefone} onChange={handleChange} placeholder="Digite o telefone do profissional" required />
+        <label>Ativo</label>
+        <select name="ativo" value={profissional.ativo} onChange={handleChange} required>
+          <option value={true}>Ativo</option>
+          <option value={false}>Inativo</option>
+        </select>
+        <div className="button-container">
+          <button className="criar-button" disabled={loading}>{loading ? 'Carregando...' : 'Criar Profissional'}</button>
+          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
         </div>
-      )}
-      <div className="cadastro-profissionais-container">
-        <h1>Cadastro de Profissionais</h1>
-        <div className="cadastro-form">
-          <label>Empresa</label>
-          <select name="empresa_id" value={profissional.empresa_id} onChange={handleChange} required>
-            <option value="">Selecione uma empresa</option>
-            {empresas.map(empresa => (
-              <option key={empresa.id} value={empresa.id}>
-                {empresa.nome}
-              </option>
-            ))}
-          </select>
-          <label>Nome</label>
-          <input type="text" name="nome" value={profissional.nome} onChange={handleChange} placeholder="Digite o nome do profissional" required />
-        </div>
-        <button className="criar-button" disabled={loading}>{loading ? 'Carregando...' : 'Criar Profissional'}</button>
-        <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
-        {message && <p className="message success">{message}</p>}
-        {error && <p className="message error">{error}</p>}
-      </div>
-    </form>
+      </form>
+      {error && <p className="message error">{error}</p>}
+    </div>
   );
 };
 

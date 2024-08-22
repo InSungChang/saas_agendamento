@@ -9,7 +9,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-sizing: border-box;
 }
 
 /* Título do formulário */
@@ -26,15 +25,16 @@
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  max-width: 600px;
+  max-width: 400px;
   width: 100%;
   margin: 20px 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Estilo dos campos de entrada */
 .cadastro-form label {
-  display: block;
   font-size: 1rem;
   color: #333;
   margin-bottom: 5px;
@@ -52,43 +52,30 @@
   font-size: 0.875rem;
 }
 
-/* Botão de envio */
-.cadastro-empresas-container .criar-button {
-  background-color: #7965a6;
-  color: #fff;
-  border: none;
-  padding: 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
-  font-size: 1rem;
-  font-weight: bold;
-  margin-top: 10px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+/* Container para botões */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-.cadastro-empresas-container .criar-button:hover {
-  background-color: #512da8;
-  transform: scale(1.05);
-}
-
-/* Botão de sair */
+/* Botões */
+.cadastro-empresas-container .criar-button,
 .cadastro-empresas-container .sair-button {
   background-color: #7965a6;
-  color: #fff;
+  color: white;
   padding: 12px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 16px;
+  margin-top: 15px;
   width: 100%;
-  font-size: 1rem;
-  font-weight: bold;
-  margin-top: 10px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s, transform 0.3s;
 }
 
+.cadastro-empresas-container .criar-button:hover,
 .cadastro-empresas-container .sair-button:hover {
   background-color: #512da8;
   transform: scale(1.05);
@@ -101,6 +88,7 @@
   border-radius: 4px;
   text-align: center;
   font-size: 1rem;
+  width: 100%;
 }
 
 .message.success {
@@ -141,61 +129,33 @@
 
 /* Animação para a caixa flutuante */
 @keyframes fadeInOut {
-  0%, 100% {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  10%, 90% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0%, 100% { opacity: 0; transform: translateY(-20px); }
+  10%, 90% { opacity: 1; transform: translateY(0); }
 }
 
 /* Media queries para responsividade */
 @media (max-width: 768px) {
-  .cadastro-empresas-container h1 {
-    font-size: 1.5rem;
-  }
-
-  .cadastro-form {
-    padding: 15px;
-    margin: 10px 0;
-  }
-
+  .cadastro-empresas-container h1 { font-size: 1.5rem; }
+  .cadastro-form { padding: 15px; margin: 10px 0; }
   .cadastro-form input[type="text"],
   .cadastro-form input[type="email"],
   .cadastro-form input[type="tel"] {
     padding: 10px;
     margin-bottom: 15px;
   }
-
   .criar-button,
-  .sair-button {
-    padding: 10px;
-    font-size: 0.875rem;
-  }
+  .sair-button { padding: 10px; font-size: 0.875rem; }
 }
 
 @media (max-width: 480px) {
-  .cadastro-empresas-container h1 {
-    font-size: 1.25rem;
-  }
-
-  .cadastro-form {
-    padding: 10px;
-    margin: 5px 0;
-  }
-
+  .cadastro-empresas-container h1 { font-size: 1.25rem; }
+  .cadastro-form { padding: 10px; margin: 5px 0; }
   .cadastro-form input[type="text"],
   .cadastro-form input[type="email"],
   .cadastro-form input[type="tel"] {
     padding: 8px;
     margin-bottom: 10px;
   }
-
   .criar-button,
-  .sair-button {
-    padding: 8px;
-    font-size: 0.75rem;
-  }
+  .sair-button { padding: 8px; font-size: 0.75rem; }
 }

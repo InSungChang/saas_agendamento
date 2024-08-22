@@ -15,76 +15,47 @@ const ServicoForm = () => {
 
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [empresas, setEmpresas] = useState([]);
+  const navigate = useNavigate();
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    setLoading(true);
     const token = localStorage.getItem('token');
     axios.get(`${API_BASE_URL}/empresas`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(response => {
-        console.log('Dados brutos da API:', response);
-        const empresasData = response.data.empresas || response.data;
-        console.log('Empresas:', empresasData);
-        setEmpresas(empresasData);
-      })
-      .catch(error => {
-        setError('Não foi possível carregar a lista de empresas. Tente novamente mais tarde.');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+      .then(response => setEmpresas(response.data.empresas || response.data))
+      .catch(() => setError('Não foi possível carregar a lista de empresas. Tente novamente mais tarde.'))
+      .finally(() => setLoading(false));
+  }, [API_BASE_URL]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setServico({
-      ...servico,
-      [name]: value
-    });
+    setServico(prevState => ({ ...prevState, [name]: value }));
   };
 
-  // função handlePrecoChange para lidar especificamente com as mudanças no campo de preço.
   const handlePrecoChange = (values) => {
     const { floatValue } = values;
-    setServico({
-      ...servico,
-      preco: floatValue
-    });
+    setServico(prevState => ({ ...prevState, preco: floatValue }));
   };
 
-  // função handleDuracaoChange específica para lidar com as mudanças no campo de duração.
   const handleDuracaoChange = (values) => {
     const { value } = values;
-    setServico({
-      ...servico,
-      duracao: value
-    });
+    setServico(prevState => ({ ...prevState, duracao: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // para converter o preço para o formato decimal antes de enviar para o servidor.
-      const servicoToSubmit = {
-        ...servico,
-        preco: parseFloat(servico.preco).toFixed(2)
-      };
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_BASE_URL}/servicos`, servicoToSubmit, {
-          headers: { Authorization: `Bearer ${token}` }
+      await axios.post(`${API_BASE_URL}/servicos`, servico, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      console.log(response.data);
       setMessage('Serviço cadastrado com sucesso!');
       setMessageType('success');
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
+      setTimeout(() => navigate('/dashboard'), 2000);
     } catch (err) {
       setMessage('Erro ao cadastrar serviço. Tente novamente mais tarde.');
       setMessageType('error');
@@ -100,66 +71,57 @@ const ServicoForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="servico-form">
-      {message && (
-        <div className={`floating-message ${messageType}`}>
-          {message}
+    <div className="cadastro-servicos-container">
+      <h1>Cadastro de Serviços</h1>
+      <form onSubmit={handleSubmit} className="cadastro-form">
+        {message && (
+          <div className={`floating-message ${messageType}`}>
+            {message}
+          </div>
+        )}
+        <label>Empresa</label>
+        <select name="empresa_id" value={servico.empresa_id} onChange={handleChange} required>
+          <option value="">Selecione uma empresa</option>
+          {empresas.map(empresa => (
+            <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
+          ))}
+        </select>
+        <label>Nome</label>
+        <input type="text" name="nome" value={servico.nome} onChange={handleChange} placeholder="Digite o nome do serviço" required />
+        <label>Descrição</label>
+        <textarea name="descricao" value={servico.descricao} onChange={handleChange} placeholder="Digite a descrição do serviço" />
+        <label>Preço</label>
+        <NumericFormat
+          value={servico.preco}
+          onValueChange={handlePrecoChange}
+          thousandSeparator="."
+          decimalSeparator=","
+          prefix="R$ "
+          decimalScale={2}
+          fixedDecimalScale
+          allowNegative={false}
+          className="preco-input"
+          placeholder="Digite o preço do serviço"
+          required
+        />
+        <label>Duração (minutos)</label>
+        <NumericFormat
+          value={servico.duracao}
+          onValueChange={handleDuracaoChange}
+          thousandSeparator=""
+          decimalScale={0}
+          allowNegative={false}
+          className="duracao-input"
+          placeholder="Digite a duração do serviço em minutos"
+          required
+        />
+        <div className="button-container">
+          <button className="criar-button" disabled={loading}>{loading ? 'Carregando...' : 'Criar Serviço'}</button>
+          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
         </div>
-      )}
-      <div className="cadastro-servicos-container">
-        <h1>Cadastro de Serviços</h1>
-        <div className="cadastro-form">
-          <label>ID da Empresa</label>
-          <select name="empresa_id" value={servico.empresa_id} onChange={handleChange} required>
-            <option value="">Selecione uma empresa</option>
-            {empresas.map(empresa => (
-              <option key={empresa.id} value={empresa.id}>
-                {empresa.nome}
-              </option>
-            ))}
-          </select>
-          <label>Nome</label>
-          <input type="text" name="nome" value={servico.nome} onChange={handleChange} placeholder="Digite o nome do serviço" required />
-          <label>Descrição</label>
-          {/* <textarea name="descricao" value={servico.descricao} onChange={handleChange} placeholder="Digite a descrição do serviço" lang="pt-BR" spellcheck="true" autoComplete="off"/> */}
-          <textarea name="descricao" value={servico.descricao} onChange={handleChange} placeholder="Digite a descrição do serviço" spellcheck="false"/>
-
-          <label>Preço</label>
-          {/* Substituímos o campo de input do preço por um componente NumericFormat, que formata automaticamente o valor como moeda brasileira. */}
-          <NumericFormat
-            thousandSeparator="."
-            decimalSeparator=","
-            prefix="R$ "
-            decimalScale={2}
-            fixedDecimalScale
-            allowNegative={false}
-            onValueChange={handlePrecoChange}
-            value={servico.preco}
-            className="preco-input"
-            placeholder="Digite o preço do serviço"
-            required
-          />
-
-          {/* Substituímos o campo de input da duração por um componente NumericFormat, configurado para aceitar apenas números inteiros */}
-          <label>Duração (minutos)</label>
-          <NumericFormat
-            value={servico.duracao}
-            onValueChange={handleDuracaoChange}
-            thousandSeparator=""
-            decimalScale={0}
-            allowNegative={false}
-            className="duracao-input"
-            placeholder="Digite a duração do serviço em minutos"
-            required
-          />
-          
-        </div>
-        <button className="criar-button" disabled={loading}>{loading ? 'Carregando...' : 'Criar Serviço'}</button>
-        <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
-        {message && <p className="message success">{message}</p>}
-        {error && <p className="message error">{error}</p>}
-      </div>
-    </form>
+      </form>
+      {error && <p className="message error">{error}</p>}
+    </div>
   );
 };
 

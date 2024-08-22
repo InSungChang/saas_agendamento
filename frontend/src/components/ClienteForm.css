@@ -1,78 +1,96 @@
-/* Estilo geral da página */
+/* Geral */
 .cadastro-clientes-container {
   font-family: Arial, sans-serif;
-  background-color: #F5F5F5; /* Cinza Claro */
-  color: #333; /* Texto em cinza escuro */
+  background-color: #F5F5F5;
+  color: #333;
   margin: 0;
-  padding: 0;
+  padding: 20px;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
 }
 
 /* Título do formulário */
 .cadastro-clientes-container h1 {
-  color: #333; /* Texto em cinza escuro */
-  margin-top: 20px;
-  font-size: 28px;
+  color: #512da8;
+  margin-top: 210px;
+  font-size: 1.75rem;
   text-align: center;
 }
 
 /* Formulário de cadastro */
 .cadastro-form {
-  background-color: #FFFFFF; /* Branco */
+  background-color: #FFFFFF;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  max-width: 600px;
+  max-width: 400px;
   width: 100%;
-  margin: 20px;
+  margin: 20px 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Estilo dos campos de entrada */
+.cadastro-form label {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 5px;
+}
+
 .cadastro-form input[type="text"],
 .cadastro-form input[type="email"],
 .cadastro-form input[type="tel"],
 .cadastro-form select {
   width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #D3D3D3; /* Cinza Escuro */
+  padding: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #D3D3D3;
   border-radius: 4px;
   box-sizing: border-box;
+  font-size: 0.875rem;
 }
 
-/* Botão de envio */
-.cadastro-form button[type="submit"] {
-  background-color: #98FF98; /* Verde Menta */
-  color: #333; /* Texto em cinza escuro */
-  border: none;
-  padding: 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
-  font-size: 16px;
-  margin-top: 10px;
+.cadastro-form input:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
 }
 
-.cadastro-form button[type="submit"]:hover {
-  background-color: #87E0A1; /* Verde Menta mais escuro */
-}
-
-/* Botão Sair */
-.sair-button {
-  background-color: #f44336; /* Vermelho */
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+/* Container para botões */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-top: 20px;
 }
 
-.sair-button:hover {
-  background-color: #d32f2f; /* Vermelho mais escuro */
+/* Botões */
+.cadastro-clientes-container .criar-button,
+.cadastro-clientes-container .sair-button {
+  background-color: #7965a6;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 15px;
+  width: 100%;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.cadastro-clientes-container .criar-button:hover,
+.cadastro-clientes-container .sair-button:hover {
+  background-color: #512da8;
+  transform: scale(1.05);
+}
+
+.criar-button:disabled,
+.sair-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 
 /* Mensagens de feedback */
@@ -81,6 +99,8 @@
   padding: 10px;
   border-radius: 4px;
   text-align: center;
+  font-size: 1rem;
+  width: 100%;
 }
 
 .message.success {
@@ -93,31 +113,6 @@
   color: #721c24;
   background-color: #f8d7da;
   border-color: #f5c6cb;
-}
-
-.criar-button,
-.sair-button {
-  width: 48%;
-  padding: 10px;
-  margin: 10px 1%;
-  font-size: 16px;
-  color: #fff;
-  background-color: #007bff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.sair-button:hover,
-.sair-button:hover {
-  background-color: #0056b3;
-}
-
-/* Botão desativado */
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
 }
 
 /* Estilo para a caixa flutuante */
@@ -146,13 +141,35 @@ button:disabled {
 
 /* Animação para a caixa flutuante */
 @keyframes fadeInOut {
-  0%, 100% {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  10%, 90% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0%, 100% { opacity: 0; transform: translateY(-20px); }
+  10%, 90% { opacity: 1; transform: translateY(0); }
 }
 
+/* Media queries para responsividade */
+@media (max-width: 768px) {
+  .cadastro-clientes-container h1 { font-size: 1.5rem; }
+  .cadastro-form { padding: 15px; margin: 10px 0; }
+  .cadastro-form input[type="text"],
+  .cadastro-form input[type="email"],
+  .cadastro-form input[type="tel"],
+  .cadastro-form select {
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+  .criar-button,
+  .sair-button { padding: 10px; font-size: 0.875rem; }
+}
+
+@media (max-width: 480px) {
+  .cadastro-clientes-container h1 { font-size: 1.25rem; }
+  .cadastro-form { padding: 10px; margin: 5px 0; }
+  .cadastro-form input[type="text"],
+  .cadastro-form input[type="email"],
+  .cadastro-form input[type="tel"],
+  .cadastro-form select {
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+  .criar-button,
+  .sair-button { padding: 8px; font-size: 0.75rem; }
+}

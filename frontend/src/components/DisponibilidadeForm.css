@@ -118,7 +118,7 @@
   color: white;
 }
 
-.sair-button {
+/* .sair-button {
   background-color: #6c757d;
   color: white;
   padding: 12px;
@@ -130,7 +130,7 @@
   width: 100%;
   transition: background-color 0.3s, transform 0.3s;
 }
-
+ */
 .sair-button:hover {
   background-color: #5a6268;
   transform: scale(1.05);

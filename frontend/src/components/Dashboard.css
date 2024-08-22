@@ -12,6 +12,13 @@
   box-sizing: border-box; /* Adicionado para garantir que o padding seja incluído no cálculo do tamanho */
 }
 
+.dashboard-container h1 {
+  color: #512da8;
+  margin-top: 10px;
+  font-size: 1.75rem;
+  text-align: center;
+}
+
 /* Navegação */
 nav {
   width: 100%;
