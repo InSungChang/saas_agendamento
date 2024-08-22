@@ -11,6 +11,8 @@
   align-items: center;
   overflow-y: auto; /* para corrigir perda visual na parte superior da tela*/
   max-height: 100vh; /* Ou uma altura máxima específica */
+  height: 100vh; /* Garante que ocupe toda a altura da tela */
+  overflow: hidden; /* Evita que o conteúdo saia da área visível */
 }
 
 /* Título do formulário */
@@ -41,13 +43,18 @@
   background-color: #FFFFFF;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  padding: 10px;
+  margin-bottom: 10px;
   max-width: 400px;
   width: 100%;
   margin: 20px 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  position: relative; /* para fixar parte superior fixo para não perder visual superior */
+  top: 0;
+  z-index: 1;
+  overflow-y: auto
 }
 
 /* Estilo dos campos de entrada */
@@ -107,11 +114,17 @@
   width: 100%;
   margin: 20px 0;
   box-sizing: border-box;
+  max-height: calc(100vh - 250px); /* Ajuste a altura disponível */
+  overflow-y: auto;
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-top: 10px;
 }
 
 .disponibilidades-list ul {
   list-style-type: none;
   padding: 0;
+  margin: 0;
 }
 
 .disponibilidades-list li {
@@ -120,6 +133,7 @@
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid #D3D3D3;
+  margin: 0;
 }
 
 .delete-button {
