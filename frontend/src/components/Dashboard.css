@@ -1,64 +1,33 @@
-/* Geral */
-.dashboard-container {
-  font-family: Arial, sans-serif;
-  background-color: #F5F5F5;
-  color: #333;
-  margin: 0;
+/* Layout principal do dashboard */
+.dashboard-layout {
+  display: flex;
+}
+
+/* Container de conteúdo */
+.dashboard-content {
   padding: 20px;
-  min-height: 100vh;
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-sizing: border-box; /* Adicionado para garantir que o padding seja incluído no cálculo do tamanho */
 }
 
-.dashboard-container h1 {
-  color: #512da8;
-  margin-top: 10px;
-  font-size: 1.75rem;
-  text-align: center;
+/* Sidebar aberto */
+.dashboard-layout.sidebar-open .dashboard-content {
+  margin-left: 250px;
 }
 
-/* Navegação */
-nav {
-  width: 100%;
-  max-width: 1200px;
-  margin-bottom: 40px;
-  margin-top: 20px;
+/* Sidebar fechado */
+.dashboard-layout.sidebar-closed .dashboard-content {
+  margin-left: auto;
+  margin-right: auto;
 }
 
-nav ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
+.sidebar-container.closed + .dashboard-content {
+  margin-left: 50px;
 }
 
-nav ul li {
-  flex: 1 1 calc(50% - 0.5rem);
-  min-width: 150px;
-  box-sizing: border-box; /* Adicionado para garantir que o padding seja incluído no cálculo do tamanho */
-}
-
-nav a {
-  display: block;
-  background-color: #7965a6;
-  color: #fff;
-  text-decoration: none;
-  padding: 0.75rem 0.5rem;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 0.875rem;
-  transition: background-color 0.3s ease;
-}
-
-nav a:hover {
-  background-color: #512da8;
-}
-
-/* Botão de logout estilizado */
 .logout-button {
   background-color: #512da8; /* Cor principal */
   color: #fff; /* Cor do texto */
@@ -89,91 +58,4 @@ nav a:hover {
 .logout-button:focus {
   outline: 2px solid #7965a6; /* Borda de foco */
   outline-offset: 4px; /* Espaçamento da borda */
-}
-
-/* Media queries para telas menores */
-@media (max-width: 768px) {
-
-  h1 {
-    margin-top: 100px;
-  }
-
-  p{
-    text-align: center;
-  }
-
-  nav {
-    width: 100%;
-    max-width: 1200px;
-    margin-bottom: 10px;
-    margin-top: 20px;
-  }
-
-  nav ul li {
-    flex: 1 1 calc(50% - 10px);
-    min-width: 120px; /* Reduzido para ajustar melhor em telas menores */
-  }
-
-  .dashboard-container {
-    padding: 10px;
-  }
-
-  .dashboard-container h1 {
-    font-size: 24px;
-  }
-
-  nav a {
-    font-size: 12px;
-    padding: 12px 8px;
-  }
-
-  .logout-button {
-    margin-top: 5px;
-  }
-
-}
-
-@media (max-width: 480px) {
-  
-  h1 {
-    margin-top: 40px;
-  }
-
-  p{
-    text-align: center;
-  }
-
-  nav {
-    width: 100%;
-    max-width: 1200px;
-    margin-bottom: 10px;
-    margin-top: 20px;
-  }
-
-  .dashboard-container {
-    padding: 0.5rem;
-  }
-
-  .dashboard-container h1 {
-    font-size: 1.125rem;
-  }
-
-  nav ul li {
-    flex: 1 1 100%;
-    min-width: unset; /* Remove o min-width para permitir que os botões ocupem toda a largura */
-  }
-
-  nav a {
-    font-size: 0.75rem;
-    padding: 0.5rem;
-  }
-
-  .dashboard-content {
-    padding: 1rem;
-  }
-
-  .logout-button {
-    margin-top: 10px;
-  }
-
 }

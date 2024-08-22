@@ -3,23 +3,12 @@
   font-family: Arial, sans-serif;
   background-color: #F5F5F5;
   color: #333;
+  margin: 0;
   padding: 20px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: margin-left 0.3s ease;
-}
-
-/* Sidebar aberto */
-.form-layout.sidebar-open .cadastro-empresas-container {
-  margin-left: 250px;
-}
-
-/* Sidebar fechado */
-.form-layout.sidebar-closed .cadastro-empresas-container {
-  margin-left: auto;
-  margin-right: auto;
 }
 
 /* Título do formulário */
@@ -136,22 +125,6 @@
   background-color: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
-}
-
-.form-layout {
-  display: flex;
-}
-
-/* Container de formulário */
-.cadastro-empresas-container {
-  flex: 1;
-  padding: 20px;
-  margin-left: 250px;
-  transition: margin-left 0.3s ease;
-}
-
-.sidebar-container.closed + .cadastro-empresas-container {
-  margin-left: 50px;
 }
 
 /* Animação para a caixa flutuante */

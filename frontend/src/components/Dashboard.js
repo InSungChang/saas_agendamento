@@ -1,10 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
-import { Link, useNavigate } from 'react-router-dom'; // Adicionado useNavigate
+import Sidebar from './Sidebar';
+import { useNavigate } from 'react-router-dom'; // Adicionado useNavigate
 
 const Dashboard = () => {
 
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
 
   useEffect(() => {
     // Verifique se o usuário está autenticado
@@ -24,31 +30,13 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard-container">
-      <h1>Bem-vindo ao Dashboard</h1>
-      <nav>
-        <ul>
-          <li><Link to="/empresas">Cadastro das Empresas</Link></li>
-          <li><Link to="/consultarAlterarExcluirEmpresas">Consultar, Alterar e Excluir Empresas</Link></li>
-          <li><Link to="/usuarios">Cadastro de Usuários</Link></li>
-          <li><Link to="/consultarAlterarExcluirUsuarios">Consultar, Alterar e Excluir Usuários</Link></li>
-          <li><Link to="/clientes">Cadastro de Clientes</Link></li>
-          <li><Link to="/consultarAlterarExcluirClientes">Consultar, Alterar e Excluir Clientes</Link></li>
-          <li><Link to="/servicos">Cadastro de Serviços</Link></li>
-          <li><Link to="/profissionais">Cadastro de Profissionais</Link></li>
-          <li><Link to="/profissionaisServicos">Cadastro de Profissionais X Serviços</Link></li>
-          <li><Link to="/disponibilidades">Cadastro de Disponibilidade dos Profissionais</Link></li>
-          <li><Link to="/agendamentos">Agendamento por Serviço e Profissional</Link></li>
-          <li><Link to="/agendamentoTodosProfissionais">Agendamento por Serviço (Todos Profissionais)</Link></li>
-          <li><Link to="/agendamentoTodosServicos">Agendamento por Profissional (Todos Serviços)</Link></li>
-          {/* Adicione outros links de navegação aqui */}
-        </ul>
-      </nav>
+    <div className={`dashboard-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      <Sidebar onToggle={handleSidebarToggle}/>
       <div className="dashboard-content">
+        <h1>Bem-vindo ao Dashboard</h1>
         <p>Aqui você pode gerenciar suas informações e acessar outras funcionalidades.</p>
-        {/* Adicione mais conteúdo conforme necessário */}
+        <button className="logout-button" onClick={handleLogout}>Sair</button>
       </div>
-      <button className="logout-button" onClick={handleLogout}>Sair</button>
     </div>
   );
 };
