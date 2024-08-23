@@ -6,7 +6,7 @@ const DisponibilidadePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { disponibilidades, agendamento, profissionais } = location.state;
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleSidebarToggle = (isOpen) => {
     setIsSidebarOpen(isOpen);

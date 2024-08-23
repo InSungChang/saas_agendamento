@@ -12,7 +12,7 @@ const DisponibilidadePage = () => {
     navigate(-1);
   };
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleSidebarToggle = (isOpen) => {
     setIsSidebarOpen(isOpen);

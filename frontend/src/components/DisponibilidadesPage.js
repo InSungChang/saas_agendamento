@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import './DisponibilidadesPageTodosProfissionais.css';
 import Sidebar from './Sidebar';
 
 const DisponibilidadePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { disponibilidades, agendamento, profissionais, servicos } = location.state;
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleSidebarToggle = (isOpen) => {
     setIsSidebarOpen(isOpen);
