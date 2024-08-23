@@ -3,14 +3,25 @@
   font-family: Arial, sans-serif;
   background-color: #F5F5F5;
   color: #333;
-  margin: 0;
-  padding: 20px;
+  padding: 50px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow-y: auto; /* para corrigir perda visual na parte superior da tela*/
   max-height: 100vh; /* Ou uma altura máxima específica */
+  transition: margin-left 0.3s ease;
+}
+
+/* Sidebar aberto */
+.form-layout.sidebar-open .disponibilidade-container {
+  margin-left: 250px;
+}
+
+/* Sidebar fechado */
+.form-layout.sidebar-closed .disponibilidade-container {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Título do formulário */

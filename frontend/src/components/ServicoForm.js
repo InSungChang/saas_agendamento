@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { NumericFormat } from 'react-number-format';
 import './ServicoForm.css';
+import Sidebar from './Sidebar';
 
 const ServicoForm = () => {
   const [servico, setServico] = useState({
@@ -19,6 +20,11 @@ const ServicoForm = () => {
   const [error, setError] = useState(null);
   const [empresas, setEmpresas] = useState([]);
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -71,6 +77,8 @@ const ServicoForm = () => {
   };
 
   return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
     <div className="cadastro-servicos-container">
       <h1>Cadastro de Serviços</h1>
       <form onSubmit={handleSubmit} className="cadastro-form">
@@ -121,6 +129,7 @@ const ServicoForm = () => {
         </div>
       </form>
       {error && <p className="message error">{error}</p>}
+    </div>
     </div>
   );
 };

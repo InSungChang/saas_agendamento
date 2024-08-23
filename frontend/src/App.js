@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 /* import LoginPage from './components/LoginPage'; */
 import LoginPage from './components/LoginPage';
@@ -26,14 +26,24 @@ const App = () => {
   const [token, setToken] = React.useState(null);
 
   const handleLogin = (token) => {
+    localStorage.setItem('token', token); // Armazena o token no localStorage
     setToken(token);
   };
 
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken); // Recupera o token do localStorage ao inicializar
+    }
+  }, []);
+
   return (
     <div>
+      <Routes>
+      <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       {token ? (
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
+        <>
+          {/* <Route path="/login" element={<LoginPage />} /> */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/empresas" element={<EmpresaForm />} />
           <Route path="/ConsultarAlterarExcluirEmpresas" element={<ConsultarAlterarExcluirEmpresaForm />} />
@@ -52,10 +62,11 @@ const App = () => {
           <Route path="/agendamentoTodosServicos" element={<AgendamentoTodosServiosForm />} />
           <Route path="/disponibilidadesPageTodosServicos" element={<DisponibilidadesPageTodosServicos />} />
           <Route path="/" element={<Dashboard />} />
-        </Routes>
+        </>
       ) : (
-        <LoginPage onLogin={handleLogin} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       )}
+      </Routes>
     </div>
   );
 };

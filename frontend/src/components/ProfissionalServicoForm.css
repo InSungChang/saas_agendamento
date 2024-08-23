@@ -3,12 +3,23 @@
   font-family: Arial, sans-serif;
   background-color: #F5F5F5;
   color: #333;
-  margin: 0;
-  padding: 20px;
+  padding: 50px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: margin-left 0.3s ease;
+}
+
+/* Sidebar aberto */
+.form-layout.sidebar-open .cadastro-profissional-servico-container {
+  margin-left: 250px;
+}
+
+/* Sidebar fechado */
+.form-layout.sidebar-closed .cadastro-profissional-servico-container {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Título do formulário */

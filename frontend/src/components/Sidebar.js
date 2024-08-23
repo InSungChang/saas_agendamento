@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaBars, FaTimes } from 'react-icons/fa'; // Importa os ícones do react-icons/fa
+import { FaBars, FaEllipsisV } from 'react-icons/fa'; // Importa os ícones do react-icons/fa
 import './Sidebar.css';
 
 const navItems = [
+  { path: '/login', label: 'Sair' },
   { path: '/empresas', label: 'Cadastro das Empresas' },
   { path: '/consultarAlterarExcluirEmpresas', label: 'Consultar, Alterar e Excluir Empresas' },
   { path: '/usuarios', label: 'Cadastro de Usuários' },
@@ -30,7 +31,7 @@ const Sidebar = ({ onToggle }) => {
   return (
     <div className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
       <button className="toggle-button" onClick={toggleSidebar}>
-        {isOpen ? <FaTimes /> : <FaBars />} {/* Usa os ícones do react-icons/fa */}
+        {isOpen ? <FaEllipsisV /> : <FaBars />} {/* Usa os ícones do react-icons/fa */}
       </button>
       <nav className="sidebar-nav">
         <ul>

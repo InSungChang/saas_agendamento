@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './UsuarioForm.css';
+import Sidebar from './Sidebar';
 
 const UsuarioForm = () => {
   const [usuario, setUsuario] = useState({
@@ -18,6 +19,12 @@ const UsuarioForm = () => {
   const [loading, setLoading] = useState(false);
   const [empresas, setEmpresas] = useState([]);
   const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
 
   useEffect(() => {
     const fetchEmpresas = async () => {
@@ -69,6 +76,8 @@ const UsuarioForm = () => {
   const handleCancel = () => navigate('/dashboard');
 
   return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+      <Sidebar onToggle={handleSidebarToggle} />
     <div className="cadastro-usuarios-container">
       <h1>Cadastro de Usuários</h1>
       <form onSubmit={handleSubmit} className="cadastro-form">
@@ -153,6 +162,7 @@ const UsuarioForm = () => {
           </button>
         </div>
       </form>
+    </div>
     </div>
   );
 };

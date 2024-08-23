@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './ProfissionalForm.css';
+import Sidebar from './Sidebar';
 
 const ProfissionalForm = () => {
   const [profissional, setProfissional] = useState({
@@ -18,6 +19,11 @@ const ProfissionalForm = () => {
   const [error, setError] = useState(null);
   const [empresas, setEmpresas] = useState([]);
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -60,6 +66,8 @@ const ProfissionalForm = () => {
   };
 
   return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
     <div className="cadastro-profissionais-container">
       <h1>Cadastro de Profissionais</h1>
       <form onSubmit={handleSubmit} className="cadastro-form">
@@ -92,6 +100,7 @@ const ProfissionalForm = () => {
         </div>
       </form>
       {error && <p className="message error">{error}</p>}
+    </div>
     </div>
   );
 };

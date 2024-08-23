@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './DisponibilidadeForm.css';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from './Sidebar';
 
 const DisponibilidadeForm = () => {
   const [profissionalId, setProfissionalId] = useState('');
@@ -20,6 +21,12 @@ const DisponibilidadeForm = () => {
   const [error, setError] = useState(null);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -107,6 +114,8 @@ const DisponibilidadeForm = () => {
   };
 
   return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
     <div className="disponibilidade-container">
       {message && <div className={`floating-message ${messageType}`}>{message}</div>}
       <h1>Cadastro de disponibilidade</h1>
@@ -161,6 +170,7 @@ const DisponibilidadeForm = () => {
         </ul>
       </div>
       {error && <p className="message error">{error}</p>}
+    </div>
     </div>
   );
 };

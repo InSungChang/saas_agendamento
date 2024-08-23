@@ -2,15 +2,32 @@
 
 /* Estilizando o container principal */
 .agendamento-container {
-  padding: 20px;
-  max-width: 1000px;
-  margin: 0 auto;
+  font-family: Arial, sans-serif;
+  background-color: #F5F5F5;
+  color: #333;
+  padding: 50px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: margin-left 0.3s ease;
+}
+
+/* Sidebar aberto */
+.form-layout.sidebar-open .agendamento-container {
+  margin-left: 250px;
+}
+
+/* Sidebar fechado */
+.form-layout.sidebar-closed .agendamento-container {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .agendamento-container h1 {
   color: #333;
   /* Texto em cinza escuro */
-  margin-top: 20px;
+  margin-top: 120px;
   font-size: 28px;
   text-align: center;
 }
@@ -104,6 +121,14 @@
 
 .disponibilidade-item button:hover {
   background-color: #004d40;
+}
+
+/* Container para botões */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 /* Estilizando os botões de agendamento e sair */

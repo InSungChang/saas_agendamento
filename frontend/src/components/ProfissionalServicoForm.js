@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './ProfissionalServicoForm.css';
+import Sidebar from './Sidebar';
 
 const ProfissionalServicoForm = () => {
   const [profissionalServico, setProfissionalServico] = useState({
@@ -16,6 +17,11 @@ const ProfissionalServicoForm = () => {
   const [error, setError] = useState(null);
   const [profissionais, setProfissionais] = useState([]);
   const [servicos, setServicos] = useState([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -74,6 +80,8 @@ const ProfissionalServicoForm = () => {
   };
 
   return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
     <div className="cadastro-profissional-servico-container">
       <h1>Associar Profissional a Serviço</h1>
       <form onSubmit={handleSubmit} className="cadastro-form">
@@ -107,6 +115,7 @@ const ProfissionalServicoForm = () => {
       </form>
       {message && <p className={`message ${messageType}`}>{message}</p>}
       {error && <p className="message error">{error}</p>}
+    </div>
     </div>
   );
 };

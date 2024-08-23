@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './AgendamentoTodosProfissionaisForm.css';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from './Sidebar';
 
 const AgendamentoForm = () => {
   const [clientes, setClientes] = useState([]);
@@ -20,7 +21,11 @@ const AgendamentoForm = () => {
   const [messageType, setMessageType] = useState('');
   const [loading, setLoading] = useState(false);
   const [diasExibicao, setDiasExibicao] = useState(7);
-  /* const navigate = useNavigate(); */
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -185,6 +190,8 @@ const AgendamentoForm = () => {
   };
 
   return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
     <div className="agendamento-container">      
       <h1>Agendamento - Filtro Por Serviço</h1>
       {message && <div className={`floating-message ${messageType}`}>{message}</div>}
@@ -213,7 +220,8 @@ const AgendamentoForm = () => {
             <option value={21}>21 dias</option>
             <option value={30}>30 dias</option>
           </select>
-
+            
+          <div className="button-container">
           <button 
             type="button" 
             onClick={handleExibirDisponibilidade} 
@@ -224,12 +232,12 @@ const AgendamentoForm = () => {
           </button>
 
           <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
-
+          </div>
         </div>
   
       </form>
     </div>
-    
+    </div>
   );
 };
 

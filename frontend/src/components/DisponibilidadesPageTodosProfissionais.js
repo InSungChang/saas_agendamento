@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './DisponibilidadesPageTodosProfissionais.css';
+import Sidebar from './Sidebar';
 
 const DisponibilidadePage = () => {
   const navigate = useNavigate();
@@ -11,7 +12,15 @@ const DisponibilidadePage = () => {
     navigate(-1);
   };
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
+
   return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
     <div className="disponibilidade-container">
       <h2>Disponibilidades</h2>
       <div className="disponibilidades-grid">
@@ -34,6 +43,7 @@ const DisponibilidadePage = () => {
         ))}
       </div>
       <button onClick={handleVoltar} className="voltar-button">Voltar</button>
+    </div>
     </div>
   );
 };

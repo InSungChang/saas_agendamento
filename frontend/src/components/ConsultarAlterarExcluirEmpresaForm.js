@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './ConsultarAlterarExcluir.css';
+import Sidebar from './Sidebar';
 
 const AlterarEmpresaForm = () => {
   const [empresas, setEmpresas] = useState([]);
@@ -16,6 +17,11 @@ const AlterarEmpresaForm = () => {
   const [messageType, setMessageType] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
 
   useEffect(() => {
     fetchEmpresas();
@@ -157,7 +163,9 @@ const AlterarEmpresaForm = () => {
   );
 
   return (
-    <form onSubmit={handleSubmit}>
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
+    <form className="consultar-container" onSubmit={handleSubmit}>
       {message && (
         <div className={`floating-message ${messageType}`}>
         {message}
@@ -227,6 +235,7 @@ const AlterarEmpresaForm = () => {
         {message && <p>{message}</p>}
       </div>
     </form>
+    </div>
   );
 };
 
