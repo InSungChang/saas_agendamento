@@ -33,8 +33,8 @@ const Dashboard = () => {
     <div className={`dashboard-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <Sidebar onToggle={handleSidebarToggle}/>
       <div className="dashboard-content">
-        <h1>Bem-vindo ao Dashboard</h1>
-        <p>Aqui você pode gerenciar suas informações e acessar outras funcionalidades.</p>
+        <h1>Bem-vindo ao Controle de Agendamento</h1>
+        <p>Aqui você pode gerenciar suas informações. Menu Lateral está no canto superior esquerdo.</p>
         <button className="logout-button" onClick={handleLogout}>Sair</button>
       </div>
     </div>

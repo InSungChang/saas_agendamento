@@ -90,7 +90,7 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-top: 20px;
-  max-height: 400px;
+  max-height: 450px;
   overflow-y: auto;
   padding: 15px 0;
 }
@@ -216,4 +216,31 @@
 
 .voltar-button:hover {
   background-color: #0b7dda;
+}
+
+@media (max-width: 480px) {
+  .form-layout.sidebar-closed {
+    padding-left: 40px; /* ajuste a largura da barra lateral */
+  }
+  
+  .form-layout.sidebar-closed .sidebar {
+    width: 30px; /* ajuste a largura da barra lateral */
+    overflow: hidden;  
+    background-color: transparent;
+  }
+  
+  .form-layout.sidebar-closed .sidebar .toggle-button {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+  }
+  
+  .form-layout.sidebar-closed .sidebar .sidebar-nav {
+    display: none;
+  }
+
+  .agendamento-container h1{
+    font-size: 20px;
+  }
 }

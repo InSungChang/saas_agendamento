@@ -208,3 +208,27 @@
 .voltar-button:hover {
   background-color: #0b7dda;
 }
+
+@media (max-width: 480px) {
+  .form-layout.sidebar-closed {
+    padding-left: 40px; /* ajuste a largura da barra lateral */
+  }
+  
+  .form-layout.sidebar-closed .sidebar {
+    width: 30px; /* ajuste a largura da barra lateral */
+    overflow: hidden;  
+    background-color: transparent;
+  }
+  
+  .form-layout.sidebar-closed .sidebar .toggle-button {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+  }
+  
+  .form-layout.sidebar-closed .sidebar .sidebar-nav {
+    display: none;
+  }
+
+}

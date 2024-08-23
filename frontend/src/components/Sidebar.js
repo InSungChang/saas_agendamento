@@ -5,6 +5,9 @@ import './Sidebar.css';
 
 const navItems = [
   { path: '/login', label: 'Sair' },
+  { path: '/agendamentos', label: 'Agendamento por Serviço e Profissional' },
+  { path: '/agendamentoTodosProfissionais', label: 'Agendamento por Serviço (Todos Profissionais)' },
+  { path: '/agendamentoTodosServicos', label: 'Agendamento por Profissional (Todos Serviços)' },
   { path: '/empresas', label: 'Cadastro das Empresas' },
   { path: '/consultarAlterarExcluirEmpresas', label: 'Consultar, Alterar e Excluir Empresas' },
   { path: '/usuarios', label: 'Cadastro de Usuários' },
@@ -15,9 +18,6 @@ const navItems = [
   { path: '/profissionais', label: 'Cadastro de Profissionais' },
   { path: '/profissionaisServicos', label: 'Cadastro de Profissionais X Serviços' },
   { path: '/disponibilidades', label: 'Cadastro de Disponibilidade dos Profissionais' },
-  { path: '/agendamentos', label: 'Agendamento por Serviço e Profissional' },
-  { path: '/agendamentoTodosProfissionais', label: 'Agendamento por Serviço (Todos Profissionais)' },
-  { path: '/agendamentoTodosServicos', label: 'Agendamento por Profissional (Todos Serviços)' },
 ];
 
 const Sidebar = ({ onToggle }) => {
