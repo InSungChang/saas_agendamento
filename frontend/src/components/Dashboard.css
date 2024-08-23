@@ -28,6 +28,27 @@
   margin-left: 50px;
 }
 
+.dashboard-layout.sidebar-closed {
+  padding-left: 40px; /* ajuste a largura da barra lateral */
+}
+
+.dashboard-layout.sidebar-closed .sidebar {
+  width: 40px; /* ajuste a largura da barra lateral */
+  overflow: hidden;
+  
+}
+
+.dashboard-layout.sidebar-closed .sidebar .toggle-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+}
+
+.dashboard-layout.sidebar-closed .sidebar .sidebar-nav {
+  display: none;
+}
+
 .logout-button {
   background-color: #512da8; /* Cor principal */
   color: #fff; /* Cor do texto */

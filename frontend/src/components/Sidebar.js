@@ -33,6 +33,7 @@ const Sidebar = ({ onToggle }) => {
       <button className="toggle-button" onClick={toggleSidebar}>
         {isOpen ? <FaEllipsisV /> : <FaBars />} {/* Usa os ícones do react-icons/fa */}
       </button>
+      
       <nav className="sidebar-nav">
         <ul>
           {navItems.map(({ path, label, icon }) => (
@@ -44,6 +45,7 @@ const Sidebar = ({ onToggle }) => {
           ))}
         </ul>
       </nav>
+      
     </div>
   );
 };

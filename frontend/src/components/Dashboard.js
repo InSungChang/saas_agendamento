@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'; // Adicionado useNavigate
 const Dashboard = () => {
 
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleSidebarToggle = (isOpen) => {
     setIsSidebarOpen(isOpen);
