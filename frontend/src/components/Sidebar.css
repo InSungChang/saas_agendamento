@@ -67,3 +67,11 @@
 .toggle-button:hover {
   background-color: #512da8;
 }
+
+.sidebar.open p {
+  font-size: 13px;
+}
+
+.sidebar.closed p {
+  display: none;
+}

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FaBars, FaEllipsisV } from 'react-icons/fa'; // Importa os ícones do react-icons/fa
 import './Sidebar.css';
+
+import { AuthContext } from '../AuthContext';
 
 const navItems = [
   { path: '/login', label: 'Sair' },
@@ -23,6 +25,8 @@ const navItems = [
 const Sidebar = ({ onToggle }) => {
   const [isOpen, setIsOpen] = useState(true);
 
+  const { usuarioLogado, empresa } = useContext(AuthContext);
+
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
     onToggle(!isOpen);
@@ -33,7 +37,8 @@ const Sidebar = ({ onToggle }) => {
       <button className="toggle-button" onClick={toggleSidebar}>
         {isOpen ? <FaEllipsisV /> : <FaBars />} {/* Usa os ícones do react-icons/fa */}
       </button>
-      
+      <p>Usuário Logado: {usuarioLogado ? usuarioLogado.nome : 'Carregando...'}</p>
+      <p>Empresa: {empresa ? empresa.nome : 'Carregando...'}</p>
       <nav className="sidebar-nav">
         <ul>
           {navItems.map(({ path, label, icon }) => (

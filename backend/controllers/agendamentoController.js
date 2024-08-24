@@ -2,8 +2,8 @@ const db = require('../config/db');
 const Agendamento = require('../models/agendamento');
 
 exports.createAgendamento = async (req, res) => {
-  const { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento } = req.body;
-  const novoAgendamento = { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento };
+  const { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
+  const novoAgendamento = { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status };
 
   try {
     const result = await Agendamento.create(novoAgendamento);

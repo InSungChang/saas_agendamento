@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './DisponibilidadesPageTodosProfissionais.css';
 import Sidebar from './Sidebar';
+import axios from 'axios'; 
+import { AuthContext } from '../AuthContext';
 
 const DisponibilidadePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { disponibilidades, agendamento, profissionais, servicos } = location.state;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+
+  const { empresa } = useContext(AuthContext);
 
   const handleSidebarToggle = (isOpen) => {
     setIsSidebarOpen(isOpen);
@@ -17,9 +23,39 @@ const DisponibilidadePage = () => {
     navigate(-1);
   };
 
-  const handleSelecionarHorario = (data, horario) => {
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+  const handleSelecionarHorario = async (data, horario) => {
     console.log(`Horário selecionado: ${data} ${horario.inicio} - ${horario.fim}`);
-    // Aqui você pode implementar a lógica para selecionar o horário
+    // Criando o objeto agendamento com os dados necessários
+    const novoAgendamento = {
+      empresa_id: `${empresa.id}`,
+      cliente_id: agendamento.cliente_id,
+      profissional_id: agendamento.profissional_id,
+      servico_id: agendamento.servico_id,
+      data_horario_agendamento: `${data} ${horario.inicio}`,
+      status: 'agendado'
+    };
+
+    console.log('Antes do erro: ', novoAgendamento);
+
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Dentro do try: ', novoAgendamento);
+      const response = await axios.post(`${API_BASE_URL}/agendamentos`, novoAgendamento, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(response.data);
+      setMessage('Agendamento realizado com sucesso!');
+      setMessageType('success');
+    } catch (error) {
+      console.error('Erro ao realizar agendamento:', error);
+      setMessage('Erro ao realizar agendamento.');
+      setMessageType('error');
+    }
+
   };
 
   return (
@@ -27,6 +63,7 @@ const DisponibilidadePage = () => {
     <Sidebar onToggle={handleSidebarToggle} />
     <div className="disponibilidade-container">
       <h2>Disponibilidades</h2>
+      {message && <div className={`floating-message ${messageType}`}>{message}</div>}
       <div className="disponibilidades-grid">
         {disponibilidades.map((disp, index) => (
           <div key={index} className="disponibilidade-item">
