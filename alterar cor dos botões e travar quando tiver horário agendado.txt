@@ -1,3 +1,134 @@
+agora preciso travar os botões nos horários ocupados conforme tabela de agendamentos e até mudar de cor dos botões dos horários ocupados, uma cor de alerta, mas uma cor discreta. seria ideal nos horários ocupados, aparecesse além dos horários iniciais e finais, quando tiver horário ocupado, trazer os dados da tabela de agendamentos, mostrar o nome do cliente e o serviço que ficou agendado.
+
+segue os códigos para estudo e ajuste nos códigos para realização da tarefa acima.
+
+agendamentoController.js:
+const db = require('../config/db');
+const Agendamento = require('../models/agendamento');
+
+// Função para verificar conflitos de agendamento
+const verificarConflitoAgendamento = async (empresa_id, profissional_id, data_horario_agendamento, servico_id) => {
+  const [result] = await db.promise().query(
+    `SELECT * FROM agendamentos 
+     WHERE empresa_id = ? 
+     AND profissional_id = ? 
+     AND (
+       (? < TIMESTAMPADD(MINUTE, (SELECT duracao FROM servicos WHERE id = agendamentos.servico_id), data_horario_agendamento)) 
+       AND 
+       (TIMESTAMPADD(MINUTE, (SELECT duracao FROM servicos WHERE id = ?), ?) > data_horario_agendamento)
+     )`,
+    [empresa_id, profissional_id, data_horario_agendamento, servico_id, data_horario_agendamento]
+  );
+/*   console.log('Resultado da verificação: ', result); */  
+  return result.length > 0;
+};
+
+
+exports.createAgendamento = async (req, res) => {
+  const { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
+
+  // Verificar se todos os campos obrigatórios foram fornecidos
+  if (!empresa_id || !cliente_id || !profissional_id || !servico_id || !data_horario_agendamento) {
+    return res.status(400).send({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  try {
+    // Verificar se já existe um conflito de agendamento
+    const conflito = await verificarConflitoAgendamento(empresa_id, profissional_id, data_horario_agendamento, servico_id);
+    if (conflito) {
+      return res.status(400).send({ message: 'Horário já reservado. Por favor, escolha outro horário.' });
+    }
+
+    const novoAgendamento = { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status };
+    const result = await Agendamento.create(novoAgendamento);
+    res.status(201).send({ message: 'Agendamento criado com sucesso', agendamentoId: result.insertId });
+  } catch (err) {
+    res.status(500).send({ message: 'Erro ao criar agendamento', error: err.message });
+  }
+};
+
+exports.getAgendamentosByProfissional = async (req, res) => {
+  const { profissionalId } = req.params;
+  const empresa_id = req.user.empresa_id; // Assumindo que o ID da empresa está armazenado no token do usuário
+  
+  try {
+    const [results] = await db.promise().query(
+      'SELECT * FROM agendamentos WHERE profissional_id = ? AND empresa_id = ?',
+      [profissionalId, empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos por profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar agendamentos por profissional' });
+  }
+};
+
+
+exports.getAgendamentos = async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM agendamentos WHERE empresa_id = ?', [empresa_id]);
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos:', error);
+    res.status(500).json({ error: 'Erro ao buscar agendamentos' });
+  }
+};
+
+exports.updateAgendamento = async (req, res) => {
+  const { id } = req.params;
+  const { cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE agendamentos SET cliente_id = ?, profissional_id = ?, servico_id = ?, data_horario_agendamento = ?, status = ? WHERE id = ?',
+      [cliente_id, profissional_id, servico_id, data_horario_agendamento, status, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Agendamento atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar agendamento:', error);
+    res.status(500).json({ error: 'Erro ao atualizar agendamento' });
+  }
+};
+
+exports.deleteAgendamento = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM agendamentos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Agendamento deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao deletar agendamento:', error);
+    res.status(500).json({ error: 'Erro ao deletar agendamento' });
+  }
+};
+
+agendamento.js:
+const express = require('express');
+const router = express.Router();
+const agendamentoController = require('../controllers/agendamentoController');
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/agendamentos', authMiddleware, agendamentoController.createAgendamento);
+router.get('/agendamentos', authMiddleware, agendamentoController.getAgendamentos);
+router.put('/agendamentos/:id', authMiddleware, agendamentoController.updateAgendamento);
+router.delete('/agendamentos/:id', authMiddleware, agendamentoController.deleteAgendamento);
+router.get('/agendamentos/profissional/:profissionalId', authMiddleware, agendamentoController.getAgendamentosByProfissional);
+
+
+module.exports = router;
+
+AgendamentoForm.js:
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './AgendamentoForm.css';
@@ -155,7 +286,6 @@ const AgendamentoForm = () => {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(agendamentoResponse => {
-            console.log('Retorno do backend1: ', agendamentoResponse.data);
             const agendamentosExistentes = agendamentoResponse.data;
             const disponibilidadesFiltradas = filtrarHorarios(disponibilidadesFormatadas, agendamentosExistentes);
             setDisponibilidades(disponibilidadesFiltradas);
@@ -181,11 +311,11 @@ const AgendamentoForm = () => {
         const horarioInicio = new Date(`${dia.data}T${horario.inicio}`);
         const horarioFim = new Date(`${dia.data}T${horario.fim}`);
   
-        const agendamentoConflito = agendamentos.find(ag => {
+        const conflito = agendamentos.some(ag => {
           const agendamentoInicio = new Date(ag.data_horario_agendamento);
           const agendamentoFim = new Date(ag.data_horario_agendamento);
           agendamentoFim.setMinutes(agendamentoFim.getMinutes() + ag.servico_duracao);
-  
+          
           return (
             (agendamentoInicio < horarioFim) && 
             (agendamentoFim > horarioInicio)
@@ -194,19 +324,16 @@ const AgendamentoForm = () => {
   
         return {
           ...horario,
-          ocupado: Boolean(agendamentoConflito),
-          cliente_nome: agendamentoConflito ? agendamentoConflito.cliente_nome : null,
-          servico_nome: agendamentoConflito ? agendamentoConflito.servico_nome : null
+          ocupado: conflito
         };
       });
-  
+
       return {
         ...dia,
         horarios: horariosFiltrados
       };
     });
   };
-  
   
   const formatarDisponibilidades = (disponibilidades, dias, servicoDuracao) => {
     if (!disponibilidades || disponibilidades.length === 0) {
@@ -350,3 +477,106 @@ const AgendamentoForm = () => {
 };
 
 export default AgendamentoForm;
+
+DisponibilidadesPage.js:
+import React, { useState, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import './DisponibilidadesPage.css';
+import Sidebar from './Sidebar';
+import axios from 'axios'; 
+import { AuthContext } from '../AuthContext';
+
+const DisponibilidadePage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { disponibilidades, agendamento, profissionais, servicos } = location.state;
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+
+  const { empresa } = useContext(AuthContext);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
+
+  const handleVoltar = () => {
+    navigate(-1);
+  };
+
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+  const handleSelecionarHorario = async (data, horario) => {
+    console.log(`Horário selecionado: ${data} ${horario.inicio} - ${horario.fim}`);
+    // Criando o objeto agendamento com os dados necessários
+    console.log('Empresa ID: ', empresa.id);
+    const novoAgendamento = {
+      empresa_id: `${empresa.id}`,
+      cliente_id: agendamento.cliente_id,
+      profissional_id: agendamento.profissional_id,
+      servico_id: agendamento.servico_id,
+      data_horario_agendamento: `${data} ${horario.inicio}`,
+      status: 'agendado'
+    };
+
+    console.log('Antes do erro: ', novoAgendamento);
+
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Dentro do try: ', novoAgendamento);
+      const response = await axios.post(`${API_BASE_URL}/agendamentos`, novoAgendamento, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(response.data);
+      setMessage('Agendamento realizado com sucesso!');
+      setMessageType('success');
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setMessage(error.response.data.message || 'Dados inválidos ou conflito de horário.');
+        setMessageType('error');
+      } else {
+        console.error('Erro ao realizar agendamento:', error);
+        setMessage('Erro ao realizar agendamento.');
+        setMessageType('error');
+      }
+    }
+
+  };
+
+  return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
+    <div className="disponibilidade-container">
+      <h2>Disponibilidades</h2>
+      {message && <div className={`floating-message ${messageType}`}>{message}</div>}
+      <div className="disponibilidades-grid">
+        {disponibilidades.map((disp, index) => (
+          <div key={index} className="disponibilidade-item">
+            <p>{disp.data} ({disp.diaSemana})</p>
+            <p>{agendamento.profissional_id && profissionais.find(p => p.id === parseInt(agendamento.profissional_id))?.nome}</p>
+            <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
+            <p>Duração: {agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.duracao} Minutos</p>
+            {disp.horarios.map((horario, idx) => (
+  <button 
+    key={idx} 
+    onClick={() => !horario.ocupado && handleSelecionarHorario(disp.data, horario)}
+    disabled={horario.ocupado}
+    className={horario.ocupado ? 'ocupado' : ''}
+    title={horario.ocupado ? `Ocupado: ${horario.cliente_nome} (${horario.servico_nome})` : ''}
+  >
+    {`${horario.inicio} - ${horario.fim}`}
+  </button>
+))}
+
+          </div>
+        ))}
+      </div>
+      <button onClick={handleVoltar} className="voltar-button">Voltar</button>
+    </div>
+    </div>
+  );
+};
+
+export default DisponibilidadePage;

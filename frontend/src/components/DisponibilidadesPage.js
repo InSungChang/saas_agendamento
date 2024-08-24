@@ -28,7 +28,6 @@ const DisponibilidadePage = () => {
   const handleSelecionarHorario = async (data, horario) => {
     console.log(`Horário selecionado: ${data} ${horario.inicio} - ${horario.fim}`);
     // Criando o objeto agendamento com os dados necessários
-    console.log('Empresa ID: ', empresa.id);
     const novoAgendamento = {
       empresa_id: `${empresa.id}`,
       cliente_id: agendamento.cliente_id,
@@ -78,17 +77,16 @@ const DisponibilidadePage = () => {
             <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
             <p>Duração: {agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.duracao} Minutos</p>
             {disp.horarios.map((horario, idx) => (
-  <button 
-    key={idx} 
-    onClick={() => !horario.ocupado && handleSelecionarHorario(disp.data, horario)}
-    disabled={horario.ocupado}
-    className={horario.ocupado ? 'ocupado' : ''}
-    title={horario.ocupado ? `Ocupado: ${horario.cliente_nome} (${horario.servico_nome})` : ''}
-  >
-    {`${horario.inicio} - ${horario.fim}`}
-  </button>
-))}
-
+              <button 
+                  key={idx} 
+                  onClick={() => !horario.ocupado && handleSelecionarHorario(disp.data, horario)}
+                  disabled={horario.ocupado}
+                  className={horario.ocupado ? 'ocupado' : ''}
+                  title={horario.ocupado ? `Ocupado pelo cliente: ${horario.cliente_nome} - Serviço: ${horario.servico_nome}` : ''}
+                >
+                  {`${horario.inicio} - ${horario.fim}`}
+                </button>
+              ))}
           </div>
         ))}
       </div>

@@ -48,10 +48,15 @@ exports.getAgendamentosByProfissional = async (req, res) => {
   
   try {
     const [results] = await db.promise().query(
-      'SELECT * FROM agendamentos WHERE profissional_id = ? AND empresa_id = ?',
+      `SELECT a.id, a.data_horario_agendamento, c.nome AS cliente_nome, s.nome AS servico_nome, s.duracao AS servico_duracao
+       FROM agendamentos a
+       JOIN clientes c ON a.cliente_id = c.id
+       JOIN servicos s ON a.servico_id = s.id
+       WHERE a.profissional_id = ? AND a.empresa_id = ?`,
       [profissionalId, empresa_id]
     );
     res.json(results);
+    console.log('Retorno do sql: ', results);
   } catch (error) {
     console.error('Erro ao buscar agendamentos por profissional:', error);
     res.status(500).json({ error: 'Erro ao buscar agendamentos por profissional' });
