@@ -62,15 +62,24 @@ const AgendamentoForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setAgendamento({ ...agendamento, [name]: value });
-
+  
     if (name === 'servico_id') {
       carregarProfissionaisPorServico(value);
     }
-
+  
     if (name === 'profissional_id') {
       carregarDisponibilidades(value);
     }
-  };
+  
+    // Validar campos obrigatórios
+    if (!agendamento.cliente_id || !agendamento.servico_id || !agendamento.profissional_id || !agendamento.data_horario_agendamento) {
+      setMessage('Todos os campos são obrigatórios');
+      setMessageType('error');
+    } else {
+      setMessage('');
+      setMessageType('');
+    }
+  }; 
 
   const carregarProfissionaisPorServico = (servicoId) => {
     const token = localStorage.getItem('token');
@@ -140,14 +149,61 @@ const AgendamentoForm = () => {
         console.log('Dados recebidos:', response.data);
         const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao, servicoDuracao);
         console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
-        setDisponibilidades(disponibilidadesFormatadas);
+  
+        // Filtrar disponibilidades baseado em agendamentos existentes
+        axios.get(`${API_BASE_URL}/agendamentos/profissional/${profissionalId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(agendamentoResponse => {
+            const agendamentosExistentes = agendamentoResponse.data;
+            const disponibilidadesFiltradas = filtrarHorarios(disponibilidadesFormatadas, agendamentosExistentes);
+            setDisponibilidades(disponibilidadesFiltradas);
+          })
+          .catch(error => {
+            console.error('Erro ao carregar agendamentos:', error);
+            setDisponibilidades([]);
+            setMessage('Erro ao carregar agendamentos. Por favor, tente novamente.');
+            setMessageType('error');
+          });
       })
       .catch(error => {
         console.error('Erro ao carregar disponibilidades:', error);
         setDisponibilidades([]);
+        setMessage('Erro ao carregar disponibilidades. Por favor, tente novamente.');
+        setMessageType('error');
       });
   };
+  
+  const filtrarHorarios = (disponibilidades, agendamentos) => {
+    return disponibilidades.map(dia => {
+      const horariosFiltrados = dia.horarios.map(horario => {
+        const horarioInicio = new Date(`${dia.data}T${horario.inicio}`);
+        const horarioFim = new Date(`${dia.data}T${horario.fim}`);
+  
+        const conflito = agendamentos.some(ag => {
+          const agendamentoInicio = new Date(ag.data_horario_agendamento);
+          const agendamentoFim = new Date(ag.data_horario_agendamento);
+          agendamentoFim.setMinutes(agendamentoFim.getMinutes() + ag.servico_duracao);
+          
+          return (
+            (agendamentoInicio < horarioFim) && 
+            (agendamentoFim > horarioInicio)
+          );
+        });
+  
+        return {
+          ...horario,
+          ocupado: conflito
+        };
+      });
 
+      return {
+        ...dia,
+        horarios: horariosFiltrados
+      };
+    });
+  };
+  
   const formatarDisponibilidades = (disponibilidades, dias, servicoDuracao) => {
     if (!disponibilidades || disponibilidades.length === 0) {
       return [];
@@ -212,8 +268,13 @@ const AgendamentoForm = () => {
       setMessage('Agendamento realizado com sucesso!');
       setMessageType('success');
     } catch (err) {
-      setMessage('Erro ao realizar agendamento.');
-      setMessageType('error');
+      if (err.response && err.response.status === 400) {
+        setMessage(err.response.data.message || 'Dados inválidos ou conflito de horário.');
+        setMessageType('error');  
+      } else {
+        setMessage('Erro ao realizar agendamento. Por favor, tente novamente.');
+        setMessageType('error');
+      }
     } finally {
       setLoading(false);
     }

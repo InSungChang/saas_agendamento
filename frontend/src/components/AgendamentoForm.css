@@ -161,6 +161,7 @@
   border-radius: 4px;
   color: white;
   z-index: 200;
+  transition: opacity 0.3s ease;
 }
 
 .floating-message.success {

@@ -20,7 +20,31 @@
     border-radius: 5px;
   }
   
+  .ocupado {
+    background-color: #ffcccc; /* Cor de fundo para indicar ocupação */
+    cursor: not-allowed; /* Cursor de não permitido */
+  }
   
+/* Mensagem de sucesso ou erro */
+.disponibilidade-container .floating-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  border-radius: 4px;
+  color: white;
+  z-index: 200;
+  transition: opacity 0.3s ease;
+}
+
+.disponibilidade-container .floating-message.success {
+  background-color: #4caf50;
+}
+
+.disponibilidade-container .floating-message.error {
+  background-color: #f44336;
+}
+
   @media (max-width: 480px) {
 
     .form-layout.sidebar-closed {

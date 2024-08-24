@@ -7,5 +7,7 @@ router.post('/agendamentos', authMiddleware, agendamentoController.createAgendam
 router.get('/agendamentos', authMiddleware, agendamentoController.getAgendamentos);
 router.put('/agendamentos/:id', authMiddleware, agendamentoController.updateAgendamento);
 router.delete('/agendamentos/:id', authMiddleware, agendamentoController.deleteAgendamento);
+router.get('/agendamentos/profissional/:profissionalId', authMiddleware, agendamentoController.getAgendamentosByProfissional);
+
 
 module.exports = router;

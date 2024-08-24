@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import './DisponibilidadesPageTodosProfissionais.css';
+import './DisponibilidadesPage.css';
 import Sidebar from './Sidebar';
 import axios from 'axios'; 
 import { AuthContext } from '../AuthContext';
@@ -28,6 +28,7 @@ const DisponibilidadePage = () => {
   const handleSelecionarHorario = async (data, horario) => {
     console.log(`Horário selecionado: ${data} ${horario.inicio} - ${horario.fim}`);
     // Criando o objeto agendamento com os dados necessários
+    console.log('Empresa ID: ', empresa.id);
     const novoAgendamento = {
       empresa_id: `${empresa.id}`,
       cliente_id: agendamento.cliente_id,
@@ -51,9 +52,14 @@ const DisponibilidadePage = () => {
       setMessage('Agendamento realizado com sucesso!');
       setMessageType('success');
     } catch (error) {
-      console.error('Erro ao realizar agendamento:', error);
-      setMessage('Erro ao realizar agendamento.');
-      setMessageType('error');
+      if (error.response && error.response.status === 400) {
+        setMessage(error.response.data.message || 'Dados inválidos ou conflito de horário.');
+        setMessageType('error');
+      } else {
+        console.error('Erro ao realizar agendamento:', error);
+        setMessage('Erro ao realizar agendamento.');
+        setMessageType('error');
+      }
     }
 
   };
@@ -72,13 +78,17 @@ const DisponibilidadePage = () => {
             <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
             <p>Duração: {agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.duracao} Minutos</p>
             {disp.horarios.map((horario, idx) => (
-              <button 
-                key={idx} 
-                onClick={() => handleSelecionarHorario(disp.data, horario)}
-              >
-                {`${horario.inicio} - ${horario.fim}`}
-              </button>
-            ))}
+  <button 
+    key={idx} 
+    onClick={() => !horario.ocupado && handleSelecionarHorario(disp.data, horario)}
+    disabled={horario.ocupado}
+    className={horario.ocupado ? 'ocupado' : ''}
+    title={horario.ocupado ? `Ocupado: ${horario.cliente_nome} (${horario.servico_nome})` : ''}
+  >
+    {`${horario.inicio} - ${horario.fim}`}
+  </button>
+))}
+
           </div>
         ))}
       </div>
