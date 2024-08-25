@@ -37,8 +37,8 @@ const Sidebar = ({ onToggle }) => {
       <button className="toggle-button" onClick={toggleSidebar}>
         {isOpen ? <FaEllipsisV /> : <FaBars />} {/* Usa os ícones do react-icons/fa */}
       </button>
-      <p>Usuário Logado: {usuarioLogado ? usuarioLogado.nome : 'Carregando...'}</p>
-      <p>Empresa: {empresa ? empresa.nome : 'Carregando...'}</p>
+      <p>Empresa: {empresa ? empresa.id + '-' + empresa.nome : 'Carregando...'}</p>
+      <p>Usuário: {usuarioLogado ? usuarioLogado.nome : 'Carregando...'}</p>
       <nav className="sidebar-nav">
         <ul>
           {navItems.map(({ path, label, icon }) => (

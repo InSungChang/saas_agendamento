@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 /* import LoginPage from './components/LoginPage'; */
+import { AuthContext } from './AuthContext';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import EmpresaForm from './components/EmpresaForm';
@@ -23,25 +24,13 @@ import DisponibilidadesPageTodosServicos from './components/DisponibilidadesPage
 
 
 const App = () => {
-  const [token, setToken] = React.useState(null);
-
-  const handleLogin = (token) => {
-    localStorage.setItem('token', token); // Armazena o token no localStorage
-    setToken(token);
-  };
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken); // Recupera o token do localStorage ao inicializar
-    }
-  }, []);
+  const { usuarioLogado } = useContext(AuthContext); // Obter o usuário logado do contexto  const [token, setToken] = React.useState(null);
 
   return (
     <div>
       <Routes>
-      <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-      {token ? (
+      <Route path="/login" element={<LoginPage />} />
+        {usuarioLogado ? (
         <>
           {/* <Route path="/login" element={<LoginPage />} /> */}
           <Route path="/dashboard" element={<Dashboard />} />
