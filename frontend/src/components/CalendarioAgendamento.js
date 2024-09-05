@@ -1,4 +1,3 @@
-// CalendarioAgendamento.js
 import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -7,6 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import axios from 'axios';
 import './CalendarioAgendamento.css';
+import { useNavigate } from 'react-router-dom';
 
 const CalendarioAgendamento = () => {
   const [eventos, setEventos] = useState([]);
@@ -16,13 +16,16 @@ const CalendarioAgendamento = () => {
   const [clientes, setClientes] = useState([]);
   const [diasExibicao, setDiasExibicao] = useState(7);
   const [currentTimeEvent, setCurrentTimeEvent] = useState(null);
+  const [horaInicial, setHoraInicial] = useState('08:00:00');
+  const [horaFinal, setHoraFinal] = useState('19:00:00');
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Carregar clientes, serviços e profissionais
       axios.get(`${API_BASE_URL}/clientes`, { headers: { Authorization: `Bearer ${token}` } })
         .then(response => setClientes(response.data))
         .catch(error => console.error('Erro ao carregar clientes:', error));
@@ -58,7 +61,7 @@ const CalendarioAgendamento = () => {
     };
 
     atualizarLinhaTempo();
-    const intervalId = setInterval(atualizarLinhaTempo, 60000); // Atualiza a cada minuto
+    const intervalId = setInterval(atualizarLinhaTempo, 60000);
 
     return () => clearInterval(intervalId);
   }, []);
@@ -69,9 +72,7 @@ const CalendarioAgendamento = () => {
       const response = await axios.get(`${API_BASE_URL}/agendamentos`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('Dados recebidos dos agendamentos:', response.data);
       const eventosFormatados = formatarEventos(response.data);
-      console.log('Eventos formatados:', eventosFormatados);
       setEventos(eventosFormatados);
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error);
@@ -84,9 +85,7 @@ const CalendarioAgendamento = () => {
       const response = await axios.get(`${API_BASE_URL}/agendamentos/profissional/${profissionalId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('Dados recebidos dos agendamentos do profissional:', response.data);
       const eventosFormatados = formatarEventos(response.data);
-      console.log('Eventos formatados do profissional:', eventosFormatados);
       setEventos(eventosFormatados);
     } catch (error) {
       console.error('Erro ao carregar agendamentos do profissional:', error);
@@ -102,7 +101,7 @@ const CalendarioAgendamento = () => {
       const cliente = clientes.find(c => c.id === agendamento.cliente_id);
       const servico = servicos.find(s => s.id === agendamento.servico_id);
       const profissional = profissionais.find(p => p.id === agendamento.profissional_id);
-      const duracaoServico = servico ? servico.duracao : 60; // Duração padrão de 60 minutos se não encontrar o serviço
+      const duracaoServico = servico ? servico.duracao : 60;
 
       const dataInicio = new Date(agendamento.data_horario_agendamento);
       const dataFim = new Date(dataInicio.getTime() + duracaoServico * 60000);
@@ -142,7 +141,6 @@ const CalendarioAgendamento = () => {
 
   const handleEventDrop = (dropInfo) => {
     console.log('Evento movido:', dropInfo.event);
-    // Aqui você pode implementar a lógica para atualizar o agendamento no backend
   };
 
   const filtrarPorProfissional = (profissionalId) => {
@@ -154,17 +152,51 @@ const CalendarioAgendamento = () => {
     }
   };
 
+  const handleCancel = () => {
+    navigate('/dashboard');
+  };
+
   return (
-    <div className="calendario-container">
-      <div className="filtro-profissionais">
-        <select onChange={(e) => filtrarPorProfissional(e.target.value)} value={profissionalSelecionado}>
-          <option value="">Todos os profissionais</option>
-          {profissionais.map(prof => (
-            <option key={prof.id} value={prof.id}>{prof.nome}</option>
-          ))}
-        </select>
+    <div className="calendario-container">  
+      <div className="lista-profissionais">
+        <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+        <div 
+          className="profissional-item" 
+          style={{ backgroundColor: '#000' }} 
+          onClick={() => filtrarPorProfissional('')}
+        >
+          Todos os Profissionais
+        </div>
+        {profissionais.map(prof => (
+          <div 
+            key={prof.id} 
+            className="profissional-item" 
+            style={{ backgroundColor: prof.cor }} 
+            onClick={() => filtrarPorProfissional(prof.id)}
+          >
+            {prof.nome}
+          </div>
+        ))}
       </div>
       <div className="calendar-wrapper">
+        <div className="filtro-horario">
+          <label>
+            Hora Inicial:
+            <input 
+              type="time" 
+              value={horaInicial} 
+              onChange={(e) => setHoraInicial(e.target.value)} 
+            />
+          </label>
+          <label>
+            Hora Final:
+            <input 
+              type="time" 
+              value={horaFinal} 
+              onChange={(e) => setHoraFinal(e.target.value)} 
+            />
+          </label>
+        </div>
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
@@ -185,10 +217,13 @@ const CalendarioAgendamento = () => {
           height="auto"
           contentHeight="auto"
           stickyHeaderDates={true}
+          slotMinTime={horaInicial}
+          slotMaxTime={horaFinal}
         />
       </div>
     </div>
   );
+  
 };
 
 export default CalendarioAgendamento;
