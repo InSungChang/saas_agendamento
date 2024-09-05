@@ -1,0 +1,942 @@
+tenho código abaixo onde faz agendamento, escolhendo serviço e escolhendo profissional. acredito que ele está funcionando a parte lógica de regra de negócio, tem a parte de não agendar um horário que o profissional tem agendamento e também do conflito de horas baseando duração de cada serviço. agora preciso criar uma nova tela que seja gráfico, tipo um calendário, para que o usuário tenha mais facilidades para marcar agendamento ao cliente. seria ideal criar do zero ou usar algo que alguém já criou e modificar para minha necessidade? não tenho interesse de biblioteca ou framework que eu terei que pagar para comercializar o meu SaaS. preciso de código aberto/open source para criar a tela de agendamento com layout de calendário. estou anexando modelo do calendário, visual por mês, semana e dia.
+
+agendamentoController.js:
+const db = require('../config/db');
+const Agendamento = require('../models/agendamento');
+
+// Função para verificar conflitos de agendamento
+const verificarConflitoAgendamento = async (empresa_id, profissional_id, data_horario_agendamento, servico_id) => {
+  const [result] = await db.promise().query(
+    `SELECT * FROM agendamentos 
+     WHERE empresa_id = ? 
+     AND profissional_id = ? 
+     AND (
+       (? < TIMESTAMPADD(MINUTE, (SELECT duracao FROM servicos WHERE id = agendamentos.servico_id), data_horario_agendamento)) 
+       AND 
+       (TIMESTAMPADD(MINUTE, (SELECT duracao FROM servicos WHERE id = ?), ?) > data_horario_agendamento)
+     )`,
+    [empresa_id, profissional_id, data_horario_agendamento, servico_id, data_horario_agendamento]
+  );
+/*   console.log('Resultado da verificação: ', result); */  
+  return result.length > 0;
+};
+
+
+exports.createAgendamento = async (req, res) => {
+  const { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
+
+  // Verificar se todos os campos obrigatórios foram fornecidos
+  if (!empresa_id || !cliente_id || !profissional_id || !servico_id || !data_horario_agendamento) {
+    return res.status(400).send({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  try {
+    // Verificar se já existe um conflito de agendamento
+    const conflito = await verificarConflitoAgendamento(empresa_id, profissional_id, data_horario_agendamento, servico_id);
+    if (conflito) {
+      return res.status(400).send({ message: 'Horário já reservado. Por favor, escolha outro horário.' });
+    }
+
+    const novoAgendamento = { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status };
+    const result = await Agendamento.create(novoAgendamento);
+    res.status(201).send({ message: 'Agendamento criado com sucesso', agendamentoId: result.insertId });
+  } catch (err) {
+    res.status(500).send({ message: 'Erro ao criar agendamento', error: err.message });
+  }
+};
+
+exports.getAgendamentosByProfissional = async (req, res) => {
+  const { profissionalId } = req.params;
+  const empresa_id = req.user.empresa_id; // Assumindo que o ID da empresa está armazenado no token do usuário
+  
+  try {
+    const [results] = await db.promise().query(
+      `SELECT a.id, a.data_horario_agendamento, c.nome AS cliente_nome, s.nome AS servico_nome, s.duracao AS servico_duracao
+       FROM agendamentos a
+       JOIN clientes c ON a.cliente_id = c.id
+       JOIN servicos s ON a.servico_id = s.id
+       WHERE a.profissional_id = ? AND a.empresa_id = ?`,
+      [profissionalId, empresa_id]
+    );
+    res.json(results);
+    console.log('Retorno do sql: ', results);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos por profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar agendamentos por profissional' });
+  }
+};
+
+
+exports.getAgendamentos = async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM agendamentos WHERE empresa_id = ?', [empresa_id]);
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos:', error);
+    res.status(500).json({ error: 'Erro ao buscar agendamentos' });
+  }
+};
+
+exports.updateAgendamento = async (req, res) => {
+  const { id } = req.params;
+  const { cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE agendamentos SET cliente_id = ?, profissional_id = ?, servico_id = ?, data_horario_agendamento = ?, status = ? WHERE id = ?',
+      [cliente_id, profissional_id, servico_id, data_horario_agendamento, status, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Agendamento atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar agendamento:', error);
+    res.status(500).json({ error: 'Erro ao atualizar agendamento' });
+  }
+};
+
+exports.deleteAgendamento = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM agendamentos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Agendamento deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao deletar agendamento:', error);
+    res.status(500).json({ error: 'Erro ao deletar agendamento' });
+  }
+};
+
+agendamento.js:
+const db = require('../config/db');
+
+class Agendamento {
+  static create(agendamento) {
+    return new Promise((resolve, reject) => {
+      db.query('INSERT INTO agendamentos SET ?', agendamento, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+  }
+}
+
+module.exports = Agendamento;
+
+agendamento.js:
+const express = require('express');
+const router = express.Router();
+const agendamentoController = require('../controllers/agendamentoController');
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/agendamentos', authMiddleware, agendamentoController.createAgendamento);
+router.get('/agendamentos', authMiddleware, agendamentoController.getAgendamentos);
+router.put('/agendamentos/:id', authMiddleware, agendamentoController.updateAgendamento);
+router.delete('/agendamentos/:id', authMiddleware, agendamentoController.deleteAgendamento);
+router.get('/agendamentos/profissional/:profissionalId', authMiddleware, agendamentoController.getAgendamentosByProfissional);
+
+
+module.exports = router;
+
+server.js:
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/auth');
+const clienteRoutes = require('./routes/cliente');
+const usuarioRoutes = require('./routes/usuario');
+const empresaRoutes = require('./routes/empresa');
+const servicoRoutes = require('./routes/servico');
+const profissionalRoutes = require('./routes/profissional');
+const profissionalServicoRoutes = require('./routes/profissionalServico');
+const userRoutes = require('./routes/user');
+const disponibilidadeRoutes = require('./routes/disponibilidade');
+const agendamentoRoutes = require('./routes/agendamento');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api', clienteRoutes);
+app.use('/api', usuarioRoutes);
+app.use('/api', empresaRoutes);
+app.use('/api', servicoRoutes);
+app.use('/api', profissionalRoutes);
+app.use('/api', profissionalServicoRoutes);
+app.use('/api', userRoutes);
+app.use('/api', disponibilidadeRoutes);
+app.use('/api', agendamentoRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
+
+AgendamentoForm.js:
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './AgendamentoForm.css';
+import { useNavigate } from 'react-router-dom';
+import Sidebar from './Sidebar';
+
+const AgendamentoForm = () => {
+  const [clientes, setClientes] = useState([]);
+  const [servicos, setServicos] = useState([]);
+  const [profissionais, setProfissionais] = useState([]);
+  const [disponibilidades, setDisponibilidades] = useState([]);
+  const navigate = useNavigate();
+  const [agendamento, setAgendamento] = useState({
+    empresa_id: '', // Será preenchido automaticamente
+    cliente_id: '',
+    servico_id: '',
+    profissional_id: '',
+    data_horario_agendamento: ''
+  });
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [diasExibicao, setDiasExibicao] = useState(7);
+  /* const navigate = useNavigate(); */
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
+
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+  const handleExibirDisponibilidade = () => {
+    navigate('/disponibilidadesPage', { 
+      state: { 
+        disponibilidades, 
+        agendamento, 
+        profissionais, 
+        servicos 
+      } 
+    });
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Carregar clientes, serviços e profissionais
+      axios.get(`${API_BASE_URL}/clientes`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => setClientes(response.data))
+        .catch(error => console.error('Erro ao carregar clientes:', error));
+
+      axios.get(`${API_BASE_URL}/servicos`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => setServicos(response.data))
+        .catch(error => console.error('Erro ao carregar serviços:', error));
+
+      axios.get(`${API_BASE_URL}/profissionais`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => setProfissionais(response.data))
+        .catch(error => console.error('Erro ao carregar profissionais:', error));
+    }
+  }, [API_BASE_URL]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setAgendamento({ ...agendamento, [name]: value });
+  
+    if (name === 'servico_id') {
+      carregarProfissionaisPorServico(value);
+    }
+  
+    if (name === 'profissional_id') {
+      carregarDisponibilidades(value);
+    }
+  
+    // Validar campos obrigatórios
+    if (!agendamento.cliente_id || !agendamento.servico_id || !agendamento.profissional_id || !agendamento.data_horario_agendamento) {
+      setMessage('Todos os campos são obrigatórios');
+      setMessageType('error');
+    } else {
+      setMessage('');
+      setMessageType('');
+    }
+  }; 
+
+  const carregarProfissionaisPorServico = (servicoId) => {
+    const token = localStorage.getItem('token');
+    axios.get(`${API_BASE_URL}/profissionais-por-servico/${servicoId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(response => setProfissionais(response.data))
+      .catch(error => console.error('Erro ao carregar profissionais por serviço:', error));
+  };
+
+  /* const carregarDisponibilidades = (profissionalId) => {
+    const token = localStorage.getItem('token');
+  
+    axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(response => {
+        console.log('Dados recebidos:', response.data);
+        const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao);
+        console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
+        setDisponibilidades(disponibilidadesFormatadas);
+      })
+      .catch(error => {
+        console.error('Erro ao carregar disponibilidades:', error);
+        setDisponibilidades([]);
+      });
+  }; */
+
+/*   const formatarDisponibilidades = (disponibilidades, dias) => {
+    if (!disponibilidades || disponibilidades.length === 0) {
+      return [];
+    }
+  
+    const hoje = new Date();
+    const disponibilidadesFormatadas = [];
+  
+    const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  
+    for (let i = 0; i < dias; i++) {
+      const data = new Date(hoje);
+      data.setDate(hoje.getDate() + i);
+      const diaSemana = diasSemana[data.getDay()];
+  
+      const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
+  
+      if (disponibilidadesDoDia.length > 0) {
+        disponibilidadesFormatadas.push({
+          data: data.toISOString().split('T')[0],
+          diaSemana: diaSemana,
+          horarios: disponibilidadesDoDia.map(d => ({
+            inicio: d.hora_inicio,
+            fim: d.hora_fim
+          }))
+        });
+      }
+    }
+  
+    return disponibilidadesFormatadas;
+  }; */
+
+  const carregarDisponibilidades = (profissionalId) => {
+    const token = localStorage.getItem('token');
+    const servicoDuracao = servicos.find(s => s.id === parseInt(agendamento.servico_id))?.duracao;
+  
+    axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(response => {
+        console.log('Dados recebidos:', response.data);
+        const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao, servicoDuracao);
+        console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
+  
+        // Filtrar disponibilidades baseado em agendamentos existentes
+        axios.get(`${API_BASE_URL}/agendamentos/profissional/${profissionalId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(agendamentoResponse => {
+            console.log('Retorno do backend1: ', agendamentoResponse.data);
+            const agendamentosExistentes = agendamentoResponse.data;
+            const disponibilidadesFiltradas = filtrarHorarios(disponibilidadesFormatadas, agendamentosExistentes);
+            setDisponibilidades(disponibilidadesFiltradas);
+          })
+          .catch(error => {
+            console.error('Erro ao carregar agendamentos:', error);
+            setDisponibilidades([]);
+            setMessage('Erro ao carregar agendamentos. Por favor, tente novamente.');
+            setMessageType('error');
+          });
+      })
+      .catch(error => {
+        console.error('Erro ao carregar disponibilidades:', error);
+        setDisponibilidades([]);
+        setMessage('Erro ao carregar disponibilidades. Por favor, tente novamente.');
+        setMessageType('error');
+      });
+  };
+  
+  const filtrarHorarios = (disponibilidades, agendamentos) => {
+    return disponibilidades.map(dia => {
+      const horariosFiltrados = dia.horarios.map(horario => {
+        const horarioInicio = new Date(`${dia.data}T${horario.inicio}`);
+        const horarioFim = new Date(`${dia.data}T${horario.fim}`);
+  
+        const agendamentoConflito = agendamentos.find(ag => {
+          const agendamentoInicio = new Date(ag.data_horario_agendamento);
+          const agendamentoFim = new Date(ag.data_horario_agendamento);
+          agendamentoFim.setMinutes(agendamentoFim.getMinutes() + ag.servico_duracao);
+  
+          return (
+            (agendamentoInicio < horarioFim) && 
+            (agendamentoFim > horarioInicio)
+          );
+        });
+  
+        return {
+          ...horario,
+          ocupado: Boolean(agendamentoConflito),
+          cliente_nome: agendamentoConflito ? agendamentoConflito.cliente_nome : null,
+          servico_nome: agendamentoConflito ? agendamentoConflito.servico_nome : null
+        };
+      });
+  
+      return {
+        ...dia,
+        horarios: horariosFiltrados
+      };
+    });
+  };
+  
+  
+  const formatarDisponibilidades = (disponibilidades, dias, servicoDuracao) => {
+    if (!disponibilidades || disponibilidades.length === 0) {
+      return [];
+    }
+  
+    const hoje = new Date();
+    const disponibilidadesFormatadas = [];
+    const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  
+    for (let i = 0; i < dias; i++) {
+      const data = new Date(hoje);
+      data.setDate(hoje.getDate() + i);
+      const diaSemana = diasSemana[data.getDay()];
+  
+      const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
+  
+      if (disponibilidadesDoDia.length > 0) {
+        const horariosDistribuidos = distribuirHorarios(disponibilidadesDoDia[0], servicoDuracao);
+        
+        disponibilidadesFormatadas.push({
+          data: data.toISOString().split('T')[0],
+          diaSemana: diaSemana,
+          horarios: horariosDistribuidos
+        });
+      }
+    }
+  
+    return disponibilidadesFormatadas;
+  };
+  
+  const distribuirHorarios = (disponibilidade, servicoDuracao) => {
+    const horarios = [];
+    const inicio = new Date(`2000-01-01T${disponibilidade.hora_inicio}`);
+    const fim = new Date(`2000-01-01T${disponibilidade.hora_fim}`);
+  
+    while (inicio < fim) {
+      const horarioFim = new Date(inicio.getTime() + servicoDuracao * 60000);
+      if (horarioFim <= fim) {
+        horarios.push({
+          inicio: inicio.toTimeString().slice(0, 5),
+          fim: horarioFim.toTimeString().slice(0, 5)
+        });
+      }
+      inicio.setTime(inicio.getTime() + servicoDuracao * 60000);
+    }
+  
+    return horarios;
+  };
+
+  const handleCancel = () => {
+    navigate('/dashboard');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_BASE_URL}/agendamentos`, agendamento, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage('Agendamento realizado com sucesso!');
+      setMessageType('success');
+    } catch (err) {
+      if (err.response && err.response.status === 400) {
+        setMessage(err.response.data.message || 'Dados inválidos ou conflito de horário.');
+        setMessageType('error');  
+      } else {
+        setMessage('Erro ao realizar agendamento. Por favor, tente novamente.');
+        setMessageType('error');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
+    <div className="agendamento-container">    
+      <h1>Agendamento - Filtro Por Serviço + Profissional</h1>        
+      {message && <div className={`floating-message ${messageType}`}>{message}</div>}
+      <form onSubmit={handleSubmit} className="agendamento-form">        
+        <div className="agendamento-form-header">          
+          <label>Cliente</label>        
+          <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
+            <option value="">Selecione um cliente</option>
+            {clientes.map(cliente => (
+            <option key={cliente.id} value={cliente.id}>{cliente.nome}</option>
+            ))}
+          </select>
+
+          <label>Serviço</label>
+          <select name="servico_id" value={agendamento.servico_id} onChange={handleChange} required>
+            <option value="">Selecione um serviço</option>
+            {servicos.map(servico => (
+              <option key={servico.id} value={servico.id}>{servico.nome}</option>
+            ))}
+          </select>
+
+          <label>Dias de exibição</label>
+          <select value={diasExibicao} onChange={(e) => setDiasExibicao(Number(e.target.value))}>
+            <option value={7}>7 dias</option>
+            <option value={14}>14 dias</option>
+            <option value={21}>21 dias</option>
+            <option value={30}>30 dias</option>
+          </select>
+
+          <label>Profissional</label>
+          <select 
+            name="profissional_id" 
+            value={agendamento.profissional_id} 
+            onChange={handleChange} 
+            required
+            disabled={!agendamento.servico_id}
+          >
+          <option value="">Selecione um profissional</option>
+             {profissionais.map(profissional => (
+             <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
+             ))}
+          </select>
+          <div className="button-container">
+          <button 
+            type="button" 
+            onClick={handleExibirDisponibilidade} 
+            className="exibir-disponibilidade-button"
+            disabled={!agendamento.profissional_id}
+          >
+            Exibir Disponibilidade
+          </button>
+
+          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+          </div>
+        </div>
+  
+      </form>
+    </div>
+  </div>  
+  );
+};
+
+export default AgendamentoForm;
+
+DisponibilidadesPage.js:
+import React, { useState, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import './DisponibilidadesPage.css';
+import Sidebar from './Sidebar';
+import axios from 'axios'; 
+import { AuthContext } from '../AuthContext';
+
+const DisponibilidadePage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { disponibilidades, agendamento, profissionais, servicos } = location.state;
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+
+  const { empresa } = useContext(AuthContext);
+
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
+
+  const handleVoltar = () => {
+    navigate(-1);
+  };
+
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+  const handleSelecionarHorario = async (data, horario) => {
+    console.log(`Horário selecionado: ${data} ${horario.inicio} - ${horario.fim}`);
+    // Criando o objeto agendamento com os dados necessários
+    const novoAgendamento = {
+      empresa_id: `${empresa.id}`,
+      cliente_id: agendamento.cliente_id,
+      profissional_id: agendamento.profissional_id,
+      servico_id: agendamento.servico_id,
+      data_horario_agendamento: `${data} ${horario.inicio}`,
+      status: 'agendado'
+    };
+
+    console.log('Antes do erro: ', novoAgendamento);
+
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Dentro do try: ', novoAgendamento);
+      const response = await axios.post(`${API_BASE_URL}/agendamentos`, novoAgendamento, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(response.data);
+      setMessage('Agendamento realizado com sucesso!');
+      setMessageType('success');
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setMessage(error.response.data.message || 'Dados inválidos ou conflito de horário.');
+        setMessageType('error');
+      } else {
+        console.error('Erro ao realizar agendamento:', error);
+        setMessage('Erro ao realizar agendamento.');
+        setMessageType('error');
+      }
+    }
+
+  };
+
+  return (
+    <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+    <Sidebar onToggle={handleSidebarToggle} />
+    <div className="disponibilidade-container">
+      <h2>Disponibilidades</h2>
+      {message && <div className={`floating-message ${messageType}`}>{message}</div>}
+      <div className="disponibilidades-grid">
+        {disponibilidades.map((disp, index) => (
+          <div key={index} className="disponibilidade-item">
+            <p>{disp.data} ({disp.diaSemana})</p>
+            <p>{agendamento.profissional_id && profissionais.find(p => p.id === parseInt(agendamento.profissional_id))?.nome}</p>
+            <p>{agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.nome}</p>
+            <p>Duração: {agendamento.servico_id && servicos.find(s => s.id === parseInt(agendamento.servico_id))?.duracao} Minutos</p>
+            {disp.horarios.map((horario, idx) => (
+              <button 
+                  key={idx} 
+                  onClick={() => !horario.ocupado && handleSelecionarHorario(disp.data, horario)}
+                  disabled={horario.ocupado}
+                  className={horario.ocupado ? 'ocupado' : ''}
+                  title={horario.ocupado ? `Ocupado pelo cliente: ${horario.cliente_nome} - Serviço: ${horario.servico_nome}` : ''}
+                >
+                  {`${horario.inicio} - ${horario.fim}`}
+                </button>
+              ))}
+          </div>
+        ))}
+      </div>
+      <button onClick={handleVoltar} className="voltar-button">Voltar</button>
+    </div>
+    </div>
+  );
+};
+
+export default DisponibilidadePage;
+
+DisponibilidadesPage.css:
+.disponibilidades-page-container {
+    padding: 20px;
+  }
+  
+  .disponibilidades-form {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .disponibilidades-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+  }
+  
+  .disponibilidade-item {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  
+  .ocupado {
+    background-color: #ffcccc; /* Cor de fundo para indicar ocupação */
+    cursor: not-allowed; /* Cursor de não permitido */
+  }
+  
+/* Mensagem de sucesso ou erro */
+.disponibilidade-container .floating-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  border-radius: 4px;
+  color: white;
+  z-index: 200;
+  transition: opacity 0.3s ease;
+}
+
+.disponibilidade-container .floating-message.success {
+  background-color: #4caf50;
+}
+
+.disponibilidade-container .floating-message.error {
+  background-color: #f44336;
+}
+
+.disponibilidade-item button.ocupado {
+  background-color: #f44336; /* Cor de alerta, pode ajustar conforme necessidade */
+  color: white;
+  cursor: not-allowed;
+}
+
+.disponibilidade-item button.ocupado:hover {
+  background-color: #d32f2f; /* Cor de alerta mais escura ao passar o mouse */
+}
+
+  @media (max-width: 480px) {
+
+    .form-layout.sidebar-closed {
+      padding-left: 40px; /* ajuste a largura da barra lateral */
+    }
+    
+    .form-layout.sidebar-closed .sidebar {
+      width: 30px; /* ajuste a largura da barra lateral */
+      overflow: hidden;  
+      background-color: transparent;
+    }
+    
+    .form-layout.sidebar-closed .sidebar .toggle-button {
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 1;
+    }
+    
+    .form-layout.sidebar-closed .sidebar .sidebar-nav {
+      display: none;
+    }
+  
+  }
+
+Sidebar.js:
+import React, { useState, useContext } from 'react';
+import { Link } from 'react-router-dom';
+import { FaBars, FaEllipsisV } from 'react-icons/fa'; // Importa os ícones do react-icons/fa
+import './Sidebar.css';
+
+import { AuthContext } from '../AuthContext';
+
+const navItems = [
+  { path: '/login', label: 'Sair' },
+  { path: '/agendamentos', label: 'Agendamento por Serviço e Profissional' },
+  { path: '/agendamentoTodosProfissionais', label: 'Agendamento por Serviço (Todos Profissionais)' },
+  { path: '/agendamentoTodosServicos', label: 'Agendamento por Profissional (Todos Serviços)' },
+  { path: '/empresas', label: 'Cadastro das Empresas' },
+  { path: '/consultarAlterarExcluirEmpresas', label: 'Consultar, Alterar e Excluir Empresas' },
+  { path: '/usuarios', label: 'Cadastro de Usuários' },
+  { path: '/consultarAlterarExcluirUsuarios', label: 'Consultar, Alterar e Excluir Usuários' },
+  { path: '/clientes', label: 'Cadastro de Clientes' },
+  { path: '/consultarAlterarExcluirClientes', label: 'Consultar, Alterar e Excluir Clientes' },
+  { path: '/servicos', label: 'Cadastro de Serviços' },
+  { path: '/profissionais', label: 'Cadastro de Profissionais' },
+  { path: '/profissionaisServicos', label: 'Cadastro de Profissionais X Serviços' },
+  { path: '/disponibilidades', label: 'Cadastro de Disponibilidade dos Profissionais' },
+];
+
+const Sidebar = ({ onToggle }) => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  const { usuarioLogado, empresa } = useContext(AuthContext);
+
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+    onToggle(!isOpen);
+  };
+
+  return (
+    <div className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
+      <button className="toggle-button" onClick={toggleSidebar}>
+        {isOpen ? <FaEllipsisV /> : <FaBars />} {/* Usa os ícones do react-icons/fa */}
+      </button>
+      <p>Empresa: {empresa ? empresa.id + '-' + empresa.nome : 'Carregando...'}</p>
+      <p>Usuário: {usuarioLogado ? usuarioLogado.nome : 'Carregando...'}</p>
+      <nav className="sidebar-nav">
+        <ul>
+          {navItems.map(({ path, label, icon }) => (
+            <li key={path}>
+              <Link to={path}>
+              {isOpen && <span>{label}</span>}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      
+    </div>
+  );
+};
+
+export default Sidebar;
+
+AuthContext.js:
+// AuthContext.js
+import React, { createContext, useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+
+export const AuthContext = createContext();
+
+const AuthProvider = ({ children }) => {
+    const [usuarioLogado, setUsuarioLogado] = useState(null);
+    const [empresa, setEmpresa] = useState(null);
+    const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+    // Definir a função `fetchUserAndCompany` usando `useCallback` para evitar redefinição desnecessária
+    const fetchUserAndCompany = useCallback(async (token) => {
+        try {
+            const userResponse = await axios.get(`${API_BASE_URL}/usuario-logado`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUsuarioLogado(userResponse.data);
+
+            const empresaResponse = await axios.get(`${API_BASE_URL}/empresas/${userResponse.data.empresa_id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setEmpresa(empresaResponse.data);
+        } catch (error) {
+            console.error('Erro ao obter usuário logado ou dados da empresa:', error);
+        }
+    }, [API_BASE_URL]); // Incluindo API_BASE_URL como dependência
+
+    const login = async (email, senha) => {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, senha });
+            const token = response.data.token;
+            localStorage.setItem('token', token);
+            await fetchUserAndCompany(token); // Chama `fetchUserAndCompany` para atualizar usuário e empresa
+        } catch (error) {
+            console.error('Erro no login:', error);
+        }
+    };
+
+    const logout = () => {
+        localStorage.removeItem('token');
+        setUsuarioLogado(null);
+        setEmpresa(null);
+    };
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetchUserAndCompany(token); // Usa a função definida fora do `useEffect`
+        }
+    }, [fetchUserAndCompany]); // Incluindo a função como dependência
+
+    return (
+        <AuthContext.Provider value={{ usuarioLogado, empresa, login, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+
+export default AuthProvider;
+
+index.js:
+import React from 'react';
+import ReactDOM from 'react-dom/client'; // Atualize a importação
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
+import './index.css'; // Seu arquivo de estilo principal
+import AuthProvider from './AuthContext'; // Importe o AuthProvider
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <AuthProvider> {/* Envolva o App com AuthProvider */}
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
+
+App.js:
+import React, { useContext } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+
+/* import LoginPage from './components/LoginPage'; */
+import { AuthContext } from './AuthContext';
+import LoginPage from './components/LoginPage';
+import Dashboard from './components/Dashboard';
+import EmpresaForm from './components/EmpresaForm';
+import ConsultarAlterarExcluirEmpresaForm from './components/ConsultarAlterarExcluirEmpresaForm';
+import UsuarioForm from './components/UsuarioForm';
+import ConsultarAlterarExcluirUsuarioForm from './components/ConsultarAlterarExcluirUsuarioForm';
+import ClienteForm from './components/ClienteForm';
+import ConsultarAlterarExcluirClienteForm from './components/ConsultarAlterarExcluirClienteForm';
+import ServicoForm from './components/ServicoForm';
+import ProfissionalForm from './components/ProfissionalForm';
+import ProfissionalServicoForm from './components/ProfissionalServicoForm';
+import DisponibilidadeForm from './components/DisponibilidadeForm';
+import AgendamentoForm from './components/AgendamentoForm';
+import DisponibilidadesPage from './components/DisponibilidadesPage';
+import AgendamentoTodosProfissionaisForm from './components/AgendamentoTodosProfissionaisForm';
+import DisponibilidadesPageTodosProfissionais from './components/DisponibilidadesPageTodosProfissionais';
+import AgendamentoTodosServiosForm from './components/AgendamentoTodosServicosForm';
+import DisponibilidadesPageTodosServicos from './components/DisponibilidadesPageTodosServicos';
+
+
+const App = () => {
+  const { usuarioLogado } = useContext(AuthContext); // Obter o usuário logado do contexto  const [token, setToken] = React.useState(null);
+
+  return (
+    <div>
+      <Routes>
+      <Route path="/login" element={<LoginPage />} />
+        {usuarioLogado ? (
+        <>
+          {/* <Route path="/login" element={<LoginPage />} /> */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/empresas" element={<EmpresaForm />} />
+          <Route path="/ConsultarAlterarExcluirEmpresas" element={<ConsultarAlterarExcluirEmpresaForm />} />
+          <Route path="/usuarios" element={<UsuarioForm />} />
+          <Route path="/consultarAlterarExcluirUsuarios" element={<ConsultarAlterarExcluirUsuarioForm />} />
+          <Route path="/clientes" element={<ClienteForm />} />
+          <Route path="/ConsultarAlterarExcluirClientes" element={<ConsultarAlterarExcluirClienteForm />} />
+          <Route path="/servicos" element={<ServicoForm />} />
+          <Route path="/profissionais" element={<ProfissionalForm />} />
+          <Route path="/profissionaisServicos" element={<ProfissionalServicoForm />} />
+          <Route path="/disponibilidades" element={<DisponibilidadeForm />} />
+          <Route path="/agendamentos" element={<AgendamentoForm />} />
+          <Route path="/disponibilidadesPage" element={<DisponibilidadesPage />} />
+          <Route path="/agendamentoTodosProfissionais" element={<AgendamentoTodosProfissionaisForm />} />
+          <Route path="/disponibilidadesPageTodosProfissionais" element={<DisponibilidadesPageTodosProfissionais />} />
+          <Route path="/agendamentoTodosServicos" element={<AgendamentoTodosServiosForm />} />
+          <Route path="/disponibilidadesPageTodosServicos" element={<DisponibilidadesPageTodosServicos />} />
+          <Route path="/" element={<Dashboard />} />
+        </>
+      ) : (
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      )}
+      </Routes>
+    </div>
+  );
+};
+
+export default App;
+
+tabela agendamentos:
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    empresa_id INT NOT NULL,
+    cliente_id INT NOT NULL,
+    profissional_id INT NOT NULL,
+    servico_id INT NOT NULL,
+    data_horario_agendamento DATETIME NOT NULL,
+    status ENUM('agendado', 'concluido', 'cancelado') DEFAULT 'agendado',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES empresas(id),
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (profissional_id) REFERENCES profissionais(id),
+    FOREIGN KEY (servico_id) REFERENCES servicos(id)

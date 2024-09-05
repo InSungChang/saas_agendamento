@@ -7,6 +7,9 @@ import { AuthContext } from '../AuthContext';
 
 const navItems = [
   { path: '/login', label: 'Sair' },
+/*   { path: '/agenda', label: 'Calendário de Agendamento - GPT - React Big Calendar' },
+  { path: '/agendamento', label: 'Calendário de Agendamento - GPT' }, */
+  { path: '/calendarioAgendamento', label: 'Calendário de Agendamento - Claude' },
   { path: '/agendamentos', label: 'Agendamento por Serviço e Profissional' },
   { path: '/agendamentoTodosProfissionais', label: 'Agendamento por Serviço (Todos Profissionais)' },
   { path: '/agendamentoTodosServicos', label: 'Agendamento por Profissional (Todos Serviços)' },

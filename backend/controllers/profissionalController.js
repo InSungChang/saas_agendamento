@@ -2,8 +2,8 @@ const db = require('../config/db');
 const Profissional = require('../models/Profissional');
 
 exports.createProfissional = (req, res) => {
-  const { empresa_id, nome } = req.body;
-  const novoProfissional = { empresa_id, nome };
+  const { empresa_id, nome, email, telefone, ativo, cor } = req.body;
+  const novoProfissional = { empresa_id, nome, email, telefone, ativo, cor };
 
   Profissional.create(novoProfissional, (err, result) => {
     if (err) {
@@ -15,12 +15,12 @@ exports.createProfissional = (req, res) => {
 
 exports.updateProfissional = async (req, res) => {
   const { id } = req.params;
-  const { empresa_id, nome } = req.body;
+  const { empresa_id, nome, email, telefone, ativo, cor } = req.body;
 
   try {
     const [result] = await db.promise().query(
-      'UPDATE profissionais SET empresa_id = ?, nome = ? WHERE id = ?',
-      [empresa_id, nome, id]
+      'UPDATE profissionais SET empresa_id = ?, nome = ?, email = ?, telefone = ?, ativo = ?, cor = ? WHERE id = ?',
+      [empresa_id, nome, email, telefone, ativo, cor, id]
     );
     
     if (result.affectedRows > 0) {
@@ -56,4 +56,3 @@ exports.deleteProfissional = async (req, res) => {
     }
   }
 };
-

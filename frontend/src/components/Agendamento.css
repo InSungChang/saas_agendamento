@@ -1,0 +1,61 @@
+/* Agendamento.css */
+
+.agendamento-container {
+    display: flex;
+  }
+  
+  .sidebar {
+    width: 250px;
+    background-color: #f4f4f4;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+  }
+  
+  .calendar {
+    margin-bottom: 20px;
+  }
+  
+  .calendar-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .professionals ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .main-content {
+    flex: 1;
+    padding: 20px;
+  }
+  
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .toolbar button {
+    margin-right: 10px;
+  }
+  
+  .toolbar input {
+    padding: 5px;
+  }
+  
+  .calendar-view {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 20px;
+    min-height: 400px;
+  }
+  
+  .appointments .appointment {
+    padding: 10px;
+    margin-bottom: 10px;
+    color: #fff;
+    cursor: pointer;
+  }
+  

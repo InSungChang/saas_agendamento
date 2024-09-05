@@ -44,6 +44,10 @@ CREATE TABLE profissionais (
     id INT AUTO_INCREMENT PRIMARY KEY,
     empresa_id INT NOT NULL,
     nome VARCHAR(100) NOT NULL,
+    cor VARCHAR(7),
+    telefone VARCHAR(20),
+    email VARCHAR(100),
+    ativo ENUM('Ativo', 'Inativo') NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (empresa_id) REFERENCES empresas(id)
 );

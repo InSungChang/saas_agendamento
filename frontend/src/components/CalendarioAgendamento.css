@@ -1,0 +1,141 @@
+/* CalendarioAgendamento.css */
+
+.calendario-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-wrapper {
+  flex-grow: 1;
+  min-height: 0;
+}
+
+.filtro-profissionais {
+  margin-bottom: 20px;
+}
+
+.fc {
+  height: 100%;
+}
+
+.fc .fc-view-harness {
+  height: 100% !important;
+}
+
+.fc .fc-toolbar {
+  margin-bottom: 0.5em;
+}
+
+.filtro-profissionais select {
+  width: 200px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.2em;
+}
+
+.fc .fc-button-primary {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.fc .fc-button-primary:hover {
+  background-color: #45a049;
+  border-color: #45a049;
+}
+
+.fc .fc-col-header-cell-cushion {
+  padding: 10px 4px;
+}
+
+.fc .fc-daygrid-day-number {
+  padding: 4px;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+  padding: 0 4px;
+}
+
+.fc-event {
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.fc-event:hover {
+  opacity: 0.8;
+}
+
+.fc-day-today {
+  background-color: #f0fff4 !important;
+}
+
+.legenda {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.legenda-item {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+  margin-bottom: 10px;
+}
+
+.legenda-cor {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  border-radius: 50%;
+}
+
+/* Estilos para o modal de detalhes do evento */
+.evento-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.evento-modal h2 {
+  margin-top: 0;
+}
+
+.evento-modal button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.evento-modal button:hover {
+  background-color: #45a049;
+}
+
+.fc-event-title {
+  font-size: 10px;
+}
+
+@media (max-width: 768px) {
+  .fc .fc-toolbar {
+    flex-direction: column;
+  }
+  
+  .fc .fc-toolbar-title {
+    margin: 0.5em 0;
+  }
+}

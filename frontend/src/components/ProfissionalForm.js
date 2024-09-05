@@ -10,7 +10,8 @@ const ProfissionalForm = () => {
     nome: '',
     email: '',
     telefone: '',
-    ativo: true
+    ativo: 'ativo',
+    cor: '#000000' // Valor padrão para cor
   });
 
   const [message, setMessage] = useState('');
@@ -67,40 +68,42 @@ const ProfissionalForm = () => {
 
   return (
     <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-    <Sidebar onToggle={handleSidebarToggle} />
-    <div className="cadastro-profissionais-container">
-      <h1>Cadastro de Profissionais</h1>
-      <form onSubmit={handleSubmit} className="cadastro-form">
-        {message && (
-          <div className={`floating-message ${messageType}`}>
-            {message}
+      <Sidebar onToggle={handleSidebarToggle} />
+      <div className="cadastro-profissionais-container">
+        <h1>Cadastro de Profissionais</h1>
+        <form onSubmit={handleSubmit} className="cadastro-form">
+          {message && (
+            <div className={`floating-message ${messageType}`}>
+              {message}
+            </div>
+          )}
+          <label>Empresa</label>
+          <select name="empresa_id" value={profissional.empresa_id} onChange={handleChange} required>
+            <option value="">Selecione uma empresa</option>
+            {empresas.map(empresa => (
+              <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
+            ))}
+          </select>
+          <label>Nome</label>
+          <input type="text" name="nome" value={profissional.nome} onChange={handleChange} placeholder="Digite o nome do profissional" required />
+          <label>Email</label>
+          <input type="email" name="email" value={profissional.email} onChange={handleChange} placeholder="Digite o email do profissional" required />
+          <label>Telefone</label>
+          <input type="text" name="telefone" value={profissional.telefone} onChange={handleChange} placeholder="Digite o telefone do profissional" required />
+          <label>Cor de Identificação no Calendário</label>
+          <input type="color" name="cor" value={profissional.cor} onChange={handleChange} required />
+          <label>Ativo</label>
+          <select name="ativo" value={profissional.ativo} onChange={handleChange} required>
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+          </select>
+          <div className="button-container">
+            <button className="criar-button" disabled={loading}>{loading ? 'Carregando...' : 'Criar Profissional'}</button>
+            <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
           </div>
-        )}
-        <label>Empresa</label>
-        <select name="empresa_id" value={profissional.empresa_id} onChange={handleChange} required>
-          <option value="">Selecione uma empresa</option>
-          {empresas.map(empresa => (
-            <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
-          ))}
-        </select>
-        <label>Nome</label>
-        <input type="text" name="nome" value={profissional.nome} onChange={handleChange} placeholder="Digite o nome do profissional" required />
-        <label>Email</label>
-        <input type="email" name="email" value={profissional.email} onChange={handleChange} placeholder="Digite o email do profissional" required />
-        <label>Telefone</label>
-        <input type="text" name="telefone" value={profissional.telefone} onChange={handleChange} placeholder="Digite o telefone do profissional" required />
-        <label>Ativo</label>
-        <select name="ativo" value={profissional.ativo} onChange={handleChange} required>
-          <option value={true}>Ativo</option>
-          <option value={false}>Inativo</option>
-        </select>
-        <div className="button-container">
-          <button className="criar-button" disabled={loading}>{loading ? 'Carregando...' : 'Criar Profissional'}</button>
-          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
-        </div>
-      </form>
-      {error && <p className="message error">{error}</p>}
-    </div>
+        </form>
+        {error && <p className="message error">{error}</p>}
+      </div>
     </div>
   );
 };
