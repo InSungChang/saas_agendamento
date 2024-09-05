@@ -8,15 +8,18 @@
 .lista-profissionais {
   display: flex;
   flex-direction: column;
-  width: 200px; /* Ajuste conforme necessário */
-  margin-right: 8px; /* Espaço entre a lista e o calendário */
+  width: 200px;
+  /* Ajuste conforme necessário */
+  margin-right: 8px;
+  /* Espaço entre a lista e o calendário */
 }
 
 .profissional-item {
   padding: 5px;
   margin: 1px 0px;
   cursor: pointer;
-  color: white; /* Ajuste conforme necessário */
+  color: white;
+  /* Ajuste conforme necessário */
   text-align: center;
   border-radius: 5px;
   font-size: 13px;
@@ -25,6 +28,7 @@
 .calendar-wrapper {
   flex-grow: 1;
   min-height: 0;
+  margin-top: 15px;
 }
 
 .fc {
@@ -136,14 +140,16 @@
 
 .filtro-horario {
   display: flex;
-  justify-content: flex-start;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  flex-direction: column;
+  align-items: center;
 }
 
 .filtro-horario label {
   display: flex;
   flex-direction: column;
   margin-right: 10px;
+  align-items: center;
 }
 
 .filtro-horario input {
@@ -165,18 +171,102 @@
   font-size: 16px;
   margin-top: 15px;
   width: 100%;
-  margin-bottom: 10px;
 }
 
 .sair-button:hover {
   background-color: #512da8;
 }
 
+.agendar-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.agendar-button:hover {
+  background-color: #45a049;
+}
+
+/* Estilos para o modal de agendamento */
+.agendamento-modal {
+  position: fixed;
+  top: 50%;
+  left: 23.7%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.agendamento-modal button {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.agendamento-modal button:hover {
+  background-color: #45a049;
+}
+
+.current-time-line {
+  border-top: 2px solid red;
+  /* Ajuste a largura e a cor da linha conforme necessário */
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.fc-timeGridWeek-view {
+  .fc-timegrid-now-indicator-container {
+    overflow: visible !important;
+
+    .fc-timegrid-now-indicator-line {
+
+      &::before,
+      &::after {
+        content: "";
+        width: 700%;
+        border-style: solid;
+        border-width: 1px 0 0px;
+        position: absolute;
+        top: -1px;
+        border-color: red !important;
+      }
+
+      &::before {
+        right: 100%;
+      }
+
+      &::after {
+        left: 100%;
+      }
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .fc .fc-toolbar {
     flex-direction: column;
   }
-  
+
   .fc .fc-toolbar-title {
     margin: 0.5em 0;
   }
@@ -184,5 +274,4 @@
   .filtro-horario {
     justify-content: center;
   }
-
 }

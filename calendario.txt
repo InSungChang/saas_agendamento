@@ -1,4 +1,4 @@
-preciso adicionar opção de todos os profissionais na lista de profissionais que está ao lado esquerdo, quando clicara todos os profissionais deverão aparecer todo agendamento e quando clicar um profissional aparecer agendamento daquele profissional. segue os códigos para análise e alterações.
+Preciso exibir uma linha vermelha que indique hora atual quando o tipo de calendário é semanal e dia. quando for calendário semana, quero que a linha seja exibida em todas as colunas dos dias da semana. no momento está mostrando somente no dia atual, mas quando tem agendamento, a linha praticamente desaparece. segue os códigos para entendimento.
 
 CalendarioAgendamento.js:
 import React, { useState, useEffect } from 'react';
@@ -9,6 +9,8 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import axios from 'axios';
 import './CalendarioAgendamento.css';
+import { useNavigate } from 'react-router-dom';
+import CalendarioAgendamentoForm from './CalendarioAgendamentoForm'; // Importe o componente
 
 const CalendarioAgendamento = () => {
   const [eventos, setEventos] = useState([]);
@@ -18,6 +20,11 @@ const CalendarioAgendamento = () => {
   const [clientes, setClientes] = useState([]);
   const [diasExibicao, setDiasExibicao] = useState(7);
   const [currentTimeEvent, setCurrentTimeEvent] = useState(null);
+  const [horaInicial, setHoraInicial] = useState('08:00:00');
+  const [horaFinal, setHoraFinal] = useState('19:00:00');
+  const [showAgendamentoForm, setShowAgendamentoForm] = useState(false); // Estado para exibir o formulário
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -53,14 +60,16 @@ const CalendarioAgendamento = () => {
         start: now,
         end: now,
         display: 'background',
-        backgroundColor: 'red',
-        borderColor: 'red'
+        backgroundColor: 'transparent',
+        borderColor: 'red',
+        borderWidth: '2px', // Ajuste a largura da borda conforme necessário
+        classNames: ['current-time-line'] // Adicione uma classe personalizada
       });
     };
-
+  
     atualizarLinhaTempo();
     const intervalId = setInterval(atualizarLinhaTempo, 60000);
-
+  
     return () => clearInterval(intervalId);
   }, []);
 
@@ -150,21 +159,64 @@ const CalendarioAgendamento = () => {
     }
   };
 
+  const handleCancel = () => {
+    navigate('/dashboard');
+  };
+
   return (
     <div className="calendario-container">
       <div className="lista-profissionais">
+        <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+        <button
+          className="agendar-button"
+          onClick={() => setShowAgendamentoForm(true)}
+        >
+          Agendar
+        </button>
+        {showAgendamentoForm && (
+          <div className="agendamento-modal">
+            <CalendarioAgendamentoForm />
+            <button onClick={() => setShowAgendamentoForm(false)}>Fechar</button>
+          </div>
+        )}
+        <div className="filtro-horario">
+          <label>
+            Horário Inicial:
+            <input
+              type="time"
+              value={horaInicial}
+              onChange={(e) => setHoraInicial(e.target.value)}
+            />
+          </label>
+          <label>
+            Horário Final:
+            <input
+              type="time"
+              value={horaFinal}
+              onChange={(e) => setHoraFinal(e.target.value)}
+            />
+          </label>
+        </div>
+        <div
+          className="profissional-item"
+          style={{ backgroundColor: '#000' }}
+          onClick={() => filtrarPorProfissional('')}
+        >
+          Todos os Profissionais
+        </div>
         {profissionais.map(prof => (
-          <div 
-            key={prof.id} 
-            className="profissional-item" 
-            style={{ backgroundColor: prof.cor }} 
+          <div
+            key={prof.id}
+            className="profissional-item"
+            style={{ backgroundColor: prof.cor }}
             onClick={() => filtrarPorProfissional(prof.id)}
           >
             {prof.nome}
           </div>
         ))}
       </div>
-      <div className="calendar-wrapper">
+      
+      <div className="calendar-wrapper">        
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
@@ -185,6 +237,8 @@ const CalendarioAgendamento = () => {
           height="auto"
           contentHeight="auto"
           stickyHeaderDates={true}
+          slotMinTime={horaInicial}
+          slotMaxTime={horaFinal}
         />
       </div>
     </div>
@@ -205,21 +259,23 @@ CalendarioAgendamento.css:
   display: flex;
   flex-direction: column;
   width: 200px; /* Ajuste conforme necessário */
-  margin-right: 20px; /* Espaço entre a lista e o calendário */
+  margin-right: 8px; /* Espaço entre a lista e o calendário */
 }
 
 .profissional-item {
-  padding: 10px;
-  margin: 5px 0;
+  padding: 5px;
+  margin: 1px 0px;
   cursor: pointer;
   color: white; /* Ajuste conforme necessário */
   text-align: center;
   border-radius: 5px;
+  font-size: 13px;
 }
 
 .calendar-wrapper {
   flex-grow: 1;
   min-height: 0;
+  margin-top: 15px;
 }
 
 .fc {
@@ -329,6 +385,109 @@ CalendarioAgendamento.css:
   font-size: 10px;
 }
 
+.filtro-horario {
+  display: flex;
+  margin-bottom: 15px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.filtro-horario label {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+  align-items: center;
+}
+
+.filtro-horario input {
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.fc .fc-button {
+  padding: 0.4em 0.9em;
+}
+
+.sair-button {
+  background-color: #7965a6;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.sair-button:hover {
+  background-color: #512da8;
+}
+
+.agendar-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.agendar-button:hover {
+  background-color: #45a049;
+}
+
+/* Estilos para o modal de agendamento */
+.agendamento-modal {
+  position: fixed;
+  top: 50%;
+  left: 23.7%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.agendamento-modal button {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.agendamento-modal button:hover {
+  background-color: #45a049;
+}
+
+.current-time-line {
+  border-top: 2px solid red; /* Ajuste a largura e a cor da linha conforme necessário */
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10; /* Certifique-se de que a linha esteja acima de outros elementos */
+}
+
+.fc-timegrid-now-indicator-line {
+  width: 100%;
+  border-top: 2px solid red; /* Ajuste a largura e a cor da linha conforme necessário */
+  position: absolute;
+  z-index: 10; /* Certifique-se de que a linha esteja acima de outros elementos */
+}
+
 @media (max-width: 768px) {
   .fc .fc-toolbar {
     flex-direction: column;
@@ -336,5 +495,9 @@ CalendarioAgendamento.css:
   
   .fc .fc-toolbar-title {
     margin: 0.5em 0;
+  }
+
+  .filtro-horario {
+    justify-content: center;
   }
 }

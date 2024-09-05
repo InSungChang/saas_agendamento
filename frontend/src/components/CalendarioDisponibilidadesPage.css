@@ -1,0 +1,54 @@
+.disponibilidades-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.disponibilidade-item {
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.ocupado {
+  background-color: #ffcccc;
+  /* Cor de fundo para indicar ocupação */
+  cursor: not-allowed;
+  /* Cursor de não permitido */
+}
+
+/* Mensagem de sucesso ou erro */
+.disponibilidade-container .floating-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  border-radius: 4px;
+  color: white;
+  z-index: 200;
+  transition: opacity 0.3s ease;
+}
+
+.disponibilidade-container .floating-message.success {
+  background-color: #4caf50;
+}
+
+.disponibilidade-container .floating-message.error {
+  background-color: #f44336;
+}
+
+.disponibilidade-item button.ocupado {
+  background-color: #f44336;
+  /* Cor de alerta, pode ajustar conforme necessidade */
+  color: white;
+  cursor: not-allowed;
+}
+
+.disponibilidade-item button.ocupado:hover {
+  background-color: #d32f2f;
+  /* Cor de alerta mais escura ao passar o mouse */
+}
+
+@media (max-width: 480px) {
+
+}

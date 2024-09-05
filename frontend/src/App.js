@@ -24,7 +24,8 @@ import DisponibilidadesPageTodosServicos from './components/DisponibilidadesPage
 import CalendarioAgendamento from './components/CalendarioAgendamento';
 import Agendamento from './components/Agendamento';
 import Agenda from './components/Agenda';
-
+import CalendarioAgendamentoForm from './components/CalendarioAgendamentoForm';
+import CalendarioDisponibilidadesPage from './components/CalendarioDisponibilidadesPage';
 
 const App = () => {
   const { usuarioLogado } = useContext(AuthContext); // Obter o usuário logado do contexto  const [token, setToken] = React.useState(null);
@@ -56,6 +57,8 @@ const App = () => {
           <Route path="/calendarioAgendamento" element={<CalendarioAgendamento />} />
           <Route path="/agendamento" element={<Agendamento />} />
           <Route path="/agenda" element={<Agenda />} />
+          <Route path="/calendarioAgendamentos" element={<CalendarioAgendamentoForm />} />
+          <Route path="/calendarioDisponibilidadesPage" element={<CalendarioDisponibilidadesPage />} />
           <Route path="/" element={<Dashboard />} />
         </>
       ) : (

@@ -7,6 +7,7 @@ import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import axios from 'axios';
 import './CalendarioAgendamento.css';
 import { useNavigate } from 'react-router-dom';
+import CalendarioAgendamentoForm from './CalendarioAgendamentoForm'; // Importe o componente
 
 const CalendarioAgendamento = () => {
   const [eventos, setEventos] = useState([]);
@@ -18,6 +19,7 @@ const CalendarioAgendamento = () => {
   const [currentTimeEvent, setCurrentTimeEvent] = useState(null);
   const [horaInicial, setHoraInicial] = useState('08:00:00');
   const [horaFinal, setHoraFinal] = useState('19:00:00');
+  const [showAgendamentoForm, setShowAgendamentoForm] = useState(false); // Estado para exibir o formulário
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -157,46 +159,59 @@ const CalendarioAgendamento = () => {
   };
 
   return (
-    <div className="calendario-container">  
+    <div className="calendario-container">
       <div className="lista-profissionais">
         <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
-        <div 
-          className="profissional-item" 
-          style={{ backgroundColor: '#000' }} 
+        <button
+          className="agendar-button"
+          onClick={() => setShowAgendamentoForm(true)}
+        >
+          Agendar
+        </button>
+        {showAgendamentoForm && (
+          <div className="agendamento-modal">
+            <CalendarioAgendamentoForm />
+            <button onClick={() => setShowAgendamentoForm(false)}>Fechar</button>
+          </div>
+        )}
+        <div className="filtro-horario">
+          <label>
+            Horário Inicial:
+            <input
+              type="time"
+              value={horaInicial}
+              onChange={(e) => setHoraInicial(e.target.value)}
+            />
+          </label>
+          <label>
+            Horário Final:
+            <input
+              type="time"
+              value={horaFinal}
+              onChange={(e) => setHoraFinal(e.target.value)}
+            />
+          </label>
+        </div>
+        <div
+          className="profissional-item"
+          style={{ backgroundColor: '#000' }}
           onClick={() => filtrarPorProfissional('')}
         >
           Todos os Profissionais
         </div>
         {profissionais.map(prof => (
-          <div 
-            key={prof.id} 
-            className="profissional-item" 
-            style={{ backgroundColor: prof.cor }} 
+          <div
+            key={prof.id}
+            className="profissional-item"
+            style={{ backgroundColor: prof.cor }}
             onClick={() => filtrarPorProfissional(prof.id)}
           >
             {prof.nome}
           </div>
         ))}
       </div>
-      <div className="calendar-wrapper">
-        <div className="filtro-horario">
-          <label>
-            Hora Inicial:
-            <input 
-              type="time" 
-              value={horaInicial} 
-              onChange={(e) => setHoraInicial(e.target.value)} 
-            />
-          </label>
-          <label>
-            Hora Final:
-            <input 
-              type="time" 
-              value={horaFinal} 
-              onChange={(e) => setHoraFinal(e.target.value)} 
-            />
-          </label>
-        </div>
+      
+      <div className="calendar-wrapper">        
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
@@ -219,11 +234,11 @@ const CalendarioAgendamento = () => {
           stickyHeaderDates={true}
           slotMinTime={horaInicial}
           slotMaxTime={horaFinal}
+          nowIndicator={true}
         />
       </div>
     </div>
   );
-  
 };
 
 export default CalendarioAgendamento;
