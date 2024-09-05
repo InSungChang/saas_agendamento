@@ -78,10 +78,30 @@ const CalendarioAgendamento = () => {
     }
   };
 
+  const carregarEventosPorProfissional = async (profissionalId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/agendamentos/profissional/${profissionalId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log('Dados recebidos dos agendamentos do profissional:', response.data);
+      const eventosFormatados = formatarEventos(response.data);
+      console.log('Eventos formatados do profissional:', eventosFormatados);
+      setEventos(eventosFormatados);
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos do profissional:', error);
+    }
+  };
+
   const formatarEventos = (agendamentos) => {
+    if (clientes.length === 0 || servicos.length === 0 || profissionais.length === 0) {
+      return [];
+    }
+
     return agendamentos.map(agendamento => {
       const cliente = clientes.find(c => c.id === agendamento.cliente_id);
       const servico = servicos.find(s => s.id === agendamento.servico_id);
+      const profissional = profissionais.find(p => p.id === agendamento.profissional_id);
       const duracaoServico = servico ? servico.duracao : 60; // Duração padrão de 60 minutos se não encontrar o serviço
 
       const dataInicio = new Date(agendamento.data_horario_agendamento);
@@ -92,7 +112,7 @@ const CalendarioAgendamento = () => {
         title: `${cliente ? cliente.nome : 'Cliente'} - ${servico ? servico.nome : 'Serviço'}`,
         start: dataInicio,
         end: dataFim,
-        color: obterCorProfissional(agendamento.profissional_id)
+        color: profissional ? profissional.cor : obterCorProfissional(agendamento.profissional_id)
       };
     });
   };
@@ -131,19 +151,6 @@ const CalendarioAgendamento = () => {
       carregarEventosPorProfissional(profissionalId);
     } else {
       carregarEventos();
-    }
-  };
-
-  const carregarEventosPorProfissional = async (profissionalId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/agendamentos/profissional/${profissionalId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const eventosFormatados = formatarEventos(response.data);
-      setEventos(eventosFormatados);
-    } catch (error) {
-      console.error('Erro ao carregar agendamentos do profissional:', error);
     }
   };
 

@@ -48,7 +48,7 @@ exports.getAgendamentosByProfissional = async (req, res) => {
   
   try {
     const [results] = await db.promise().query(
-      `SELECT a.id, a.data_horario_agendamento, c.nome AS cliente_nome, s.nome AS servico_nome, s.duracao AS servico_duracao
+      `SELECT a.id, a.data_horario_agendamento, a.cliente_id, a.servico_id, a.profissional_id, c.nome AS cliente_nome, s.nome AS servico_nome, s.duracao AS servico_duracao
        FROM agendamentos a
        JOIN clientes c ON a.cliente_id = c.id
        JOIN servicos s ON a.servico_id = s.id
