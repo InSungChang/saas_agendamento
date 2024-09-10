@@ -1,4 +1,63 @@
-import React, { useState, useEffect, useContext } from 'react';
+vou compartilhar código para análise e alteração, preciso adicionar uma nova funcionalidade no sistema. no className="evento-modal" quero criar um botão de "cancelar", quando clicar nesse botão quero fazer uma pergunta de confirmação "Deseja cancelar este agendamento?" e o registro do agendamento quero limpar/excluir da tabela agendamentos e gravar o registro cancelado na tabela chamada cancelamentos com status "cancelado", gravar data e horário do cancelamento no campo data_horario_cancelado e restante dos campos trazer os mesmos dados da tabela agendamentos.
+
+segue estrutura das tabelas e código para análise e alterações. preciso que mostre código completo das alterações.
+
+tabela cancelamentos:
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT NOT NULL,
+  `cliente_id` INT NOT NULL,
+  `profissional_id` INT NOT NULL,
+  `servico_id` INT NOT NULL,
+  `data_horario_cancelado` DATETIME NOT NULL,
+  `status` ENUM('agendado', 'concluido', 'cancelado') NULL DEFAULT 'cancelado',
+  `criado_em` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `empresa_id` (`empresa_id` ASC) VISIBLE,
+  INDEX `cliente_id` (`cliente_id` ASC) VISIBLE,
+  INDEX `profissional_id` (`profissional_id` ASC) VISIBLE,
+  INDEX `servico_id` (`servico_id` ASC) VISIBLE,
+  CONSTRAINT `cancelamentos_ibfk_1`
+    FOREIGN KEY (`empresa_id`)
+    REFERENCES `agendar`.`empresas` (`id`),
+  CONSTRAINT `cancelamentos_ibfk_2`
+    FOREIGN KEY (`cliente_id`)
+    REFERENCES `agendar`.`clientes` (`id`),
+  CONSTRAINT `cancelamentos_ibfk_3`
+    FOREIGN KEY (`profissional_id`)
+    REFERENCES `agendar`.`profissionais` (`id`),
+  CONSTRAINT `cancelamentos_ibfk_4`
+    FOREIGN KEY (`servico_id`)
+    REFERENCES `agendar`.`servicos` (`id`))  
+
+tabela agendamentos:
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT NOT NULL,
+  `cliente_id` INT NOT NULL,
+  `profissional_id` INT NOT NULL,
+  `servico_id` INT NOT NULL,
+  `data_horario_agendamento` DATETIME NOT NULL,
+  `status` ENUM('agendado', 'concluido', 'cancelado') NULL DEFAULT 'agendado',
+  `criado_em` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `empresa_id` (`empresa_id` ASC) VISIBLE,
+  INDEX `cliente_id` (`cliente_id` ASC) VISIBLE,
+  INDEX `profissional_id` (`profissional_id` ASC) VISIBLE,
+  INDEX `servico_id` (`servico_id` ASC) VISIBLE,
+  CONSTRAINT `agendamentos_ibfk_1`
+    FOREIGN KEY (`empresa_id`)
+    REFERENCES `agendar`.`empresas` (`id`),
+  CONSTRAINT `agendamentos_ibfk_2`
+    FOREIGN KEY (`cliente_id`)
+    REFERENCES `agendar`.`clientes` (`id`),
+  CONSTRAINT `agendamentos_ibfk_3`
+    FOREIGN KEY (`profissional_id`)
+    REFERENCES `agendar`.`profissionais` (`id`),
+  CONSTRAINT `agendamentos_ibfk_4`
+    FOREIGN KEY (`servico_id`)
+    REFERENCES `agendar`.`servicos` (`id`))
+
+CalendarioAgendamento.js:
+import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -7,8 +66,7 @@ import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import axios from 'axios';
 import './CalendarioAgendamento.css';
 import { useNavigate } from 'react-router-dom';
-import CalendarioAgendamentoForm from './CalendarioAgendamentoForm';
-import { AuthContext } from '../AuthContext'; // Importe o AuthContext
+import CalendarioAgendamentoForm from './CalendarioAgendamentoForm'; // Importe o componente
 
 const CalendarioAgendamento = () => {
   const [eventos, setEventos] = useState([]);
@@ -20,18 +78,14 @@ const CalendarioAgendamento = () => {
   const [currentTimeEvent, setCurrentTimeEvent] = useState(null);
   const [horaInicial, setHoraInicial] = useState('08:00:00');
   const [horaFinal, setHoraFinal] = useState('19:00:00');
-  const [showAgendamentoForm, setShowAgendamentoForm] = useState(false);
+  const [showAgendamentoForm, setShowAgendamentoForm] = useState(false); // Estado para exibir o formulário
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   const [eventoSelecionado, setEventoSelecionado] = useState(null);
   const [showEventoModal, setShowEventoModal] = useState(false);
-  const [showConfirmacaoCancelamento, setShowConfirmacaoCancelamento] = useState(false);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
-
-  // Obter usuário logado e empresa do AuthContext
-  const { usuarioLogado } = useContext(AuthContext); // Use o AuthContext para acessar os dados do usuário
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -85,7 +139,6 @@ const CalendarioAgendamento = () => {
     const dataFim = new Date(evento.end);
 
     setEventoSelecionado({
-      id: evento.id,
       title: evento.title,
       cliente: cliente ? cliente.nome : 'Cliente',
       servico: servico ? servico.nome : 'Serviço',
@@ -99,32 +152,6 @@ const CalendarioAgendamento = () => {
 
   const handleCloseEventoModal = () => {
     setShowEventoModal(false);
-    setShowConfirmacaoCancelamento(false);
-  };
-
-  const handleCancelarAgendamento = () => {
-    setShowConfirmacaoCancelamento(true);
-  };
-
-  const confirmarCancelamento = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE_URL}/cancelamentos`, {
-        agendamento_id: eventoSelecionado.id,
-        usuario_id: usuarioLogado?.id // Usa o usuarioLogado.id do AuthContext
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      // Remover o evento cancelado da lista de eventos
-      setEventos(eventos.filter(evento => evento.id !== eventoSelecionado.id));
-
-      handleCloseEventoModal();
-      carregarEventos(); // Recarregar eventos para atualizar a visualização
-    } catch (error) {
-      console.error('Erro ao cancelar agendamento:', error);
-      alert('Ocorreu um erro ao cancelar o agendamento. Por favor, tente novamente.');
-    }
   };
 
   const carregarEventos = async () => {
@@ -305,19 +332,290 @@ const CalendarioAgendamento = () => {
             <p><strong>Profissional:</strong> {eventoSelecionado.profissional}</p>
             <p><strong>Início:</strong> {eventoSelecionado.dataInicio}</p>
             <p><strong>Fim:</strong> {eventoSelecionado.dataFim}</p>
-            <button onClick={handleCloseEventoModal} className='fechar-button'>Fechar</button>
-            <button onClick={handleCancelarAgendamento} className="cancelar-button">Cancelar Agendamento</button>
-            {showConfirmacaoCancelamento && (
-              <div className="confirmacao-cancelamento">
-                <p>Deseja cancelar este agendamento?</p>
-                <button onClick={confirmarCancelamento} className="cancelar-button">Sim</button>
-                <button onClick={() => setShowConfirmacaoCancelamento(false)} className="cancelar-button">Não</button>
-              </div>
-            )}
+            <button onClick={handleCloseEventoModal}>Fechar</button>
         </div>
-      )}
+       )}
     </div>
   );
 };
 
 export default CalendarioAgendamento;
+
+CalendarioAgendamento.css:
+/* CalendarioAgendamento.css */
+
+.calendario-container {
+  display: flex;
+  height: 100vh;
+}
+
+.lista-profissionais {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  /* Ajuste conforme necessário */
+  margin-right: 8px;
+  /* Espaço entre a lista e o calendário */
+}
+
+.profissional-item {
+  padding: 5px;
+  margin: 1px 0px;
+  cursor: pointer;
+  color: white;
+  /* Ajuste conforme necessário */
+  text-align: center;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.calendar-wrapper {
+  flex-grow: 1;
+  min-height: 0;
+  margin-top: 15px;
+}
+
+.fc {
+  height: 100%;
+}
+
+.fc .fc-view-harness {
+  height: 100% !important;
+}
+
+.fc .fc-toolbar {
+  margin-bottom: 0.5em;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.2em;
+}
+
+.fc .fc-button-primary {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.fc .fc-button-primary:hover {
+  background-color: #45a049;
+  border-color: #45a049;
+}
+
+.fc .fc-col-header-cell-cushion {
+  padding: 10px 4px;
+}
+
+.fc .fc-daygrid-day-number {
+  padding: 4px;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+  padding: 0 4px;
+}
+
+.fc-event {
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.fc-event:hover {
+  opacity: 0.8;
+}
+
+.fc-day-today {
+  background-color: #f0fff4 !important;
+}
+
+.legenda {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.legenda-item {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+  margin-bottom: 10px;
+}
+
+.legenda-cor {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  border-radius: 50%;
+}
+
+/* Estilos para o modal de detalhes do evento */
+.evento-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.evento-modal h2 {
+  margin-top: 0;
+}
+
+.evento-modal button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.evento-modal button:hover {
+  background-color: #45a049;
+}
+
+.fc-event-title {
+  font-size: 10px;
+}
+
+.filtro-horario {
+  display: flex;
+  margin-bottom: 15px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.filtro-horario label {
+  display: flex;
+  flex-direction: column;
+  margin-right: 10px;
+  align-items: center;
+}
+
+.filtro-horario input {
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.fc .fc-button {
+  padding: 0.4em 0.9em;
+}
+
+.sair-button {
+  background-color: #7965a6;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.sair-button:hover {
+  background-color: #512da8;
+}
+
+.agendar-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.agendar-button:hover {
+  background-color: #45a049;
+}
+
+/* Estilos para o modal de agendamento */
+.agendamento-modal {
+  position: fixed;
+  top: 50%;
+  left: 23.7%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.agendamento-modal button {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.agendamento-modal button:hover {
+  background-color: #45a049;
+}
+
+.current-time-line {
+  border-top: 2px solid red;
+  /* Ajuste a largura e a cor da linha conforme necessário */
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.fc-timeGridWeek-view {
+  .fc-timegrid-now-indicator-container {
+    overflow: visible !important;
+
+    .fc-timegrid-now-indicator-line {
+
+      &::before,
+      &::after {
+        content: "";
+        width: 700%;
+        border-style: solid;
+        border-width: 1px 0 0px;
+        position: absolute;
+        top: -1px;
+        border-color: red !important;
+      }
+
+      &::before {
+        right: 100%;
+      }
+
+      &::after {
+        left: 100%;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .fc .fc-toolbar {
+    flex-direction: column;
+  }
+
+  .fc .fc-toolbar-title {
+    margin: 0.5em 0;
+  }
+
+  .filtro-horario {
+    justify-content: center;
+  }
+}

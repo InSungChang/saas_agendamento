@@ -12,6 +12,7 @@ const profissionalServicoRoutes = require('./routes/profissionalServico');
 const userRoutes = require('./routes/user');
 const disponibilidadeRoutes = require('./routes/disponibilidade');
 const agendamentoRoutes = require('./routes/agendamento');
+const cancelamentoRoutes = require('./routes/cancelamento');
 
 const app = express();
 app.use(cors());
@@ -27,6 +28,7 @@ app.use('/api', profissionalServicoRoutes);
 app.use('/api', userRoutes);
 app.use('/api', disponibilidadeRoutes);
 app.use('/api', agendamentoRoutes);
+app.use('/api', cancelamentoRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

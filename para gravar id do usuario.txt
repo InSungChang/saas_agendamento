@@ -1,4 +1,214 @@
-import React, { useState, useEffect, useContext } from 'react';
+tive que alterar na tabela cancelamentos adicionando campo usuario_id para identificar qual usuário fez cancelamento. preciso ajustar nos códigos para armazenar id do usuário na tabela cancelamentos. a parte lógica está funcionando quando clico chamo confirmarCancelamento, preciso somente guardar id do usuário na tabela cancelamentos. favor alterar somente essa alterção que eu descreví. segue os códigos para análise e devidas alterações. após análise e alterações, favor mostrar todos os códigos completos para meu entendimento. 
+
+db.js:
+const mysql = require('mysql2');
+
+const db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+});
+
+db.connect((err) => {
+    if (err) {
+        console.error('Erro ao conectar ao MySQL:', err.message);
+        process.exit(1);
+    }
+    console.log('MySQL conectado...');
+});
+
+module.exports = db;
+
+cancelamentoController.js:
+const db = require('../config/db');
+
+exports.createCancelamento = async (req, res) => {
+  const { agendamento_id } = req.body;
+  const empresa_id = req.user.empresa_id;
+
+  if (!agendamento_id) {
+    return res.status(400).send({ message: 'ID do agendamento é obrigatório.' });
+  }
+
+  const connection = await db.promise();
+
+  try {
+    await connection.beginTransaction();
+
+    // Buscar informações do agendamento
+    const [agendamento] = await connection.query(
+      'SELECT * FROM agendamentos WHERE id = ? AND empresa_id = ?',
+      [agendamento_id, empresa_id]
+    );
+
+    if (agendamento.length === 0) {
+      await connection.rollback();
+      return res.status(404).send({ message: 'Agendamento não encontrado.' });
+    }
+
+    const agendamentoInfo = agendamento[0];
+
+    // Inserir na tabela de cancelamentos
+    const [resultCancelamento] = await connection.query(
+      `INSERT INTO cancelamentos 
+       (empresa_id, cliente_id, profissional_id, servico_id, data_horario_cancelado, status) 
+       VALUES (?, ?, ?, ?, NOW(), 'cancelado')`,
+      [agendamentoInfo.empresa_id, agendamentoInfo.cliente_id, agendamentoInfo.profissional_id, agendamentoInfo.servico_id]
+    );
+
+    // Deletar da tabela de agendamentos
+    await connection.query('DELETE FROM agendamentos WHERE id = ?', [agendamento_id]);
+
+    await connection.commit();
+
+    res.status(201).send({ 
+      message: 'Agendamento cancelado com sucesso', 
+      cancelamentoId: resultCancelamento.insertId 
+    });
+
+  } catch (err) {
+    await connection.rollback();
+    console.error('Erro ao cancelar agendamento:', err);
+    res.status(500).send({ message: 'Erro ao cancelar agendamento', error: err.message });
+  }
+};
+
+exports.getCancelamentos = async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query(
+      `SELECT c.*, cl.nome AS cliente_nome, p.nome AS profissional_nome, s.nome AS servico_nome
+       FROM cancelamentos c
+       JOIN clientes cl ON c.cliente_id = cl.id
+       JOIN profissionais p ON c.profissional_id = p.id
+       JOIN servicos s ON c.servico_id = s.id
+       WHERE c.empresa_id = ?`,
+      [empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar cancelamentos:', error);
+    res.status(500).json({ error: 'Erro ao buscar cancelamentos' });
+  }
+};
+
+agendamento.js:
+const db = require('../config/db');
+
+class Agendamento {
+  static create(agendamento) {
+    return new Promise((resolve, reject) => {
+      db.query('INSERT INTO agendamentos SET ?', agendamento, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+  }
+
+  static cancel(id, empresa_id) {
+    return new Promise((resolve, reject) => {
+      db.beginTransaction(async (err) => {
+        if (err) {
+          return reject(err);
+        }
+
+        try {
+          // Buscar informações do agendamento
+          const [agendamento] = await db.promise().query(
+            'SELECT * FROM agendamentos WHERE id = ? AND empresa_id = ?',
+            [id, empresa_id]
+          );
+
+          if (agendamento.length === 0) {
+            throw new Error('Agendamento não encontrado.');
+          }
+
+          const agendamentoInfo = agendamento[0];
+
+          // Inserir na tabela de cancelamentos
+          await db.promise().query(
+            `INSERT INTO cancelamentos 
+             (empresa_id, cliente_id, profissional_id, servico_id, data_horario_cancelado, status) 
+             VALUES (?, ?, ?, ?, NOW(), 'cancelado')`,
+            [agendamentoInfo.empresa_id, agendamentoInfo.cliente_id, agendamentoInfo.profissional_id, agendamentoInfo.servico_id]
+          );
+
+          // Deletar da tabela de agendamentos
+          await db.promise().query('DELETE FROM agendamentos WHERE id = ?', [id]);
+
+          db.commit((err) => {
+            if (err) {
+              return db.rollback(() => {
+                reject(err);
+              });
+            }
+            resolve();
+          });
+        } catch (error) {
+          db.rollback(() => {
+            reject(error);
+          });
+        }
+      });
+    });
+  }
+  
+}
+
+module.exports = Agendamento;
+
+cancelamento.js:
+const express = require('express');
+const router = express.Router();
+const cancelamentoController = require('../controllers/cancelamentoController');
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/cancelamentos', authMiddleware, cancelamentoController.createCancelamento);
+router.get('/cancelamentos', authMiddleware, cancelamentoController.getCancelamentos);
+
+module.exports = router;
+
+server.js:
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/auth');
+const clienteRoutes = require('./routes/cliente');
+const usuarioRoutes = require('./routes/usuario');
+const empresaRoutes = require('./routes/empresa');
+const servicoRoutes = require('./routes/servico');
+const profissionalRoutes = require('./routes/profissional');
+const profissionalServicoRoutes = require('./routes/profissionalServico');
+const userRoutes = require('./routes/user');
+const disponibilidadeRoutes = require('./routes/disponibilidade');
+const agendamentoRoutes = require('./routes/agendamento');
+const cancelamentoRoutes = require('./routes/cancelamento');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api', clienteRoutes);
+app.use('/api', usuarioRoutes);
+app.use('/api', empresaRoutes);
+app.use('/api', servicoRoutes);
+app.use('/api', profissionalRoutes);
+app.use('/api', profissionalServicoRoutes);
+app.use('/api', userRoutes);
+app.use('/api', disponibilidadeRoutes);
+app.use('/api', agendamentoRoutes);
+app.use('/api', cancelamentoRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
+
+CalendarioAgendamento.js:
+import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -8,7 +218,6 @@ import axios from 'axios';
 import './CalendarioAgendamento.css';
 import { useNavigate } from 'react-router-dom';
 import CalendarioAgendamentoForm from './CalendarioAgendamentoForm';
-import { AuthContext } from '../AuthContext'; // Importe o AuthContext
 
 const CalendarioAgendamento = () => {
   const [eventos, setEventos] = useState([]);
@@ -29,9 +238,6 @@ const CalendarioAgendamento = () => {
   const [showConfirmacaoCancelamento, setShowConfirmacaoCancelamento] = useState(false);
 
   const API_BASE_URL = process.env.REACT_APP_API_URL;
-
-  // Obter usuário logado e empresa do AuthContext
-  const { usuarioLogado } = useContext(AuthContext); // Use o AuthContext para acessar os dados do usuário
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -110,8 +316,7 @@ const CalendarioAgendamento = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${API_BASE_URL}/cancelamentos`, {
-        agendamento_id: eventoSelecionado.id,
-        usuario_id: usuarioLogado?.id // Usa o usuarioLogado.id do AuthContext
+        agendamento_id: eventoSelecionado.id
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });

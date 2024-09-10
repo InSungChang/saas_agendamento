@@ -103,37 +103,6 @@
   border-radius: 50%;
 }
 
-/* Estilos para o modal de detalhes do evento */
-.evento-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-}
-
-.evento-modal h2 {
-  margin-top: 0;
-}
-
-.evento-modal button {
-  margin-top: 10px;
-  padding: 5px 10px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.evento-modal button:hover {
-  background-color: #45a049;
-}
-
 .fc-event-title {
   font-size: 10px;
 }
@@ -260,6 +229,47 @@
       }
     }
   }
+}
+
+/* Estilos para o modal de detalhes do evento */
+.evento-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.evento-modal h2 {
+  margin-top: 0;
+}
+
+.evento-modal .fechar-button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.evento-modal .fechar-button:hover {
+  background-color: #45a049;
+}
+
+.cancelar-button {
+  background-color: #f44336;
+  margin: 5px;
+  padding: 5px 10px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {

@@ -37,7 +37,7 @@ exports.login = (req, res) => {
 
         // Gera o token JWT incluindo o empresa_id
         const token = jwt.sign({ 
-            id: user.usuario_id,
+            id: user.id,
             empresa_id: user.empresa_id, // Inclui o empresa_id no payload do token
             nome: user.nome
         }, process.env.JWT_SECRET, {
