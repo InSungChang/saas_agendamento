@@ -5,6 +5,9 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 const db = require('../config/db');
 
+/* Para utilizar com ManyChat */
+router.post('/disponibilidades/verificar', authMiddleware, disponibilidadeController.verificarDisponibilidade);
+
 router.post('/disponibilidades', authMiddleware, disponibilidadeController.createDisponibilidade);
 
 // Nova rota para buscar disponibilidades por profissional e intervalo de datas

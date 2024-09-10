@@ -1,0 +1,1403 @@
+Me ajude a criar "Criar a API do Sistema de Agendamento". segue o meu código para servir de base como está funcionando meus APIs.
+
+Preciso criar os APIs para Verificar Disponibilidade, Criar Agendamento e Cancelar Agendamento.
+
+db.js:
+const mysql = require('mysql2');
+
+const db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+});
+
+db.connect((err) => {
+    if (err) {
+        console.error('Erro ao conectar ao MySQL:', err.message);
+        process.exit(1);
+    }
+    console.log('MySQL conectado...');
+});
+
+module.exports = db;
+
+disponibilidadeController.js:
+const Disponibilidade = require('../models/Disponibilidade');
+
+exports.createDisponibilidade = (req, res) => {
+  const { profissional_id, dia_semana, hora_inicio, hora_fim } = req.body;
+  const novaDisponibilidade = { profissional_id, dia_semana, hora_inicio, hora_fim };
+
+  Disponibilidade.create(novaDisponibilidade, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar disponibilidade', error: err });
+    }
+    res.status(201).send({ message: 'Disponibilidade criada com sucesso', disponibilidadeId: result.insertId });
+  });
+};
+
+exports.getDisponibilidadesByProfissional = (req, res) => {
+  const { profissional_id } = req.params;
+
+  /* console.log(`Profissional ID recebido: ${profissional_id}`); */ // Log para depuração
+
+  Disponibilidade.getByProfissional(profissional_id, (err, disponibilidades) => {
+    if (err) {
+      console.error('Erro ao buscar disponibilidades:', err); // Log detalhado do erro
+      return res.status(500).send({ message: 'Erro ao buscar disponibilidades', error: err });
+    }
+    res.status(200).json(disponibilidades);
+  });
+};
+
+exports.deleteDisponibilidade = (req, res) => {
+  const { id } = req.params;
+
+  Disponibilidade.delete(id, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao excluir disponibilidade', error: err });
+    }
+    res.status(200).send({ message: 'Disponibilidade excluída com sucesso' });
+  });
+};
+
+agendamentoController.js:
+const db = require('../config/db');
+const Agendamento = require('../models/agendamento');
+
+// Função para verificar conflitos de agendamento
+const verificarConflitoAgendamento = async (empresa_id, profissional_id, data_horario_agendamento, servico_id) => {
+  const [result] = await db.promise().query(
+    `SELECT * FROM agendamentos 
+     WHERE empresa_id = ? 
+     AND profissional_id = ? 
+     AND (
+       (? < TIMESTAMPADD(MINUTE, (SELECT duracao FROM servicos WHERE id = agendamentos.servico_id), data_horario_agendamento)) 
+       AND 
+       (TIMESTAMPADD(MINUTE, (SELECT duracao FROM servicos WHERE id = ?), ?) > data_horario_agendamento)
+     )`,
+    [empresa_id, profissional_id, data_horario_agendamento, servico_id, data_horario_agendamento]
+  );
+/*   console.log('Resultado da verificação: ', result); */  
+  return result.length > 0;
+};
+
+
+exports.createAgendamento = async (req, res) => {
+  const { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
+
+  // Verificar se todos os campos obrigatórios foram fornecidos
+  if (!empresa_id || !cliente_id || !profissional_id || !servico_id || !data_horario_agendamento) {
+    return res.status(400).send({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  try {
+    // Verificar se já existe um conflito de agendamento
+    const conflito = await verificarConflitoAgendamento(empresa_id, profissional_id, data_horario_agendamento, servico_id);
+    if (conflito) {
+      return res.status(400).send({ message: 'Horário já reservado. Por favor, escolha outro horário.' });
+    }
+
+    const novoAgendamento = { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status };
+    const result = await Agendamento.create(novoAgendamento);
+    res.status(201).send({ message: 'Agendamento criado com sucesso', agendamentoId: result.insertId });
+  } catch (err) {
+    res.status(500).send({ message: 'Erro ao criar agendamento', error: err.message });
+  }
+};
+
+exports.getAgendamentosByProfissional = async (req, res) => {
+  const { profissionalId } = req.params;
+  const empresa_id = req.user.empresa_id; // Assumindo que o ID da empresa está armazenado no token do usuário
+  
+  try {
+    const [results] = await db.promise().query(
+      `SELECT a.id, a.data_horario_agendamento, a.cliente_id, a.servico_id, a.profissional_id, c.nome AS cliente_nome, s.nome AS servico_nome, s.duracao AS servico_duracao
+       FROM agendamentos a
+       JOIN clientes c ON a.cliente_id = c.id
+       JOIN servicos s ON a.servico_id = s.id
+       WHERE a.profissional_id = ? AND a.empresa_id = ?`,
+      [profissionalId, empresa_id]
+    );
+    res.json(results);
+    console.log('Retorno do sql: ', results);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos por profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar agendamentos por profissional' });
+  }
+};
+
+
+exports.getAgendamentos = async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM agendamentos WHERE empresa_id = ?', [empresa_id]);
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos:', error);
+    res.status(500).json({ error: 'Erro ao buscar agendamentos' });
+  }
+};
+
+exports.updateAgendamento = async (req, res) => {
+  const { id } = req.params;
+  const { cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE agendamentos SET cliente_id = ?, profissional_id = ?, servico_id = ?, data_horario_agendamento = ?, status = ? WHERE id = ?',
+      [cliente_id, profissional_id, servico_id, data_horario_agendamento, status, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Agendamento atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar agendamento:', error);
+    res.status(500).json({ error: 'Erro ao atualizar agendamento' });
+  }
+};
+
+exports.deleteAgendamento = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM agendamentos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Agendamento deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao deletar agendamento:', error);
+    res.status(500).json({ error: 'Erro ao deletar agendamento' });
+  }
+};
+
+cancelamentoController.js:
+const db = require('../config/db');
+
+exports.createCancelamento = async (req, res) => {
+  const { agendamento_id } = req.body;
+  const empresa_id = req.user.empresa_id;
+  const usuario_id = req.user.id; // Pega o ID do usuário logado
+
+  if (!agendamento_id) {
+    return res.status(400).send({ message: 'ID do agendamento é obrigatório.' });
+  }
+
+  const connection = await db.promise();
+
+  try {
+    await connection.beginTransaction();
+
+    // Buscar informações do agendamento
+    const [agendamento] = await connection.query(
+      'SELECT * FROM agendamentos WHERE id = ? AND empresa_id = ?',
+      [agendamento_id, empresa_id]
+    );
+
+    if (agendamento.length === 0) {
+      await connection.rollback();
+      return res.status(404).send({ message: 'Agendamento não encontrado.' });
+    }
+
+    const agendamentoInfo = agendamento[0];
+
+    // Inserir na tabela de cancelamentos com o ID do usuário e a data de criação do agendamento
+    const [resultCancelamento] = await connection.query(
+      `INSERT INTO cancelamentos 
+       (empresa_id, cliente_id, profissional_id, servico_id, data_horario_cancelado, status, usuario_id, criado_em_agendamento) 
+       VALUES (?, ?, ?, ?, ?, 'cancelado', ?, ?)`,
+      [agendamentoInfo.empresa_id, agendamentoInfo.cliente_id, agendamentoInfo.profissional_id, agendamentoInfo.servico_id, agendamentoInfo.data_horario_agendamento, usuario_id, agendamentoInfo.criado_em]
+    );
+
+    // Deletar da tabela de agendamentos
+    await connection.query('DELETE FROM agendamentos WHERE id = ?', [agendamento_id]);
+
+    await connection.commit();
+
+    res.status(201).send({ 
+      message: 'Agendamento cancelado com sucesso', 
+      cancelamentoId: resultCancelamento.insertId 
+    });
+
+  } catch (err) {
+    await connection.rollback();
+    console.error('Erro ao cancelar agendamento:', err);
+    res.status(500).send({ message: 'Erro ao cancelar agendamento', error: err.message });
+  }
+};
+
+exports.getCancelamentos = async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query(
+      `SELECT c.*, cl.nome AS cliente_nome, p.nome AS profissional_nome, s.nome AS servico_nome
+       FROM cancelamentos c
+       JOIN clientes cl ON c.cliente_id = cl.id
+       JOIN profissionais p ON c.profissional_id = p.id
+       JOIN servicos s ON c.servico_id = s.id
+       WHERE c.empresa_id = ?`,
+      [empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar cancelamentos:', error);
+    res.status(500).json({ error: 'Erro ao buscar cancelamentos' });
+  }
+};
+
+clienteController.js:
+const db = require('../config/db');
+const Cliente = require('../models/Cliente');
+
+const saltRounds = 10;
+
+exports.createCliente = (req, res) => {
+  const { nome, email, telefone, endereco } = req.body;
+  const empresa_id = req.user.empresa_id; // Usa o empresa_id do usuário logado
+  const novoCliente = { empresa_id, nome, email, telefone, endereco };
+
+  Cliente.create(novoCliente, (err, result) => {
+      if (err) {
+          return res.status(500).send({ message: 'Erro ao criar cliente', error: err });
+      }
+      res.status(201).send({ message: 'Cliente criado com sucesso', clienteId: result.insertId });
+  });
+};
+
+exports.updateCliente = async (req, res) => {
+  const { id } = req.params;
+  const { nome, email, telefone, endereco } = req.body;
+  const empresa_id = req.user.empresa_id; // Obtém o empresa_id da sessão
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE clientes SET empresa_id = ?, nome = ?, email = ?, telefone = ?, endereco = ? WHERE id = ?',
+      [empresa_id, nome, email, telefone, endereco, id]
+    );
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Cliente atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Cliente não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar cliente:', error);
+    res.status(500).json({ error: 'Erro ao atualizar cliente' });
+  }
+};
+
+exports.deleteCliente = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM clientes WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Cliente deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Cliente não encontrado' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este cliente. Existem registros vinculados a esta empresa em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar cliente:', error);
+      res.status(500).json({ error: 'Erro ao deletar cliente' });
+    }
+  }
+};
+
+empresaController.js:
+const db = require('../config/db');
+const Empresa = require('../models/Empresa');
+
+const saltRounds = 10;
+
+exports.createEmpresa = (req, res) => {
+  const { nome, email, telefone, endereco } = req.body;
+  const novoEmpresa = { nome, email, telefone, endereco };
+
+  Empresa.create(novoEmpresa, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar empresa', error: err });
+    }
+    res.status(201).send({ message: 'Empresa criado com sucesso', empresaId: result.insertId });
+  });
+};
+
+exports.updateEmpresa = async (req, res) => {
+  const { id } = req.params;
+  const { nome, email, telefone, endereco } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE empresas SET nome = ?, email = ?, telefone = ?, endereco = ? WHERE id = ?',
+      [nome, email, telefone, endereco, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Empresa atualizada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Empresa não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar empresa:', error);
+    res.status(500).json({ error: 'Erro ao atualizar empresa' });
+  }
+};
+
+exports.deleteEmpresa = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM empresas WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Empresa deletada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Empresa não encontrada' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir a empresa. Existem registros vinculados a esta empresa em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar empresa:', error);
+      res.status(500).json({ error: 'Erro ao deletar empresa' });
+    }
+  }
+};
+
+profissionalController.js:
+const db = require('../config/db');
+const Profissional = require('../models/Profissional');
+
+exports.createProfissional = (req, res) => {
+  const { empresa_id, nome, email, telefone, ativo, cor } = req.body;
+  const novoProfissional = { empresa_id, nome, email, telefone, ativo, cor };
+
+  Profissional.create(novoProfissional, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar profissional', error: err });
+    }
+    res.status(201).send({ message: 'Profissional criado com sucesso', profissionalId: result.insertId });
+  });
+};
+
+exports.updateProfissional = async (req, res) => {
+  const { id } = req.params;
+  const { empresa_id, nome, email, telefone, ativo, cor } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE profissionais SET empresa_id = ?, nome = ?, email = ?, telefone = ?, ativo = ?, cor = ? WHERE id = ?',
+      [empresa_id, nome, email, telefone, ativo, cor, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Profissional atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar profissional:', error);
+    res.status(500).json({ error: 'Erro ao atualizar profissional' });
+  }
+};
+
+exports.deleteProfissional = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM profissionais WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Profissional deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este profissional. Existem registros vinculados a este profissional em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar profissional:', error);
+      res.status(500).json({ error: 'Erro ao deletar profissional' });
+    }
+  }
+};
+
+profissionalServicoController.js:
+const db = require('../config/db');
+const ProfissionalServico = require('../models/ProfissionalServico');
+
+exports.createProfissionalServico = (req, res) => {
+  const { profissional_id, servico_id } = req.body;
+  const novoProfissionalServico = { profissional_id, servico_id };
+
+  ProfissionalServico.create(novoProfissionalServico, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar associação profissional-serviço', error: err });
+    }
+    res.status(201).send({ message: 'Associação profissional-serviço criada com sucesso', id: result.insertId });
+  });
+};
+
+exports.updateProfissionalServico = async (req, res) => {
+  const { id } = req.params;
+  const { profissional_id, servico_id } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE profissional_servicos SET profissional_id = ?, servico_id = ? WHERE id = ?',
+      [profissional_id, servico_id, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Associação profissional-serviço atualizada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar associação profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao atualizar associação profissional-serviço' });
+  }
+};
+
+exports.deleteProfissionalServico = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM profissional_servicos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Associação profissional-serviço deletada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir associação profissional-serviço. Existem registros vinculados a este profissional-serviços em outros cadastros.'
+      });
+    } else {
+      console.error('Erro ao deletar associação profissional-serviço:', error);
+      res.status(500).json({ error: 'Erro ao deletar associação profissional-serviço' });
+    }
+  }
+};
+
+servicoController.js:
+const db = require('../config/db');
+const Servico = require('../models/Servico');
+
+exports.createServico = (req, res) => {
+  const { empresa_id, nome, descricao, preco, duracao } = req.body;
+  const novoServico = { empresa_id, nome, descricao, preco, duracao };
+
+  Servico.create(novoServico, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar serviço', error: err });
+    }
+    res.status(201).send({ message: 'Serviço criado com sucesso', servicoId: result.insertId });
+  });
+};
+
+exports.updateServico = async (req, res) => {
+  const { id } = req.params;
+  const { empresa_id, nome, descricao, preco, duracao } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE servicos SET empresa_id = ?, nome = ?, descricao = ?, preco = ?, duracao = ? WHERE id = ?',
+      [empresa_id, nome, descricao, preco, duracao, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Serviço atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar serviço:', error);
+    res.status(500).json({ error: 'Erro ao atualizar serviço' });
+  }
+};
+
+exports.deleteServico = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM servicos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Serviço deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este serviço. Existem registros vinculados a este serviço em outros cadastros.' 
+      });
+    } else {
+    console.error('Erro ao deletar serviço:', error);
+    res.status(500).json({ error: 'Erro ao deletar serviço' });
+    }
+  }
+};
+
+usuarioController.js:
+const bcrypt = require('bcrypt');
+const db = require('../config/db');
+const Usuario = require('../models/Usuario');
+
+const saltRounds = 10;
+
+exports.createUsuario = (req, res) => {
+  const { empresa_id, nome, email, senha, papel } = req.body;
+  const novoUsuario = { empresa_id, nome, email, senha, papel };
+
+  Usuario.create(novoUsuario, (err, result) => {
+    if (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        // Captura o erro de duplicidade de e-mail e responde com status 409
+        return res.status(409).send({ message: 'Este e-mail já está cadastrado.' });
+      }
+      return res.status(500).send({ message: 'Erro ao criar usuário', error: err });
+    }
+    res.status(201).send({ message: 'Usuário criado com sucesso', usuarioId: result.insertId });
+  });
+};
+
+exports.updateUsuario = async (req, res) => {
+  const { id } = req.params;
+  /* const { cliente_id, nome, email, senha } = req.body; */
+  const { empresa_id, nome, email, papel } = req.body;
+
+  try {
+    /* let hashedSenha = senha;
+    if (senha) {
+      hashedSenha = await bcrypt.hash(senha, saltRounds);
+    }
+
+    const [result] = await db.promise().query(
+      'UPDATE usuarios SET cliente_id = ?, nome = ?, email = ?, senha = ? WHERE id = ?',
+      [cliente_id, nome, email, hashedSenha, id]
+    ); */
+    
+    const [result] = await db.promise().query(
+      'UPDATE usuarios SET empresa_id = ?, nome = ?, email = ?, papel = ? WHERE id = ?',
+      [empresa_id, nome, email, papel, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Usuário atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ error: 'Erro ao atualizar usuário' });
+  }
+};
+
+exports.deleteUsuario = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM usuarios WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Usuário deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este usuário. Existem registros vinculados a este usuário em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar usuário:', error);
+      res.status(500).json({ error: 'Erro ao deletar usuário' });
+    }
+  }
+};
+
+agendamento.js:
+const db = require('../config/db');
+
+class Agendamento {
+  static create(agendamento) {
+    return new Promise((resolve, reject) => {
+      db.query('INSERT INTO agendamentos SET ?', agendamento, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+  }
+
+  static cancel(id, empresa_id, usuario_id) {
+    return new Promise((resolve, reject) => {
+      db.beginTransaction(async (err) => {
+        if (err) {
+          return reject(err);
+        }
+
+        try {
+          // Buscar informações do agendamento
+          const [agendamento] = await db.promise().query(
+            'SELECT * FROM agendamentos WHERE id = ? AND empresa_id = ?',
+            [id, empresa_id]
+          );
+
+          if (agendamento.length === 0) {
+            throw new Error('Agendamento não encontrado.');
+          }
+
+          const agendamentoInfo = agendamento[0];
+
+          // Inserir na tabela de cancelamentos com o ID do usuário
+          await db.promise().query(
+            `INSERT INTO cancelamentos 
+             (empresa_id, cliente_id, profissional_id, servico_id, data_horario_cancelado, status, usuario_id, criado_em_agendamento) 
+             VALUES (?, ?, ?, ?, ?, 'cancelado', ?, ?)`,
+            [agendamentoInfo.empresa_id, agendamentoInfo.cliente_id, agendamentoInfo.profissional_id, agendamentoInfo.servico_id, agendamentoInfo.data_horario_agendamento, usuario_id, agendamentoInfo.criado_em]
+          );
+
+          // Deletar da tabela de agendamentos
+          await db.promise().query('DELETE FROM agendamentos WHERE id = ?', [id]);
+
+          db.commit((err) => {
+            if (err) {
+              return db.rollback(() => {
+                reject(err);
+              });
+            }
+            resolve();
+          });
+        } catch (error) {
+          db.rollback(() => {
+            reject(error);
+          });
+        }
+      });
+    });
+  }
+}
+
+module.exports = Agendamento;
+
+Cliente.js:
+const db = require('../config/db');
+
+const Cliente = {
+  create: (cliente, callback) => {
+    const query = `INSERT INTO clientes (empresa_id, nome, email, telefone, endereco) VALUES (?, ?, ?, ?, ?)`;
+    db.query(query, [cliente.empresa_id, cliente.nome, cliente.email, cliente.telefone, cliente.endereco], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  }
+};
+
+module.exports = Cliente;
+
+Disponibilidade.js:
+const db = require('../config/db');
+
+const Disponibilidade = {
+  create: (disponibilidade, callback) => {
+    const query = `
+      INSERT INTO disponibilidades (profissional_id, dia_semana, hora_inicio, hora_fim)
+      VALUES (?, ?, ?, ?)`;
+    db.query(query, [
+      disponibilidade.profissional_id, 
+      disponibilidade.dia_semana, 
+      disponibilidade.hora_inicio, 
+      disponibilidade.hora_fim
+    ], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  },
+
+  getByProfissional: (profissional_id, callback) => {
+    const query = `SELECT * FROM disponibilidades WHERE profissional_id = ?`;
+    db.query(query, [profissional_id], (err, results) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, results);
+    });
+  },
+
+  delete: (id, callback) => {
+    const query = `DELETE FROM disponibilidades WHERE id = ?`;
+    db.query(query, [id], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  },
+};
+
+module.exports = Disponibilidade;
+
+Empresa.js:
+const db = require('../config/db');
+
+const Empresa = {
+  create: (empresa, callback) => {
+    const query = `INSERT INTO empresas (nome, email, telefone, endereco) VALUES (?, ?, ?, ?)`;
+    db.query(query, [empresa.nome, empresa.email, empresa.telefone, empresa.endereco], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  }
+};
+
+module.exports = Empresa;
+
+Profissional.js:
+const db = require('../config/db');
+
+const Profissional = {
+  create: (profissional, callback) => {
+    const query = `INSERT INTO profissionais (empresa_id, nome, email, telefone, ativo, cor) VALUES (?, ?, ?, ?, ?, ?)`;
+    db.query(query, [profissional.empresa_id, profissional.nome, profissional.email, profissional.telefone, profissional.ativo, profissional.cor], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  }
+};
+
+module.exports = Profissional;
+
+ProfissionalServico.js:
+const db = require('../config/db');
+
+const ProfissionalServico = {
+  create: (profissionalServico, callback) => {
+    const query = `INSERT INTO profissional_servicos (profissional_id, servico_id) VALUES (?, ?)`;
+    db.query(query, [profissionalServico.profissional_id, profissionalServico.servico_id], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  }
+};
+
+module.exports = ProfissionalServico;
+
+Servico.js:
+const db = require('../config/db');
+
+const Servico = {
+  create: (servico, callback) => {
+    const query = `INSERT INTO servicos (empresa_id, nome, descricao, preco, duracao) VALUES (?, ?, ?, ?, ?)`;
+    db.query(query, [servico.empresa_id, servico.nome, servico.descricao, servico.preco, servico.duracao], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  }
+};
+
+module.exports = Servico;
+
+Usuario.js:
+const db = require('../config/db');
+const bcrypt = require('bcrypt');
+
+const Usuario = {
+  create: (usuario, callback) => {
+    bcrypt.hash(usuario.senha, 10, (err, hash) => {
+      if (err) {
+        return callback(err);
+      }
+      const query = `INSERT INTO usuarios (empresa_id, nome, email, senha, papel) VALUES (?, ?, ?, ?, ?)`;
+      db.query(query, [usuario.empresa_id, usuario.nome, usuario.email, hash, usuario.papel], (err, result) => {
+        if (err) {
+          return callback(err);
+        }
+        callback(null, result);
+      });
+    });
+  }
+};
+
+module.exports = Usuario;
+
+agendamento.js:
+const express = require('express');
+const router = express.Router();
+const agendamentoController = require('../controllers/agendamentoController');
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/agendamentos', authMiddleware, agendamentoController.createAgendamento);
+router.get('/agendamentos', authMiddleware, agendamentoController.getAgendamentos);
+router.put('/agendamentos/:id', authMiddleware, agendamentoController.updateAgendamento);
+router.delete('/agendamentos/:id', authMiddleware, agendamentoController.deleteAgendamento);
+router.get('/agendamentos/profissional/:profissionalId', authMiddleware, agendamentoController.getAgendamentosByProfissional);
+
+
+module.exports = router;
+
+auth.js:
+const express = require('express');
+const { register, login } = require('../controllers/authController');
+const router = express.Router();
+
+router.post('/register', register);
+router.post('/login', login);
+
+module.exports = router;
+
+cancelamento.js:
+const express = require('express');
+const router = express.Router();
+const cancelamentoController = require('../controllers/cancelamentoController');
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/cancelamentos', authMiddleware, cancelamentoController.createCancelamento);
+router.get('/cancelamentos', authMiddleware, cancelamentoController.getCancelamentos);
+
+module.exports = router;
+
+cliente.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const clienteController = require('../controllers/clienteController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/clientes', authMiddleware, clienteController.createCliente);
+
+// Rota para obter todos os clientes
+/* router.get('/clientes', authMiddleware,  async (req, res) => {
+    try {
+        const [results] = await db.promise().query('SELECT * FROM clientes');
+        res.json(results);
+    } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar clientes'
+        });
+    }
+}); */
+
+router.get('/clientes', authMiddleware, async (req, res) => {
+    const empresa_id = req.user.empresa_id;
+    try {
+        const [results] = await db.promise().query('SELECT * FROM clientes WHERE empresa_id = ?', [empresa_id]);
+        res.json(results);
+    } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+        res.status(500).json({ error: 'Erro ao buscar clientes' });
+    }
+});
+
+// Rota para obter um cliente específico
+router.get('/clientes/:id', authMiddleware, async (req, res) => {
+    const {
+        id
+    } = req.params;
+    try {
+        const [results] = await db.promise().query('SELECT * FROM clientes WHERE id = ?', [id]);
+        if (results.length > 0) {
+            res.json(results[0]);
+        } else {
+            res.status(404).json({
+                error: 'Cliente não encontrado'
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar cliente:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar cliente'
+        });
+    }
+});
+
+// Rota para buscar clientes por empresa
+router.get('/clientes/:empresa_id', async (req, res) => {
+    const empresa_id = req.params.empresa_id;
+    try {
+        const clientes = await db.query('SELECT * FROM clientes WHERE empresa_id = ?', [empresa_id]);
+        res.json(clientes);
+    } catch (error) {
+        res.status(500).send('Erro ao buscar clientes');
+    }
+});
+
+// Rota para atualizar um cliente
+router.put('/clientes/:id', authMiddleware, clienteController.updateCliente);
+
+// Rota para deletar um cliente
+router.delete('/clientes/:id', authMiddleware, clienteController.deleteCliente);
+
+module.exports = router;
+
+disponibilidade.js:
+const express = require('express');
+const router = express.Router();
+const disponibilidadeController = require('../controllers/disponibilidadeController');
+const authMiddleware = require('../middleware/authMiddleware');
+
+const db = require('../config/db');
+
+router.post('/disponibilidades', authMiddleware, disponibilidadeController.createDisponibilidade);
+
+// Nova rota para buscar disponibilidades por profissional e intervalo de datas
+router.get('/disponibilidades/profissional/:profissional_id', authMiddleware, async (req, res) => {
+  const { profissional_id } = req.params;
+
+  try {
+    const [results] = await db.promise().query(
+      'SELECT * FROM disponibilidades WHERE profissional_id = ?',
+      [profissional_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar disponibilidades:', error);
+    res.status(500).json({ error: 'Erro ao buscar disponibilidades' });
+  }
+});
+
+// Rota para filtrar por serviço de todos os profissionais
+router.get('/disponibilidades/servico/:servico_id', authMiddleware, async (req, res) => {
+  const { servico_id } = req.params;
+
+  try {
+    const [results] = await db.promise().query(
+      `SELECT d.*, p.nome as profissional_nome
+       FROM disponibilidades d
+       JOIN profissionais p ON d.profissional_id = p.id
+       JOIN profissional_servicos ps ON p.id = ps.profissional_id
+       WHERE ps.servico_id = ?
+       ORDER BY d.hora_inicio`,
+      [servico_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar disponibilidades por serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar disponibilidades por serviço' });
+  }
+});
+
+// Rota para filtrar por profissional de todos os serviços
+router.get('/disponibilidades/profissionalservico/:profissional_id', authMiddleware, async (req, res) => {
+  const { profissional_id } = req.params;
+
+  try {
+    const [results] = await db.promise().query(
+       `SELECT d.*, s.nome as servico_nome, s.duracao as servico_duracao
+       FROM disponibilidades d
+       JOIN profissionais p ON d.profissional_id = p.id
+       JOIN profissional_servicos ps ON p.id = ps.profissional_id
+	     JOIN servicos s ON ps.servico_id = s.id
+       WHERE ps.profissional_id = ?
+       ORDER BY d.hora_inicio`,
+      [profissional_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar disponibilidades por profissional x serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar disponibilidades por profissional x serviço' });
+  }
+});
+
+/* router.get('/disponibilidades/profissional/:profissional_id', authMiddleware, disponibilidadeController.getDisponibilidadesByProfissional); */
+
+router.delete('/disponibilidades/:id', authMiddleware, disponibilidadeController.deleteDisponibilidade);
+
+module.exports = router;
+
+empresa.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const empresaController = require('../controllers/empresaController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/empresas', authMiddleware, empresaController.createEmpresa);
+
+// Rota para obter todas as empresa
+router.get('/empresas', authMiddleware, async (req, res) => {
+    try {
+        const [results] = await db.promise().query('SELECT * FROM empresas');
+        res.json(results);
+    } catch (error) {
+        console.error('Erro ao buscar empresas:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar empresas'
+        });
+    }
+});
+
+// Rota para obter uma empresa específico
+router.get('/empresas/:id', authMiddleware, async (req, res) => {
+    const {
+        id
+    } = req.params;
+    try {
+        const [results] = await db.promise().query('SELECT * FROM empresas WHERE id = ?', [id]);
+        if (results.length > 0) {
+            res.json(results[0]);
+        } else {
+            res.status(404).json({
+                error: 'Empresa não encontrada'
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar empresa:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar empresa'
+        });
+    }
+});
+
+// Rota para atualizar uma empresa
+router.put('/empresas/:id', authMiddleware, empresaController.updateEmpresa);
+
+// Rota para deletar uma empresa
+router.delete('/empresas/:id', authMiddleware, empresaController.deleteEmpresa);
+
+module.exports = router;
+
+profissional.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const profissionalController = require('../controllers/profissionalController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/profissionais', authMiddleware, profissionalController.createProfissional);
+
+/* router.get('/profissionais', authMiddleware, async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissionais');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar profissionais:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissionais' });
+  }
+}); */
+
+router.get('/profissionais', authMiddleware, async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+      const [results] = await db.promise().query('SELECT * FROM profissionais WHERE empresa_id = ?', [empresa_id]);
+      res.json(results);
+  } catch (error) {
+      console.error('Erro ao buscar profissionais:', error);
+      res.status(500).json({ error: 'Erro ao buscar profissionais' });
+  }
+});
+
+router.get('/profissionais/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissionais WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissional' });
+  }
+});
+
+// Rota para buscar profissionais por empresa
+router.get('/profissionais/:empresa_id', async (req, res) => {
+  const empresa_id = req.params.empresa_id;
+  try {
+      const profissionais = await db.query('SELECT * FROM profissionais WHERE empresa_id = ?', [empresa_id]);
+      res.json(profissionais);
+  } catch (error) {
+      res.status(500).send('Erro ao buscar profissionais');
+  }
+});
+
+router.get('/profissionais-por-servico/:servico_id', authMiddleware, async (req, res) => {
+  const { servico_id } = req.params;
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query(
+      'SELECT p.* FROM profissionais p ' +
+      'JOIN profissional_servicos ps ON p.id = ps.profissional_id ' +
+      'WHERE ps.servico_id = ? AND p.empresa_id = ?',
+      [servico_id, empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar profissionais por serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissionais por serviço' });
+  }
+});
+
+router.put('/profissionais/:id', authMiddleware, profissionalController.updateProfissional);
+
+router.delete('/profissionais/:id', authMiddleware, profissionalController.deleteProfissional);
+
+module.exports = router;
+
+profissionalServico.js:
+const express = require('express');
+const router = express.Router();
+
+const profissionalServicoController = require('../controllers/profissionalServicoController');
+
+router.post('/profissional-servicos', profissionalServicoController.createProfissionalServico);
+
+router.get('/profissional-servicos', async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissional_servicos');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar associações profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar associações profissional-serviço' });
+  }
+});
+
+router.get('/profissional-servicos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissional_servicos WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar associação profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar associação profissional-serviço' });
+  }
+});
+
+router.put('/profissional-servicos/:id', profissionalServicoController.updateProfissionalServico);
+
+router.delete('/profissional-servicos/:id', profissionalServicoController.deleteProfissionalServico);
+
+module.exports = router;
+
+servico.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const servicoController = require('../controllers/servicoController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/servicos', authMiddleware, servicoController.createServico);
+
+/* router.get('/servicos', authMiddleware, async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM servicos');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar serviços:', error);
+    res.status(500).json({ error: 'Erro ao buscar serviços' });
+  }
+}); */
+
+router.get('/servicos', authMiddleware, async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+      const [results] = await db.promise().query('SELECT * FROM servicos WHERE empresa_id = ?', [empresa_id]);
+      res.json(results);
+  } catch (error) {
+      console.error('Erro ao buscar servicos:', error);
+      res.status(500).json({ error: 'Erro ao buscar servicos' });
+  }
+});
+
+router.get('/servicos-por-profissional/:profissional_id', authMiddleware, async (req, res) => {
+  const { profissional_id } = req.params;
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query(
+      'SELECT s.* FROM servicos s ' +
+      'JOIN profissional_servicos ps ON s.id = ps.servico_id ' +
+      'WHERE ps.profissional_id = ? AND s.empresa_id = ?',
+      [profissional_id, empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar serviços por profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar serviços por profissional' });
+  }
+});
+
+router.get('/servicos/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM servicos WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar serviço' });
+  }
+});
+
+router.get('/servicos/:empresa_id', async (req, res) => {
+  const empresa_id = req.params.empresa_id;
+  try {
+      const servicos = await db.query('SELECT * FROM servicos WHERE empresa_id = ?', [empresa_id]);
+      res.json(servicos);
+  } catch (error) {
+      res.status(500).send('Erro ao buscar serviços');
+  }
+});
+
+router.put('/servicos/:id', authMiddleware, servicoController.updateServico);
+
+router.delete('/servicos/:id', authMiddleware, servicoController.deleteServico);
+
+module.exports = router;
+
+user.js:
+const express = require('express');
+const router = express.Router();
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.get('/usuario-logado', authMiddleware, (req, res) => {
+    res.json(req.user);
+});
+
+module.exports = router;
+
+usuario.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const usuarioController = require('../controllers/usuarioController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/usuarios', authMiddleware, usuarioController.createUsuario);
+
+// Rota para obter todos os usuarios
+router.get('/usuarios', authMiddleware, async (req, res) => {
+    try {
+        const [results] = await db.promise().query('SELECT * FROM usuarios');
+        res.json(results);
+    } catch (error) {
+        console.error('Erro ao buscar usuarios:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar usuarios'
+        });
+    }
+});
+
+// Rota para obter um usuário específico
+router.get('/usuarios/:id', authMiddleware, async (req, res) => {
+    const {
+        id
+    } = req.params;
+    try {
+        const [results] = await db.promise().query('SELECT * FROM usuarios WHERE id = ?', [id]);
+        if (results.length > 0) {
+            res.json(results[0]);
+        } else {
+            res.status(404).json({
+                error: 'Usuário não encontrado'
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar usuário:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar usuário'
+        });
+    }
+});
+
+// Rota para atualizar um usuário
+router.put('/usuarios/:id', authMiddleware, usuarioController.updateUsuario);
+
+// Rota para deletar um usuário
+router.delete('/usuarios/:id', authMiddleware, usuarioController.deleteUsuario);
+
+module.exports = router;
+
+server.js:
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/auth');
+const clienteRoutes = require('./routes/cliente');
+const usuarioRoutes = require('./routes/usuario');
+const empresaRoutes = require('./routes/empresa');
+const servicoRoutes = require('./routes/servico');
+const profissionalRoutes = require('./routes/profissional');
+const profissionalServicoRoutes = require('./routes/profissionalServico');
+const userRoutes = require('./routes/user');
+const disponibilidadeRoutes = require('./routes/disponibilidade');
+const agendamentoRoutes = require('./routes/agendamento');
+const cancelamentoRoutes = require('./routes/cancelamento');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api', clienteRoutes);
+app.use('/api', usuarioRoutes);
+app.use('/api', empresaRoutes);
+app.use('/api', servicoRoutes);
+app.use('/api', profissionalRoutes);
+app.use('/api', profissionalServicoRoutes);
+app.use('/api', userRoutes);
+app.use('/api', disponibilidadeRoutes);
+app.use('/api', agendamentoRoutes);
+app.use('/api', cancelamentoRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
+

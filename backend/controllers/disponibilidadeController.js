@@ -36,3 +36,27 @@ exports.deleteDisponibilidade = (req, res) => {
     res.status(200).send({ message: 'Disponibilidade excluída com sucesso' });
   });
 };
+
+/* Para utilizar com ManyChat */
+exports.verificarDisponibilidade = async (req, res) => {
+  const { profissional_id, data_horario_agendamento, duracao } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      `SELECT * FROM agendamentos 
+       WHERE profissional_id = ? 
+       AND (? < TIMESTAMPADD(MINUTE, ?, data_horario_agendamento)) 
+       AND (TIMESTAMPADD(MINUTE, ?, ?) > data_horario_agendamento)`,
+      [profissional_id, data_horario_agendamento, duracao, duracao, data_horario_agendamento]
+    );
+
+    if (result.length > 0) {
+      return res.status(200).send({ disponivel: false, message: 'Horário indisponível' });
+    } else {
+      return res.status(200).send({ disponivel: true, message: 'Horário disponível' });
+    }
+  } catch (error) {
+    console.error('Erro ao verificar disponibilidade:', error);
+    res.status(500).send({ message: 'Erro ao verificar disponibilidade', error: error.message });
+  }
+};
