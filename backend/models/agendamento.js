@@ -33,9 +33,9 @@ class Agendamento {
           // Inserir na tabela de cancelamentos com o ID do usuário
           await db.promise().query(
             `INSERT INTO cancelamentos 
-             (empresa_id, cliente_id, profissional_id, servico_id, data_horario_cancelado, status, usuario_id) 
-             VALUES (?, ?, ?, ?, NOW(), 'cancelado', ?)`,
-            [agendamentoInfo.empresa_id, agendamentoInfo.cliente_id, agendamentoInfo.profissional_id, agendamentoInfo.servico_id, usuario_id]
+             (empresa_id, cliente_id, profissional_id, servico_id, data_horario_cancelado, status, usuario_id, criado_em_agendamento) 
+             VALUES (?, ?, ?, ?, ?, 'cancelado', ?, ?)`,
+            [agendamentoInfo.empresa_id, agendamentoInfo.cliente_id, agendamentoInfo.profissional_id, agendamentoInfo.servico_id, agendamentoInfo.data_horario_agendamento, usuario_id, agendamentoInfo.criado_em]
           );
 
           // Deletar da tabela de agendamentos

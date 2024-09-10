@@ -1,0 +1,477 @@
+criei mais uma coluna da tabela cancelamentos, essa coluna chama-se criado_em_agendamento, essa coluna deverá ser gravado informação da tabela agendamentos do campo criado_em, serve para preservar quando foi gerado o agendamento. segue os códigos para entendimento e alteração. preciso que mostre código completo de todos os códigos que envolvem o cancelamento do agendamento, seria quando usuário clicar no botão "Cancelar Agendamento" chamando "confirmarCancelamento".
+
+cancelamentoController.js:
+const db = require('../config/db');
+
+exports.createCancelamento = async (req, res) => {
+  const { agendamento_id } = req.body;
+  const empresa_id = req.user.empresa_id;
+  const usuario_id = req.user.id; // Pega o ID do usuário logado
+
+  if (!agendamento_id) {
+    return res.status(400).send({ message: 'ID do agendamento é obrigatório.' });
+  }
+
+  const connection = await db.promise();
+
+  try {
+    await connection.beginTransaction();
+
+    // Buscar informações do agendamento
+    const [agendamento] = await connection.query(
+      'SELECT * FROM agendamentos WHERE id = ? AND empresa_id = ?',
+      [agendamento_id, empresa_id]
+    );
+
+    if (agendamento.length === 0) {
+      await connection.rollback();
+      return res.status(404).send({ message: 'Agendamento não encontrado.' });
+    }
+
+    const agendamentoInfo = agendamento[0];
+
+    // Inserir na tabela de cancelamentos com o ID do usuário
+    const [resultCancelamento] = await connection.query(
+      `INSERT INTO cancelamentos 
+       (empresa_id, cliente_id, profissional_id, servico_id, data_horario_cancelado, status, usuario_id) 
+       VALUES (?, ?, ?, ?, NOW(), 'cancelado', ?)`,
+      [agendamentoInfo.empresa_id, agendamentoInfo.cliente_id, agendamentoInfo.profissional_id, agendamentoInfo.servico_id, usuario_id]
+    );
+
+    // Deletar da tabela de agendamentos
+    await connection.query('DELETE FROM agendamentos WHERE id = ?', [agendamento_id]);
+
+    await connection.commit();
+
+    res.status(201).send({ 
+      message: 'Agendamento cancelado com sucesso', 
+      cancelamentoId: resultCancelamento.insertId 
+    });
+
+  } catch (err) {
+    await connection.rollback();
+    console.error('Erro ao cancelar agendamento:', err);
+    res.status(500).send({ message: 'Erro ao cancelar agendamento', error: err.message });
+  }
+};
+
+exports.getCancelamentos = async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query(
+      `SELECT c.*, cl.nome AS cliente_nome, p.nome AS profissional_nome, s.nome AS servico_nome
+       FROM cancelamentos c
+       JOIN clientes cl ON c.cliente_id = cl.id
+       JOIN profissionais p ON c.profissional_id = p.id
+       JOIN servicos s ON c.servico_id = s.id
+       WHERE c.empresa_id = ?`,
+      [empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar cancelamentos:', error);
+    res.status(500).json({ error: 'Erro ao buscar cancelamentos' });
+  }
+};
+
+
+agendamento.js:
+const db = require('../config/db');
+
+class Agendamento {
+  static create(agendamento) {
+    return new Promise((resolve, reject) => {
+      db.query('INSERT INTO agendamentos SET ?', agendamento, (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      });
+    });
+  }
+
+  static cancel(id, empresa_id, usuario_id) {
+    return new Promise((resolve, reject) => {
+      db.beginTransaction(async (err) => {
+        if (err) {
+          return reject(err);
+        }
+
+        try {
+          // Buscar informações do agendamento
+          const [agendamento] = await db.promise().query(
+            'SELECT * FROM agendamentos WHERE id = ? AND empresa_id = ?',
+            [id, empresa_id]
+          );
+
+          if (agendamento.length === 0) {
+            throw new Error('Agendamento não encontrado.');
+          }
+
+          const agendamentoInfo = agendamento[0];
+
+          // Inserir na tabela de cancelamentos com o ID do usuário
+          await db.promise().query(
+            `INSERT INTO cancelamentos 
+             (empresa_id, cliente_id, profissional_id, servico_id, data_horario_cancelado, status, usuario_id) 
+             VALUES (?, ?, ?, ?, NOW(), 'cancelado', ?)`,
+            [agendamentoInfo.empresa_id, agendamentoInfo.cliente_id, agendamentoInfo.profissional_id, agendamentoInfo.servico_id, usuario_id]
+          );
+
+          // Deletar da tabela de agendamentos
+          await db.promise().query('DELETE FROM agendamentos WHERE id = ?', [id]);
+
+          db.commit((err) => {
+            if (err) {
+              return db.rollback(() => {
+                reject(err);
+              });
+            }
+            resolve();
+          });
+        } catch (error) {
+          db.rollback(() => {
+            reject(error);
+          });
+        }
+      });
+    });
+  }
+}
+
+module.exports = Agendamento;
+
+cancelamento.js:
+const express = require('express');
+const router = express.Router();
+const cancelamentoController = require('../controllers/cancelamentoController');
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/cancelamentos', authMiddleware, cancelamentoController.createCancelamento);
+router.get('/cancelamentos', authMiddleware, cancelamentoController.getCancelamentos);
+
+module.exports = router;
+
+CalendarioAgendamento.js:
+import React, { useState, useEffect, useContext } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import ptBrLocale from '@fullcalendar/core/locales/pt-br';
+import axios from 'axios';
+import './CalendarioAgendamento.css';
+import { useNavigate } from 'react-router-dom';
+import CalendarioAgendamentoForm from './CalendarioAgendamentoForm';
+import { AuthContext } from '../AuthContext'; // Importe o AuthContext
+
+const CalendarioAgendamento = () => {
+  const [eventos, setEventos] = useState([]);
+  const [profissionais, setProfissionais] = useState([]);
+  const [profissionalSelecionado, setProfissionalSelecionado] = useState('');
+  const [servicos, setServicos] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [diasExibicao, setDiasExibicao] = useState(7);
+  const [currentTimeEvent, setCurrentTimeEvent] = useState(null);
+  const [horaInicial, setHoraInicial] = useState('08:00:00');
+  const [horaFinal, setHoraFinal] = useState('19:00:00');
+  const [showAgendamentoForm, setShowAgendamentoForm] = useState(false);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const [eventoSelecionado, setEventoSelecionado] = useState(null);
+  const [showEventoModal, setShowEventoModal] = useState(false);
+  const [showConfirmacaoCancelamento, setShowConfirmacaoCancelamento] = useState(false);
+
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+  // Obter usuário logado e empresa do AuthContext
+  const { usuarioLogado } = useContext(AuthContext); // Use o AuthContext para acessar os dados do usuário
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      axios.get(`${API_BASE_URL}/clientes`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => setClientes(response.data))
+        .catch(error => console.error('Erro ao carregar clientes:', error));
+
+      axios.get(`${API_BASE_URL}/servicos`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => setServicos(response.data))
+        .catch(error => console.error('Erro ao carregar serviços:', error));
+
+      axios.get(`${API_BASE_URL}/profissionais`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => setProfissionais(response.data))
+        .catch(error => console.error('Erro ao carregar profissionais:', error));
+    }
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
+    if (clientes.length > 0 && servicos.length > 0 && profissionais.length > 0) {
+      carregarEventos();
+    }
+  }, [clientes, servicos, profissionais]);
+
+  useEffect(() => {
+    const atualizarLinhaTempo = () => {
+      const now = new Date();
+      setCurrentTimeEvent({
+        id: 'current-time',
+        title: '',
+        start: now,
+        end: now,
+        display: 'background',
+        backgroundColor: 'red',
+        borderColor: 'red'
+      });
+    };
+
+    atualizarLinhaTempo();
+    const intervalId = setInterval(atualizarLinhaTempo, 60000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const handleEventClick = (clickInfo) => {
+    const evento = clickInfo.event;
+    const cliente = clientes.find(c => c.id === evento.extendedProps.cliente_id);
+    const servico = servicos.find(s => s.id === evento.extendedProps.servico_id);
+    const profissional = profissionais.find(p => p.id === evento.extendedProps.profissional_id);
+    const dataInicio = new Date(evento.start);
+    const dataFim = new Date(evento.end);
+
+    setEventoSelecionado({
+      id: evento.id,
+      title: evento.title,
+      cliente: cliente ? cliente.nome : 'Cliente',
+      servico: servico ? servico.nome : 'Serviço',
+      profissional: profissional ? profissional.nome : 'Profissional',
+      dataInicio: dataInicio.toLocaleString(),
+      dataFim: dataFim.toLocaleString(),
+    });
+
+    setShowEventoModal(true);
+  };
+
+  const handleCloseEventoModal = () => {
+    setShowEventoModal(false);
+    setShowConfirmacaoCancelamento(false);
+  };
+
+  const handleCancelarAgendamento = () => {
+    setShowConfirmacaoCancelamento(true);
+  };
+
+  const confirmarCancelamento = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_BASE_URL}/cancelamentos`, {
+        agendamento_id: eventoSelecionado.id,
+        usuario_id: usuarioLogado?.id // Usa o usuarioLogado.id do AuthContext
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Remover o evento cancelado da lista de eventos
+      setEventos(eventos.filter(evento => evento.id !== eventoSelecionado.id));
+
+      handleCloseEventoModal();
+      carregarEventos(); // Recarregar eventos para atualizar a visualização
+    } catch (error) {
+      console.error('Erro ao cancelar agendamento:', error);
+      alert('Ocorreu um erro ao cancelar o agendamento. Por favor, tente novamente.');
+    }
+  };
+
+  const carregarEventos = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/agendamentos`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const eventosFormatados = formatarEventos(response.data);
+      setEventos(eventosFormatados);
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos:', error);
+    }
+  };
+
+  const carregarEventosPorProfissional = async (profissionalId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/agendamentos/profissional/${profissionalId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const eventosFormatados = formatarEventos(response.data);
+      setEventos(eventosFormatados);
+    } catch (error) {
+      console.error('Erro ao carregar agendamentos do profissional:', error);
+    }
+  };
+
+  const formatarEventos = (agendamentos) => {
+    if (clientes.length === 0 || servicos.length === 0 || profissionais.length === 0) {
+      return [];
+    }
+
+    return agendamentos.map(agendamento => {
+      const cliente = clientes.find(c => c.id === agendamento.cliente_id);
+      const servico = servicos.find(s => s.id === agendamento.servico_id);
+      const profissional = profissionais.find(p => p.id === agendamento.profissional_id);
+      const duracaoServico = servico ? servico.duracao : 60;
+
+      const dataInicio = new Date(agendamento.data_horario_agendamento);
+      const dataFim = new Date(dataInicio.getTime() + duracaoServico * 60000);
+
+      return {
+        id: agendamento.id,
+        title: `${cliente ? cliente.nome : 'Cliente'} - ${servico ? servico.nome : 'Serviço'}`,
+        start: dataInicio,
+        end: dataFim,
+        color: profissional ? profissional.cor : obterCorProfissional(agendamento.profissional_id),
+        extendedProps: {
+          cliente_id: agendamento.cliente_id,  
+          servico_id: agendamento.servico_id,  
+          profissional_id: agendamento.profissional_id,  
+        },
+      };
+    });
+  };
+
+  const obterCorProfissional = (profissionalId) => {
+    const cores = ['#FF5733', '#33FF57', '#3357FF', '#FF33F1', '#33FFF1'];
+    return cores[profissionalId % cores.length];
+  };
+
+  const handleDateSelect = (selectInfo) => {
+    const title = prompt('Digite o nome do cliente e o serviço:');
+    if (title) {
+      const novoEvento = {
+        title,
+        start: selectInfo.startStr,
+        end: selectInfo.endStr,
+        allDay: selectInfo.allDay
+      };
+      setEventos([...eventos, novoEvento]);
+    }
+    selectInfo.view.calendar.unselect();
+  };
+
+  const handleEventDrop = (dropInfo) => {
+    console.log('Evento movido:', dropInfo.event);
+  };
+
+  const filtrarPorProfissional = (profissionalId) => {
+    setProfissionalSelecionado(profissionalId);
+    if (profissionalId) {
+      carregarEventosPorProfissional(profissionalId);
+    } else {
+      carregarEventos();
+    }
+  };
+
+  const handleCancel = () => {
+    navigate('/dashboard');
+  };
+
+  return (
+    <div className="calendario-container">
+      <div className="lista-profissionais">
+        <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+        <button
+          className="agendar-button"
+          onClick={() => setShowAgendamentoForm(true)}
+        >
+          Agendar
+        </button>
+        {showAgendamentoForm && (
+          <div className="agendamento-modal">
+            <CalendarioAgendamentoForm />
+            <button onClick={() => setShowAgendamentoForm(false)}>Fechar</button>
+          </div>
+        )}
+        <div className="filtro-horario">
+          <label>
+            Horário Inicial:
+            <input
+              type="time"
+              value={horaInicial}
+              onChange={(e) => setHoraInicial(e.target.value)}
+            />
+          </label>
+          <label>
+            Horário Final:
+            <input
+              type="time"
+              value={horaFinal}
+              onChange={(e) => setHoraFinal(e.target.value)}
+            />
+          </label>
+        </div>
+        <div
+          className="profissional-item"
+          style={{ backgroundColor: '#000' }}
+          onClick={() => filtrarPorProfissional('')}
+        >
+          Todos os Profissionais
+        </div>
+        {profissionais.map(prof => (
+          <div
+            key={prof.id}
+            className="profissional-item"
+            style={{ backgroundColor: prof.cor }}
+            onClick={() => filtrarPorProfissional(prof.id)}
+          >
+            {prof.nome}
+          </div>
+        ))}
+      </div>
+      
+      <div className="calendar-wrapper">        
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          }}
+          locale={ptBrLocale}
+          events={[...eventos, currentTimeEvent].filter(event => event !== null)}
+          selectable={true}
+          selectMirror={true}
+          dayMaxEvents={true}
+          weekends={true}
+          select={handleDateSelect}
+          eventClick={handleEventClick}
+          eventDrop={handleEventDrop}
+          height="auto"
+          contentHeight="auto"
+          stickyHeaderDates={true}
+          slotMinTime={horaInicial}
+          slotMaxTime={horaFinal}
+          nowIndicator={true}
+        />
+      </div>
+      {showEventoModal && (
+        <div className="evento-modal">
+            <h2>Detalhes do Agendamento</h2>
+            <p><strong>Cliente:</strong> {eventoSelecionado.cliente}</p>
+            <p><strong>Serviço:</strong> {eventoSelecionado.servico}</p>
+            <p><strong>Profissional:</strong> {eventoSelecionado.profissional}</p>
+            <p><strong>Início:</strong> {eventoSelecionado.dataInicio}</p>
+            <p><strong>Fim:</strong> {eventoSelecionado.dataFim}</p>
+            <button onClick={handleCloseEventoModal} className='fechar-button'>Fechar</button>
+            <button onClick={handleCancelarAgendamento} className="cancelar-button">Cancelar Agendamento</button>
+            {showConfirmacaoCancelamento && (
+              <div className="confirmacao-cancelamento">
+                <p>Deseja cancelar este agendamento?</p>
+                <button onClick={confirmarCancelamento} className="cancelar-button">Sim</button>
+                <button onClick={() => setShowConfirmacaoCancelamento(false)} className="cancelar-button">Não</button>
+              </div>
+            )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CalendarioAgendamento;
+
