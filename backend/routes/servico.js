@@ -9,6 +9,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 router.post('/servicos', authMiddleware, servicoController.createServico);
 
+/* Para integrar com WhatsApp */
 router.get('/servicos/:empresa_id', async (req, res) => {
   const empresa_id = req.params.empresa_id;
   try {
