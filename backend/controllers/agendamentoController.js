@@ -18,7 +18,7 @@ const verificarConflitoAgendamento = async (empresa_id, profissional_id, data_ho
   return result.length > 0;
 };
 
-/* Serve para WEB e com ManyChant */
+/* Serve para WEB e com ChatBot */
 exports.createAgendamento = async (req, res) => {
   const { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
 

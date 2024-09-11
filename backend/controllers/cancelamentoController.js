@@ -1,6 +1,6 @@
 const db = require('../config/db');
 
-/* Serve para WEB e com ManyChant */
+/* Serve para WEB e com ChatBot */
 exports.createCancelamento = async (req, res) => {
   const { agendamento_id } = req.body;
   const empresa_id = req.user.empresa_id;

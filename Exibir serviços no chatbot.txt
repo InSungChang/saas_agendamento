@@ -1,0 +1,376 @@
+vou descrever como deverá funcionar no chatbot. antes de mostrar disponibilidade das datas, primeiro tem que saber com qual empresa este cliente irá agendar, existe tabela chamada empresas, estou pensando buscar número de telefone que reconheceu pelo WhatsApp usando qr code para buscar na tabela empresas para obter id da empresa para buscar as informações nas tabelas, em seguida cliente precisará informar qual serviço irá agendar dessa empresa, preciso mostrar em seguida com qual profissional irá fazer serviço, após escolha de serviço e profissional dessa empresa, precisa consultar no banco de dados se existe serviço associado com profissional, neste momento devemos buscar disponibilidade das datas e horário para agendamento. poderia me ajudar a criar API de serviço primeiro? não podemos esquecer a empresa para buscar as informações do banco de dados.
+
+pelo sistema web tem código authController.js para identificar empresa_id do usuário, segue código para análise.
+
+authController.js:
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const db = require('../config/db');
+
+exports.register = (req, res) => {
+    const { nome, email, senha } = req.body;
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(senha, salt);
+
+    const sql = 'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)';
+    db.query(sql, [nome, email, hashedPassword], (err, result) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
+        res.send('Usuário registrado com sucesso!');
+    });
+};
+
+exports.login = (req, res) => {
+    const { email, senha } = req.body;
+
+    const sql = 'SELECT * FROM usuarios WHERE email = ?';
+    db.query(sql, [email], (err, results) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
+        if (results.length === 0) {
+            return res.status(401).send('Usuário não encontrado');
+        }
+
+        const user = results[0];
+        const isPasswordValid = bcrypt.compareSync(senha, user.senha);    
+
+        if (!isPasswordValid) {
+            return res.status(401).send('Senha incorreta');
+        }
+
+        // Gera o token JWT incluindo o empresa_id
+        const token = jwt.sign({ 
+            id: user.id,
+            empresa_id: user.empresa_id, // Inclui o empresa_id no payload do token
+            nome: user.nome
+        }, process.env.JWT_SECRET, {
+            expiresIn: '1h'
+        });
+
+        // Retorna o token e as informações do usuário
+        res.json({ token, usuario: { id: user.usuario_id, nome: user.nome, empresa_id: user.empresa_id } });
+    });
+};
+
+empresa.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const empresaController = require('../controllers/empresaController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/empresas', authMiddleware, empresaController.createEmpresa);
+
+// Rota para obter todas as empresa
+router.get('/empresas', authMiddleware, async (req, res) => {
+    try {
+        const [results] = await db.promise().query('SELECT * FROM empresas');
+        res.json(results);
+    } catch (error) {
+        console.error('Erro ao buscar empresas:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar empresas'
+        });
+    }
+});
+
+// Rota para obter uma empresa específico
+router.get('/empresas/:id', authMiddleware, async (req, res) => {
+    const {
+        id
+    } = req.params;
+    try {
+        const [results] = await db.promise().query('SELECT * FROM empresas WHERE id = ?', [id]);
+        if (results.length > 0) {
+            res.json(results[0]);
+        } else {
+            res.status(404).json({
+                error: 'Empresa não encontrada'
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar empresa:', error);
+        res.status(500).json({
+            error: 'Erro ao buscar empresa'
+        });
+    }
+});
+
+// Rota para atualizar uma empresa
+router.put('/empresas/:id', authMiddleware, empresaController.updateEmpresa);
+
+// Rota para deletar uma empresa
+router.delete('/empresas/:id', authMiddleware, empresaController.deleteEmpresa);
+
+module.exports = router;
+
+empresaController.js:
+const db = require('../config/db');
+const Empresa = require('../models/Empresa');
+
+const saltRounds = 10;
+
+exports.createEmpresa = (req, res) => {
+  const { nome, email, telefone, endereco } = req.body;
+  const novoEmpresa = { nome, email, telefone, endereco };
+
+  Empresa.create(novoEmpresa, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar empresa', error: err });
+    }
+    res.status(201).send({ message: 'Empresa criado com sucesso', empresaId: result.insertId });
+  });
+};
+
+exports.updateEmpresa = async (req, res) => {
+  const { id } = req.params;
+  const { nome, email, telefone, endereco } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE empresas SET nome = ?, email = ?, telefone = ?, endereco = ? WHERE id = ?',
+      [nome, email, telefone, endereco, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Empresa atualizada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Empresa não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar empresa:', error);
+    res.status(500).json({ error: 'Erro ao atualizar empresa' });
+  }
+};
+
+exports.deleteEmpresa = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM empresas WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Empresa deletada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Empresa não encontrada' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir a empresa. Existem registros vinculados a esta empresa em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar empresa:', error);
+      res.status(500).json({ error: 'Erro ao deletar empresa' });
+    }
+  }
+};
+
+Empresa.js:
+const db = require('../config/db');
+
+const Empresa = {
+  create: (empresa, callback) => {
+    const query = `INSERT INTO empresas (nome, email, telefone, endereco) VALUES (?, ?, ?, ?)`;
+    db.query(query, [empresa.nome, empresa.email, empresa.telefone, empresa.endereco], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  }
+};
+
+module.exports = Empresa;
+
+servico.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const servicoController = require('../controllers/servicoController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/servicos', authMiddleware, servicoController.createServico);
+
+router.get('/servicos', authMiddleware, async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+      const [results] = await db.promise().query('SELECT * FROM servicos WHERE empresa_id = ?', [empresa_id]);
+      res.json(results);
+  } catch (error) {
+      console.error('Erro ao buscar servicos:', error);
+      res.status(500).json({ error: 'Erro ao buscar servicos' });
+  }
+});
+
+router.get('/servicos-por-profissional/:profissional_id', authMiddleware, async (req, res) => {
+  const { profissional_id } = req.params;
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query(
+      'SELECT s.* FROM servicos s ' +
+      'JOIN profissional_servicos ps ON s.id = ps.servico_id ' +
+      'WHERE ps.profissional_id = ? AND s.empresa_id = ?',
+      [profissional_id, empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar serviços por profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar serviços por profissional' });
+  }
+});
+
+router.get('/servicos/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM servicos WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar serviço' });
+  }
+});
+
+router.get('/servicos/:empresa_id', async (req, res) => {
+  const empresa_id = req.params.empresa_id;
+  try {
+      const servicos = await db.query('SELECT * FROM servicos WHERE empresa_id = ?', [empresa_id]);
+      res.json(servicos);
+  } catch (error) {
+      res.status(500).send('Erro ao buscar serviços');
+  }
+});
+
+router.put('/servicos/:id', authMiddleware, servicoController.updateServico);
+
+router.delete('/servicos/:id', authMiddleware, servicoController.deleteServico);
+
+module.exports = router;
+
+servicoController.js:
+const db = require('../config/db');
+const Servico = require('../models/Servico');
+
+exports.createServico = (req, res) => {
+  const { empresa_id, nome, descricao, preco, duracao } = req.body;
+  const novoServico = { empresa_id, nome, descricao, preco, duracao };
+
+  Servico.create(novoServico, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar serviço', error: err });
+    }
+    res.status(201).send({ message: 'Serviço criado com sucesso', servicoId: result.insertId });
+  });
+};
+
+exports.updateServico = async (req, res) => {
+  const { id } = req.params;
+  const { empresa_id, nome, descricao, preco, duracao } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE servicos SET empresa_id = ?, nome = ?, descricao = ?, preco = ?, duracao = ? WHERE id = ?',
+      [empresa_id, nome, descricao, preco, duracao, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Serviço atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar serviço:', error);
+    res.status(500).json({ error: 'Erro ao atualizar serviço' });
+  }
+};
+
+exports.deleteServico = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM servicos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Serviço deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este serviço. Existem registros vinculados a este serviço em outros cadastros.' 
+      });
+    } else {
+    console.error('Erro ao deletar serviço:', error);
+    res.status(500).json({ error: 'Erro ao deletar serviço' });
+    }
+  }
+};
+
+Servico.js:
+const db = require('../config/db');
+
+const Servico = {
+  create: (servico, callback) => {
+    const query = `INSERT INTO servicos (empresa_id, nome, descricao, preco, duracao) VALUES (?, ?, ?, ?, ?)`;
+    db.query(query, [servico.empresa_id, servico.nome, servico.descricao, servico.preco, servico.duracao], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  }
+};
+
+module.exports = Servico;
+
+server.js:
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/auth');
+const clienteRoutes = require('./routes/cliente');
+const usuarioRoutes = require('./routes/usuario');
+const empresaRoutes = require('./routes/empresa');
+const servicoRoutes = require('./routes/servico');
+const profissionalRoutes = require('./routes/profissional');
+const profissionalServicoRoutes = require('./routes/profissionalServico');
+const userRoutes = require('./routes/user');
+const disponibilidadeRoutes = require('./routes/disponibilidade');
+const agendamentoRoutes = require('./routes/agendamento');
+const cancelamentoRoutes = require('./routes/cancelamento');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api', clienteRoutes);
+app.use('/api', usuarioRoutes);
+app.use('/api', empresaRoutes);
+app.use('/api', servicoRoutes);
+app.use('/api', profissionalRoutes);
+app.use('/api', profissionalServicoRoutes);
+app.use('/api', userRoutes);
+app.use('/api', disponibilidadeRoutes);
+app.use('/api', agendamentoRoutes);
+app.use('/api', cancelamentoRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
+

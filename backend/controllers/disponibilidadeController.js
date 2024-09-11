@@ -37,7 +37,7 @@ exports.deleteDisponibilidade = (req, res) => {
   });
 };
 
-/* Para utilizar com ManyChat */
+/* Para utilizar com ChatBot */
 exports.verificarDisponibilidade = async (req, res) => {
   const { profissional_id, data_horario_agendamento, duracao } = req.body;
 
