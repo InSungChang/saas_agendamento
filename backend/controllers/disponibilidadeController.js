@@ -1,5 +1,7 @@
 const Disponibilidade = require('../models/Disponibilidade');
 
+const db = require('../config/db');
+
 exports.createDisponibilidade = (req, res) => {
   const { profissional_id, dia_semana, hora_inicio, hora_fim } = req.body;
   const novaDisponibilidade = { profissional_id, dia_semana, hora_inicio, hora_fim };
@@ -60,3 +62,30 @@ exports.verificarDisponibilidade = async (req, res) => {
     res.status(500).send({ message: 'Erro ao verificar disponibilidade', error: error.message });
   }
 };
+
+exports.getDisponibilidadesPorServico = async (req, res) => {
+  const { servico_id } = req.params;
+
+  try {
+    const [results] = await db.promise().query(
+      `SELECT d.*, p.nome as profissional_nome, s.duracao as servico_duracao
+       FROM disponibilidades d
+       JOIN profissionais p ON d.profissional_id = p.id
+       JOIN profissional_servicos ps ON p.id = ps.profissional_id
+       JOIN servicos s ON ps.servico_id = s.id
+       WHERE ps.servico_id = ?
+       ORDER BY d.hora_inicio`,
+      [servico_id]
+    );
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Nenhuma disponibilidade encontrada para este serviço.' });
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar disponibilidades por serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar disponibilidades por serviço' });
+  }
+};
+

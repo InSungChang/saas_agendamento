@@ -71,38 +71,36 @@ const AgendamentoForm = () => {
 
   const carregarProfissionaisPorServico = (servicoId) => {
     const token = localStorage.getItem('token');
-    axios.get(`${API_BASE_URL}/profissionais-por-servico/${servicoId}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(response => setProfissionais(response.data))
-      .catch(error => console.error('Erro ao carregar profissionais por serviço:', error));
+    axios.get(`${API_BASE_URL}/web/profissionais-por-servico/${servicoId}`, { 
+      headers: { Authorization: `Bearer ${token}` } 
+    })
+      .then(response => {
+        console.log('Profissionais carregados:', response.data);
+        setProfissionais(response.data);
+      })
+      .catch(error => {
+        console.error('Erro ao carregar profissionais por serviço:', error);
+        setMessage('Erro ao carregar profissionais. Por favor, tente novamente.');
+        setMessageType('error');
+      });
   };
 
   const carregarDisponibilidades = (servicoId) => {
     const token = localStorage.getItem('token');
-  
-    console.log(servicoId);
   
     if (!servicoId) {
       console.error('Serviço não selecionado');
       return;
     }
   
-    // Primeiro, buscar a duração do serviço
-    axios.get(`${API_BASE_URL}/servicos/${servicoId}`, {
+    axios.get(`${API_BASE_URL}/disponibilidades/servico/${servicoId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(servicoResponse => {
-        const servicoDuracao = servicoResponse.data.duracao;
-  
-        // Agora, buscar as disponibilidades
-        return axios.get(`${API_BASE_URL}/disponibilidades/servico/${servicoId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-          .then(response => {
-            console.log('Dados recebidos:', response.data);
-            const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao, servicoDuracao);
-            console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
-            setDisponibilidades(disponibilidadesFormatadas);
-          });
+      .then(response => {
+        console.log('Dados recebidos:', response.data);
+        const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao);
+        console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
+        setDisponibilidades(disponibilidadesFormatadas);
       })
       .catch(error => {
         console.error('Erro ao carregar disponibilidades:', error);
@@ -110,7 +108,7 @@ const AgendamentoForm = () => {
       });
   };
   
-  const formatarDisponibilidades = (disponibilidades, dias, servicoDuracao) => {
+  const formatarDisponibilidades = (disponibilidades, dias) => {
     if (!disponibilidades || disponibilidades.length === 0) {
       return [];
     }
@@ -142,25 +140,27 @@ const AgendamentoForm = () => {
           const horarioFim = new Date(data);
           horarioFim.setHours(horaFim, minutoFim, 0);
   
-          while (horarioAtual.getTime() + servicoDuracao * 60000 <= horarioFim.getTime()) {
-            const horarioFim = new Date(horarioAtual.getTime() + servicoDuracao * 60000);
+          while (horarioAtual.getTime() + d.servico_duracao * 60000 <= horarioFim.getTime()) {
+            const horarioFim = new Date(horarioAtual.getTime() + d.servico_duracao * 60000);
             horariosDisponiveis.push({
               profissional_nome: d.profissional_nome,
               horario: horarioAtual.toTimeString().slice(0, 5),
               fim: horarioFim.toTimeString().slice(0, 5)
             });
-            horarioAtual = new Date(horarioAtual.getTime() + servicoDuracao * 60000);
+            horarioAtual = new Date(horarioAtual.getTime() + d.servico_duracao * 60000);
           }
         });
   
         // Ordenar os horários disponíveis
         horariosDisponiveis.sort((a, b) => a.horario.localeCompare(b.horario));
-
-        disponibilidadesFormatadas.push({
-          data: data.toISOString().split('T')[0],
-          diaSemana: diaSemana,
-          horarios: horariosDisponiveis
-        });
+  
+        if (horariosDisponiveis.length > 0) {
+          disponibilidadesFormatadas.push({
+            data: data.toISOString().split('T')[0],
+            diaSemana: diaSemana,
+            horarios: horariosDisponiveis
+          });
+        }
       }
     }
   

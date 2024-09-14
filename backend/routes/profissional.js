@@ -7,6 +7,8 @@ const profissionalController = require('../controllers/profissionalController');
 
 const authMiddleware = require('../middleware/authMiddleware');
 
+const botAuthMiddleware = require('../middleware/botAuthMiddleware');
+
 router.post('/profissionais', authMiddleware, profissionalController.createProfissional);
 
 /* router.get('/profissionais', authMiddleware, async (req, res) => {
@@ -56,16 +58,28 @@ router.get('/profissionais/:empresa_id', async (req, res) => {
   }
 });
 
-router.get('/profissionais-por-servico/:servico_id', authMiddleware, async (req, res) => {
+/* Para integrar com WhatsApp */
+router.get('/profissionais-por-servico/:servico_id', botAuthMiddleware, async (req, res) => {
   const { servico_id } = req.params;
-  const empresa_id = req.user.empresa_id;
+  const empresa_id = req.query.empresa_id;
+  console.log("Empresa Id no API: ", empresa_id);
+  console.log("Servico Id no API: ", servico_id);
+
   try {
     const [results] = await db.promise().query(
-      'SELECT p.* FROM profissionais p ' +
-      'JOIN profissional_servicos ps ON p.id = ps.profissional_id ' +
-      'WHERE ps.servico_id = ? AND p.empresa_id = ?',
-      [servico_id, empresa_id]
+      `SELECT DISTINCT p.id, p.nome
+       FROM profissionais p
+       INNER JOIN profissional_servicos ps ON p.id = ps.profissional_id
+       INNER JOIN servicos s ON ps.servico_id = s.id
+       WHERE s.id = ? AND s.empresa_id = ? AND p.empresa_id = ?
+       ORDER BY p.nome`,
+      [servico_id, empresa_id, empresa_id]
     );
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Nenhum profissional encontrado para este serviço e empresa.' });
+    }
+
     res.json(results);
   } catch (error) {
     console.error('Erro ao buscar profissionais por serviço:', error);

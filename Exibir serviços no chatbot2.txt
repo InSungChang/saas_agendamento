@@ -1,0 +1,430 @@
+vou descrever como deverá funcionar no chatbot. antes de mostrar disponibilidade das datas, primeiro tem que saber com qual empresa este cliente irá agendar, existe tabela chamada empresas, estou pensando buscar número de telefone que reconheceu pelo WhatsApp usando qr code para buscar na tabela empresas para obter id da empresa para buscar as informações nas tabelas, em seguida cliente precisará informar qual serviço irá agendar dessa empresa, preciso mostrar em seguida com qual profissional irá fazer serviço, após escolha de serviço e profissional dessa empresa, precisa consultar no banco de dados se existe serviço associado com profissional, neste momento devemos buscar disponibilidade das datas e horário para agendamento. não podemos esquecer a empresa para buscar as informações do banco de dados.
+
+etapa de listar serviço desta empresa está funcionando. segue código para continuarmos com desenvolvimento.
+
+podemos fazer por etapas? vamos fazer a parte do listar profissional dessa empresa.
+
+segue código para análise e posterior ajuste.
+
+bot.js:
+require('dotenv').config();
+const { Client } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
+const axios = require('axios');
+const whatsappService = require('./whatsappService');
+
+const client = new Client();
+
+client.on('qr', (qr) => {
+    qrcode.generate(qr, { small: true });
+});
+
+client.on('ready', () => {
+    console.log('Client is ready!');
+});
+
+client.on('message', async (message) => {
+    const empresaId = await whatsappService.getEmpresaByWhatsapp(message.to);
+    if (!empresaId) {
+        await message.reply('Desculpe, não foi possível identificar sua empresa.');
+        return;
+    }
+    
+    /* Se receber mensagem de !servicos buscar lista de serviços no banco de dados */
+    if (message.body === '!servicos') {
+        const servicos = await getServicos(empresaId);
+        let response = 'Serviços disponíveis:\n';
+        servicos.forEach((servico, index) => {
+            response += `${index + 1}. ${servico.nome}\n`;
+        });
+        response += '\nPara selecionar um serviço, responda com o número correspondente.';
+        await message.reply(response);
+    } else if (/^\d+$/.test(message.body)) {
+        const servicoId = parseInt(message.body);
+        const profissionais = await getProfissionais(empresaId, servicoId);
+        let response = 'Profissionais disponíveis:\n';
+        profissionais.forEach((profissional, index) => {
+            response += `${index + 1}. ${profissional.nome}\n`;
+        });
+        response += '\nPara selecionar um profissional, responda com o número correspondente.';
+        await message.reply(response);
+    } else if (message.body.startsWith('!profissional')) {
+        // Lógica para selecionar o profissional e mostrar disponibilidade
+        // ...
+    } else if (message.body.startsWith('!agendar')) {
+        // Lógica para agendar
+        // ...
+    }
+});
+
+async function getServicos(empresaId) {
+    console.log("Veio para getServicos: ", empresaId);
+    try {
+        const response = await axios.get(`http://localhost:5000/api/servicos/${empresaId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar serviços:', error);
+        return [];
+    }
+}
+
+async function getProfissionais(empresaId, servicoId) {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/profissionais-por-servico/${servicoId}?empresa_id=${empresaId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar profissionais:', error);
+        return [];
+    }
+}
+
+client.initialize();
+
+
+whatsappService.js:
+const db = require('./config/db');
+
+exports.getEmpresaByWhatsapp = async (whatsappNumber) => {
+    console.log("Qual número? ", whatsappNumber);
+    try {
+        const [results] = await db.promise().query(
+            'SELECT id FROM empresas WHERE telefone = ?',
+            [whatsappNumber]
+        );
+        return results.length > 0 ? results[0].id : null;
+    } catch (error) {
+        console.error('Erro ao buscar empresa por WhatsApp:', error);
+        throw error;
+    }
+};
+
+profissionalController.js:
+const db = require('../config/db');
+const Profissional = require('../models/Profissional');
+
+exports.createProfissional = (req, res) => {
+  const { empresa_id, nome, email, telefone, ativo, cor } = req.body;
+  const novoProfissional = { empresa_id, nome, email, telefone, ativo, cor };
+
+  Profissional.create(novoProfissional, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar profissional', error: err });
+    }
+    res.status(201).send({ message: 'Profissional criado com sucesso', profissionalId: result.insertId });
+  });
+};
+
+exports.updateProfissional = async (req, res) => {
+  const { id } = req.params;
+  const { empresa_id, nome, email, telefone, ativo, cor } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE profissionais SET empresa_id = ?, nome = ?, email = ?, telefone = ?, ativo = ?, cor = ? WHERE id = ?',
+      [empresa_id, nome, email, telefone, ativo, cor, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Profissional atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar profissional:', error);
+    res.status(500).json({ error: 'Erro ao atualizar profissional' });
+  }
+};
+
+exports.deleteProfissional = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM profissionais WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Profissional deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir este profissional. Existem registros vinculados a este profissional em outros cadastros.' 
+      });
+    } else {
+      console.error('Erro ao deletar profissional:', error);
+      res.status(500).json({ error: 'Erro ao deletar profissional' });
+    }
+  }
+};
+
+Profissional.js:
+const db = require('../config/db');
+
+const Profissional = {
+  create: (profissional, callback) => {
+    const query = `INSERT INTO profissionais (empresa_id, nome, email, telefone, ativo, cor) VALUES (?, ?, ?, ?, ?, ?)`;
+    db.query(query, [profissional.empresa_id, profissional.nome, profissional.email, profissional.telefone, profissional.ativo, profissional.cor], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  }
+};
+
+module.exports = Profissional;
+
+profissional.js:
+const express = require('express');
+const router = express.Router();
+
+const db = require('../config/db');
+
+const profissionalController = require('../controllers/profissionalController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+
+router.post('/profissionais', authMiddleware, profissionalController.createProfissional);
+
+/* router.get('/profissionais', authMiddleware, async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissionais');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar profissionais:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissionais' });
+  }
+}); */
+
+router.get('/profissionais', authMiddleware, async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+      const [results] = await db.promise().query('SELECT * FROM profissionais WHERE empresa_id = ?', [empresa_id]);
+      res.json(results);
+  } catch (error) {
+      console.error('Erro ao buscar profissionais:', error);
+      res.status(500).json({ error: 'Erro ao buscar profissionais' });
+  }
+});
+
+router.get('/profissionais/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissionais WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissional' });
+  }
+});
+
+// Rota para buscar profissionais por empresa
+router.get('/profissionais/:empresa_id', async (req, res) => {
+  const empresa_id = req.params.empresa_id;
+  try {
+      const profissionais = await db.query('SELECT * FROM profissionais WHERE empresa_id = ?', [empresa_id]);
+      res.json(profissionais);
+  } catch (error) {
+      res.status(500).send('Erro ao buscar profissionais');
+  }
+});
+
+router.get('/profissionais-por-servico/:servico_id', authMiddleware, async (req, res) => {
+  const { servico_id } = req.params;
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query(
+      'SELECT p.* FROM profissionais p ' +
+      'JOIN profissional_servicos ps ON p.id = ps.profissional_id ' +
+      'WHERE ps.servico_id = ? AND p.empresa_id = ?',
+      [servico_id, empresa_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar profissionais por serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar profissionais por serviço' });
+  }
+});
+
+router.put('/profissionais/:id', authMiddleware, profissionalController.updateProfissional);
+
+router.delete('/profissionais/:id', authMiddleware, profissionalController.deleteProfissional);
+
+module.exports = router;
+
+profissionalServicoController.js:
+const db = require('../config/db');
+const ProfissionalServico = require('../models/ProfissionalServico');
+
+exports.createProfissionalServico = (req, res) => {
+  const { profissional_id, servico_id } = req.body;
+  const novoProfissionalServico = { profissional_id, servico_id };
+
+  ProfissionalServico.create(novoProfissionalServico, (err, result) => {
+    if (err) {
+      return res.status(500).send({ message: 'Erro ao criar associação profissional-serviço', error: err });
+    }
+    res.status(201).send({ message: 'Associação profissional-serviço criada com sucesso', id: result.insertId });
+  });
+};
+
+exports.updateProfissionalServico = async (req, res) => {
+  const { id } = req.params;
+  const { profissional_id, servico_id } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE profissional_servicos SET profissional_id = ?, servico_id = ? WHERE id = ?',
+      [profissional_id, servico_id, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Associação profissional-serviço atualizada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar associação profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao atualizar associação profissional-serviço' });
+  }
+};
+
+exports.deleteProfissionalServico = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM profissional_servicos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Associação profissional-serviço deletada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+      res.status(400).json({ 
+        message: 'Não é possível excluir associação profissional-serviço. Existem registros vinculados a este profissional-serviços em outros cadastros.'
+      });
+    } else {
+      console.error('Erro ao deletar associação profissional-serviço:', error);
+      res.status(500).json({ error: 'Erro ao deletar associação profissional-serviço' });
+    }
+  }
+};
+
+ProfissionalServico.js:
+const db = require('../config/db');
+
+const ProfissionalServico = {
+  create: (profissionalServico, callback) => {
+    const query = `INSERT INTO profissional_servicos (profissional_id, servico_id) VALUES (?, ?)`;
+    db.query(query, [profissionalServico.profissional_id, profissionalServico.servico_id], (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+      callback(null, result);
+    });
+  }
+};
+
+module.exports = ProfissionalServico;
+
+profissionalServico.js:
+const express = require('express');
+const router = express.Router();
+const db = require('../config/db');
+
+const profissionalServicoController = require('../controllers/profissionalServicoController');
+
+router.post('/profissional-servicos', profissionalServicoController.createProfissionalServico);
+
+router.get('/profissional-servicos', async (req, res) => {
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissional_servicos');
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar associações profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar associações profissional-serviço' });
+  }
+});
+
+router.get('/profissional-servicos/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM profissional_servicos WHERE id = ?', [id]);
+    if (results.length > 0) {
+      res.json(results[0]);
+    } else {
+      res.status(404).json({ error: 'Associação profissional-serviço não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar associação profissional-serviço:', error);
+    res.status(500).json({ error: 'Erro ao buscar associação profissional-serviço' });
+  }
+});
+
+router.get('/profissionais-por-servico/:servico_id', async (req, res) => {
+  const { servico_id } = req.params;
+  try {
+      const [results] = await db.promise().query(
+          'SELECT p.* FROM profissionais p ' +
+          'JOIN profissional_servicos ps ON p.id = ps.profissional_id ' +
+          'WHERE ps.servico_id = ?',
+          [servico_id]
+      );
+      res.json(results);
+  } catch (error) {
+      console.error('Erro ao buscar profissionais por serviço:', error);
+      res.status(500).json({ error: 'Erro ao buscar profissionais por serviço' });
+  }
+});
+
+router.put('/profissional-servicos/:id', profissionalServicoController.updateProfissionalServico);
+
+router.delete('/profissional-servicos/:id', profissionalServicoController.deleteProfissionalServico);
+
+module.exports = router;
+
+server.js:
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/auth');
+const clienteRoutes = require('./routes/cliente');
+const usuarioRoutes = require('./routes/usuario');
+const empresaRoutes = require('./routes/empresa');
+const servicoRoutes = require('./routes/servico');
+const profissionalRoutes = require('./routes/profissional');
+const profissionalServicoRoutes = require('./routes/profissionalServico');
+const userRoutes = require('./routes/user');
+const disponibilidadeRoutes = require('./routes/disponibilidade');
+const agendamentoRoutes = require('./routes/agendamento');
+const cancelamentoRoutes = require('./routes/cancelamento');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api', clienteRoutes);
+app.use('/api', usuarioRoutes);
+app.use('/api', empresaRoutes);
+app.use('/api', servicoRoutes);
+app.use('/api', profissionalRoutes);
+app.use('/api', profissionalServicoRoutes);
+app.use('/api', userRoutes);
+app.use('/api', disponibilidadeRoutes);
+app.use('/api', agendamentoRoutes);
+app.use('/api', cancelamentoRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
+

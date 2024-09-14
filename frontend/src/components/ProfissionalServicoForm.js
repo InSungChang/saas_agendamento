@@ -57,7 +57,7 @@ const ProfissionalServicoForm = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE_URL}/profissional-servicos`, profissionalServico, {
+      await axios.post(`${API_BASE_URL}/web/profissional-servicos`, profissionalServico, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage('Associação profissional-serviço criada com sucesso!');
