@@ -22,8 +22,8 @@ import DisponibilidadesPageTodosProfissionais from './components/Disponibilidade
 import AgendamentoTodosServiosForm from './components/AgendamentoTodosServicosForm';
 import DisponibilidadesPageTodosServicos from './components/DisponibilidadesPageTodosServicos';
 import CalendarioAgendamento from './components/CalendarioAgendamento';
-import Agendamento from './components/Agendamento';
-import Agenda from './components/Agenda';
+/* import Agendamento from './components/Agendamento';
+import Agenda from './components/Agenda'; */
 import CalendarioAgendamentoForm from './components/CalendarioAgendamentoForm';
 import CalendarioDisponibilidadesPage from './components/CalendarioDisponibilidadesPage';
 
@@ -55,8 +55,8 @@ const App = () => {
           <Route path="/agendamentoTodosServicos" element={<AgendamentoTodosServiosForm />} />
           <Route path="/disponibilidadesPageTodosServicos" element={<DisponibilidadesPageTodosServicos />} />
           <Route path="/calendarioAgendamento" element={<CalendarioAgendamento />} />
-          <Route path="/agendamento" element={<Agendamento />} />
-          <Route path="/agenda" element={<Agenda />} />
+{/*           <Route path="/agendamento" element={<Agendamento />} />
+          <Route path="/agenda" element={<Agenda />} /> */}
           <Route path="/calendarioAgendamentos" element={<CalendarioAgendamentoForm />} />
           <Route path="/calendarioDisponibilidadesPage" element={<CalendarioDisponibilidadesPage />} />
           <Route path="/" element={<Dashboard />} />

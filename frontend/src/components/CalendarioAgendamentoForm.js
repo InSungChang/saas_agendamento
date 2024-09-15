@@ -75,7 +75,7 @@ const AgendamentoForm = () => {
 
   const carregarProfissionaisPorServico = (servicoId) => {
     const token = localStorage.getItem('token');
-    axios.get(`${API_BASE_URL}/profissionais-por-servico/${servicoId}`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${API_BASE_URL}/web/profissionais-por-servico/${servicoId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(response => setProfissionais(response.data))
       .catch(error => console.error('Erro ao carregar profissionais por serviço:', error));
   };

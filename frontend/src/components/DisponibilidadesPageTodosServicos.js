@@ -19,7 +19,7 @@ const DisponibilidadePage = () => {
     <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
     <Sidebar onToggle={handleSidebarToggle} />
     <div className="disponibilidade-container">
-      <h2>Disponibilidades</h2>
+      <h2>Disponibilidades-Todos os Serviços</h2>
       <div className="disponibilidades-grid">
         {disponibilidades.map((disp, index) => (
           <div key={index} className="disponibilidade-item">
