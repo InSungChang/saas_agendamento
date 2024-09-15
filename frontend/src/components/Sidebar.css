@@ -81,3 +81,29 @@
   display: none;
   color: transparent;
 }
+
+.submenu-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #7965a6;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: right;
+  transition: background-color 0.3s;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.submenu-toggle:hover {
+  background-color: #512da8;
+}
+
+.submenu {
+  list-style-type: none;
+  padding-left: 20px;
+}
+
