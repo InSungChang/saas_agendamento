@@ -84,8 +84,9 @@ const AgendamentoTodosProfissionaisForm = () => {
         const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao);
         console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
         
-        // Carregar agendamentos existentes
-        axios.get(`${API_BASE_URL}/agendamentos/servico/${servicoId}`, {
+        // Carregar agendamentos existentes por profissional
+        console.log("Profissional ID: ", response.data[0]?.profissional_id);   
+        axios.get(`${API_BASE_URL}/agendamentos/profissional/${response.data[0]?.profissional_id}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
           .then(agendamentoResponse => {
