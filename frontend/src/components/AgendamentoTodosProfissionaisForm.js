@@ -83,15 +83,21 @@ const AgendamentoTodosProfissionaisForm = () => {
         console.log('Dados recebidos:', response.data);
         const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao);
         console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
+  
+        // Obter todos os profissionais associados ao serviço
+        const profissionalIds = response.data.map(d => d.profissional_id);
         
-        // Carregar agendamentos existentes por profissional
-        console.log("Profissional ID: ", response.data[0]?.profissional_id);   
-        axios.get(`${API_BASE_URL}/agendamentos/profissional/${response.data[0]?.profissional_id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-          .then(agendamentoResponse => {
-            console.log('Agendamentos existentes:', agendamentoResponse.data);
-            const agendamentosExistentes = agendamentoResponse.data;
+        // Carregar agendamentos para todos os profissionais
+        const agendamentosPromises = profissionalIds.map(profissionalId => 
+          axios.get(`${API_BASE_URL}/agendamentos/profissional/${profissionalId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        );
+  
+        // Resolver todas as promessas de agendamentos
+        Promise.all(agendamentosPromises)
+          .then(agendamentosResponses => {
+            const agendamentosExistentes = agendamentosResponses.flatMap(res => res.data); // Agrupar todos os agendamentos
             const disponibilidadesFiltradas = filtrarHorarios(disponibilidadesFormatadas, agendamentosExistentes);
             setDisponibilidades(disponibilidadesFiltradas);
           })
@@ -108,7 +114,7 @@ const AgendamentoTodosProfissionaisForm = () => {
         setMessageType('error');
       });
   };
-  
+    
   const formatarDisponibilidades = (disponibilidades, dias) => {
     if (!disponibilidades || disponibilidades.length === 0) {
       return [];
