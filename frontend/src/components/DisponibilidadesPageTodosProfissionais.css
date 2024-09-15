@@ -1,60 +1,118 @@
 .disponibilidades-page-container {
-    padding: 20px;
-  }
-  
-  .disponibilidades-form {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-  
-  .disponibilidades-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-  }
-  
-  .disponibilidade-item {
-    background-color: #f4f4f4;
-    padding: 10px;
-    border-radius: 5px;
-  }
-  
-  .back-button {
-    margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .back-button:hover {
-    background-color: #0056b3;
-  }
-  
-  @media (max-width: 480px) {
+  padding: 20px;
+}
 
-    .form-layout.sidebar-closed {
-      padding-left: 40px; /* ajuste a largura da barra lateral */
-    }
-    
-    .form-layout.sidebar-closed .sidebar {
-      width: 30px; /* ajuste a largura da barra lateral */
-      overflow: hidden;  
-      background-color: transparent;
-    }
-    
-    .form-layout.sidebar-closed .sidebar .toggle-button {
-      position: absolute;
-      left: 0;
-      top: 0;
-      z-index: 1;
-    }
-    
-    .form-layout.sidebar-closed .sidebar .sidebar-nav {
-      display: none;
-    }
-  
+.disponibilidades-form {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.disponibilidades-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.disponibilidade-item {
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.back-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #0056b3;
+}
+
+@media (max-width: 480px) {
+
+  .form-layout.sidebar-closed {
+    padding-left: 40px;
+    /* ajuste a largura da barra lateral */
   }
+
+  .form-layout.sidebar-closed .sidebar {
+    width: 30px;
+    /* ajuste a largura da barra lateral */
+    overflow: hidden;
+    background-color: transparent;
+  }
+
+  .form-layout.sidebar-closed .sidebar .toggle-button {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+  }
+
+  .form-layout.sidebar-closed .sidebar .sidebar-nav {
+    display: none;
+  }
+
+}
+
+.disponibilidade-container .floating-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  border-radius: 4px;
+  color: white;
+  z-index: 200;
+  transition: opacity 0.3s ease;
+}
+
+.disponibilidade-container .floating-message.success {
+  background-color: #4caf50;
+}
+
+.disponibilidade-container .floating-message.error {
+  background-color: #f44336;
+}
+
+/* Novo estilo base para todos os botões de horário */
+.disponibilidade-item button {
+  margin: 5px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Estilo atualizado para botões de horários ocupados */
+.disponibilidade-item button.ocupado {
+  background-color: #ff4444;
+  /* Vermelho mais vivo */
+  color: white;
+  cursor: not-allowed;
+}
+
+/* Novo estilo hover para botões de horários ocupados */
+.disponibilidade-item button.ocupado:hover {
+  background-color: #cc0000;
+  /* Vermelho mais escuro no hover */
+}
+
+/* Novo estilo para botões de horários disponíveis */
+.disponibilidade-item button:not(.ocupado) {
+  background-color: #4CAF50;
+  /* Verde */
+  color: white;
+}
+
+/* Novo estilo hover para botões de horários disponíveis */
+.disponibilidade-item button:not(.ocupado):hover {
+  background-color: #45a049;
+  /* Verde mais escuro no hover */
+}

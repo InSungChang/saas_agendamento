@@ -4,14 +4,14 @@ import './AgendamentoTodosProfissionaisForm.css';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
-const AgendamentoForm = () => {
+const AgendamentoTodosProfissionaisForm = () => {
   const [clientes, setClientes] = useState([]);
   const [servicos, setServicos] = useState([]);
   const [profissionais, setProfissionais] = useState([]);
   const [disponibilidades, setDisponibilidades] = useState([]);
   const navigate = useNavigate();
   const [agendamento, setAgendamento] = useState({
-    empresa_id: '', // Será preenchido automaticamente
+    empresa_id: '',
     cliente_id: '',
     servico_id: '',
     profissional_id: '',
@@ -23,27 +23,11 @@ const AgendamentoForm = () => {
   const [diasExibicao, setDiasExibicao] = useState(7);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const handleSidebarToggle = (isOpen) => {
-    setIsSidebarOpen(isOpen);
-  };
-
   const API_BASE_URL = process.env.REACT_APP_API_URL;
-
-  const handleExibirDisponibilidade = () => {
-    navigate('/disponibilidadesPageTodosProfissionais', { 
-      state: { 
-        disponibilidades, 
-        agendamento, 
-        profissionais, 
-        servicos 
-      } 
-    });
-  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Carregar clientes, serviços e profissionais
       axios.get(`${API_BASE_URL}/clientes`, { headers: { Authorization: `Bearer ${token}` } })
         .then(response => setClientes(response.data))
         .catch(error => console.error('Erro ao carregar clientes:', error));
@@ -64,9 +48,8 @@ const AgendamentoForm = () => {
 
     if (name === 'servico_id') {
       carregarProfissionaisPorServico(value);
-      carregarDisponibilidades(value); // Chame esta função quando o serviço for selecionado
+      carregarDisponibilidades(value);
     }
-
   };
 
   const carregarProfissionaisPorServico = (servicoId) => {
@@ -100,11 +83,28 @@ const AgendamentoForm = () => {
         console.log('Dados recebidos:', response.data);
         const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao);
         console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
-        setDisponibilidades(disponibilidadesFormatadas);
+        
+        // Carregar agendamentos existentes
+        axios.get(`${API_BASE_URL}/agendamentos/servico/${servicoId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(agendamentoResponse => {
+            console.log('Agendamentos existentes:', agendamentoResponse.data);
+            const agendamentosExistentes = agendamentoResponse.data;
+            const disponibilidadesFiltradas = filtrarHorarios(disponibilidadesFormatadas, agendamentosExistentes);
+            setDisponibilidades(disponibilidadesFiltradas);
+          })
+          .catch(error => {
+            console.error('Erro ao carregar agendamentos:', error);
+            setMessage('Erro ao carregar agendamentos. Por favor, tente novamente.');
+            setMessageType('error');
+          });
       })
       .catch(error => {
         console.error('Erro ao carregar disponibilidades:', error);
         setDisponibilidades([]);
+        setMessage('Erro ao carregar disponibilidades. Por favor, tente novamente.');
+        setMessageType('error');
       });
   };
   
@@ -143,6 +143,7 @@ const AgendamentoForm = () => {
           while (horarioAtual.getTime() + d.servico_duracao * 60000 <= horarioFim.getTime()) {
             const horarioFim = new Date(horarioAtual.getTime() + d.servico_duracao * 60000);
             horariosDisponiveis.push({
+              profissional_id: d.profissional_id,
               profissional_nome: d.profissional_nome,
               horario: horarioAtual.toTimeString().slice(0, 5),
               fim: horarioFim.toTimeString().slice(0, 5)
@@ -151,7 +152,6 @@ const AgendamentoForm = () => {
           }
         });
   
-        // Ordenar os horários disponíveis
         horariosDisponiveis.sort((a, b) => a.horario.localeCompare(b.horario));
   
         if (horariosDisponiveis.length > 0) {
@@ -165,6 +165,50 @@ const AgendamentoForm = () => {
     }
   
     return disponibilidadesFormatadas;
+  };
+
+  const filtrarHorarios = (disponibilidades, agendamentos) => {
+    return disponibilidades.map(dia => {
+      const horariosFiltrados = dia.horarios.map(horario => {
+        const horarioInicio = new Date(`${dia.data}T${horario.horario}`);
+        const horarioFim = new Date(`${dia.data}T${horario.fim}`);
+  
+        const agendamentoConflito = agendamentos.find(ag => {
+          const agendamentoInicio = new Date(ag.data_horario_agendamento);
+          const agendamentoFim = new Date(ag.data_horario_agendamento);
+          agendamentoFim.setMinutes(agendamentoFim.getMinutes() + ag.servico_duracao);
+  
+          return (
+            ag.profissional_id === horario.profissional_id &&
+            (agendamentoInicio < horarioFim) && 
+            (agendamentoFim > horarioInicio)
+          );
+        });
+  
+        return {
+          ...horario,
+          ocupado: Boolean(agendamentoConflito),
+          cliente_nome: agendamentoConflito ? agendamentoConflito.cliente_nome : null,
+          servico_nome: agendamentoConflito ? agendamentoConflito.servico_nome : null
+        };
+      });
+  
+      return {
+        ...dia,
+        horarios: horariosFiltrados
+      };
+    });
+  };
+
+  const handleExibirDisponibilidade = () => {
+    navigate('/disponibilidadesPageTodosProfissionais', { 
+      state: { 
+        disponibilidades, 
+        agendamento, 
+        profissionais, 
+        servicos 
+      } 
+    });
   };
 
   const handleCancel = () => {
@@ -189,56 +233,59 @@ const AgendamentoForm = () => {
     }
   };
 
+  const handleSidebarToggle = (isOpen) => {
+    setIsSidebarOpen(isOpen);
+  };
+
   return (
     <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-    <Sidebar onToggle={handleSidebarToggle} />
-    <div className="agendamento-container">      
-      <h1>Agendamento - Filtro Por Serviço</h1>
-      {message && <div className={`floating-message ${messageType}`}>{message}</div>}
-      <form onSubmit={handleSubmit} className="agendamento-form">        
-        <div className="agendamento-form-header">          
-          <label>Cliente</label>        
-          <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
-            <option value="">Selecione um cliente</option>
-            {clientes.map(cliente => (
-            <option key={cliente.id} value={cliente.id}>{cliente.nome}</option>
-            ))}
-          </select>
+      <Sidebar onToggle={handleSidebarToggle} />
+      <div className="agendamento-container">      
+        <h1>Agendamento - Filtro Por Serviço</h1>
+        {message && <div className={`floating-message ${messageType}`}>{message}</div>}
+        <form onSubmit={handleSubmit} className="agendamento-form">        
+          <div className="agendamento-form-header">          
+            <label>Cliente</label>        
+            <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
+              <option value="">Selecione um cliente</option>
+              {clientes.map(cliente => (
+              <option key={cliente.id} value={cliente.id}>{cliente.nome}</option>
+              ))}
+            </select>
 
-          <label>Serviço</label>
-          <select name="servico_id" value={agendamento.servico_id} onChange={handleChange} required>
-            <option value="">Selecione um serviço</option>
-            {servicos.map(servico => (
-              <option key={servico.id} value={servico.id}>{servico.nome}</option>
-            ))}
-          </select>
+            <label>Serviço</label>
+            <select name="servico_id" value={agendamento.servico_id} onChange={handleChange} required>
+              <option value="">Selecione um serviço</option>
+              {servicos.map(servico => (
+                <option key={servico.id} value={servico.id}>{servico.nome}</option>
+              ))}
+            </select>
 
-          <label>Dias de exibição</label>
-          <select value={diasExibicao} onChange={(e) => setDiasExibicao(Number(e.target.value))}>
-            <option value={7}>7 dias</option>
-            <option value={14}>14 dias</option>
-            <option value={21}>21 dias</option>
-            <option value={30}>30 dias</option>
-          </select>
-            
-          <div className="button-container">
-          <button 
-            type="button" 
-            onClick={handleExibirDisponibilidade} 
-            className="exibir-disponibilidade-button"
-            disabled={!agendamento.servico_id}
-          >
-            Exibir Disponibilidade
-          </button>
+            <label>Dias de exibição</label>
+            <select value={diasExibicao} onChange={(e) => setDiasExibicao(Number(e.target.value))}>
+              <option value={7}>7 dias</option>
+              <option value={14}>14 dias</option>
+              <option value={21}>21 dias</option>
+              <option value={30}>30 dias</option>
+            </select>
+              
+            <div className="button-container">
+            <button 
+              type="button" 
+              onClick={handleExibirDisponibilidade} 
+              className="exibir-disponibilidade-button"
+              disabled={!agendamento.servico_id}
+            >
+              Exibir Disponibilidade
+            </button>
 
-          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+            <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+            </div>
           </div>
-        </div>
-  
-      </form>
-    </div>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default AgendamentoForm;
+export default AgendamentoTodosProfissionaisForm;
