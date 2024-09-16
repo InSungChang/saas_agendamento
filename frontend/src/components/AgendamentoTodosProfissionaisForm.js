@@ -99,6 +99,7 @@ const AgendamentoTodosProfissionaisForm = () => {
           .then(agendamentosResponses => {
             const agendamentosExistentes = agendamentosResponses.flatMap(res => res.data); // Agrupar todos os agendamentos
             const disponibilidadesFiltradas = filtrarHorarios(disponibilidadesFormatadas, agendamentosExistentes);
+            console.log('Retorno após filtrarHorarios: ', disponibilidadesFiltradas);
             setDisponibilidades(disponibilidadesFiltradas);
           })
           .catch(error => {

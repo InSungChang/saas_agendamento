@@ -80,8 +80,6 @@ const AgendamentoForm = () => {
   const carregarDisponibilidades = (profissionalId) => {
     const token = localStorage.getItem('token');
 
-    console.log(profissionalId);
-
     if (!profissionalId) {
       console.error('Profissional não selecionado');
       return;
@@ -91,15 +89,64 @@ const AgendamentoForm = () => {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(response => {
-        console.log('Dados recebidos:', response.data);
+        console.log('Dados recebidos Disponibilidades:', response.data);
         const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao);
         console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
-        setDisponibilidades(disponibilidadesFormatadas);
+        // Filtrar disponibilidades baseado em agendamentos existentes
+        axios.get(`${API_BASE_URL}/agendamentos/profissional/${profissionalId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(agendamentoResponse => {
+            console.log('Retorno do backend1: ', agendamentoResponse.data);
+            const agendamentosExistentes = agendamentoResponse.data;
+            const disponibilidadesFiltradas = filtrarHorarios(disponibilidadesFormatadas, agendamentosExistentes);
+            console.log('Retorno após filtrarHorarios: ', disponibilidadesFiltradas);
+            setDisponibilidades(disponibilidadesFiltradas);
+          })
+          .catch(error => {
+            console.error('Erro ao carregar agendamentos:', error);
+            setDisponibilidades([]);
+            setMessage('Erro ao carregar agendamentos. Por favor, tente novamente.');
+            setMessageType('error');
+          });
       })
       .catch(error => {
         console.error('Erro ao carregar disponibilidades:', error);
         setDisponibilidades([]);
+        setMessage('Erro ao carregar disponibilidades. Por favor, tente novamente.');
+        setMessageType('error');
       });
+  };
+
+  const filtrarHorarios = (disponibilidades, agendamentos) => {
+    return disponibilidades.map(dia => {
+      const horariosFiltrados = dia.horarios.map(horario => {
+        const horarioInicio = new Date(`${dia.data}T${horario.inicio}`);
+        const horarioFim = new Date(`${dia.data}T${horario.fim}`);
+  
+        const agendamentoConflito = agendamentos.find(ag => {
+          const agendamentoInicio = new Date(ag.data_horario_agendamento);
+          const agendamentoFim = new Date(ag.data_horario_agendamento);
+          agendamentoFim.setMinutes(agendamentoFim.getMinutes() + ag.servico_duracao);
+  
+          return (
+            (agendamentoInicio < horarioFim) && 
+            (agendamentoFim > horarioInicio)
+          );
+        });
+  
+        return {
+          ...horario,
+          ocupado: Boolean(agendamentoConflito),
+          cliente_nome: agendamentoConflito ? agendamentoConflito.cliente_nome : null
+        };
+      });
+  
+      return {
+        ...dia,
+        horarios: horariosFiltrados
+      };
+    });
   };
 
   const formatarDisponibilidades = (disponibilidades, dias) => {
@@ -118,19 +165,6 @@ const AgendamentoForm = () => {
       const diaSemana = diasSemana[data.getDay()];
   
       const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
-  
-      /* if (disponibilidadesDoDia.length > 0) {
-        disponibilidadesFormatadas.push({
-          data: data.toISOString().split('T')[0],
-          diaSemana: diaSemana,          
-          horarios: disponibilidadesDoDia.map(d => ({
-            servico_nome: d.servico_nome,
-            servico_duracao: d.servico_duracao,
-            inicio: d.hora_inicio,
-            fim: d.hora_fim
-          }))
-        });
-      } */
 
         if (disponibilidadesDoDia.length > 0) {
             const horariosPorServico = disponibilidadesDoDia.flatMap(d => {
@@ -143,6 +177,7 @@ const AgendamentoForm = () => {
               const horarioFim = new Date(inicio.getTime() + duracaoServico * 60000);
               if (horarioFim <= fim) {
                 horariosDisponiveis.push({
+                  servico_id: d.servico_id,
                   servico_nome: d.servico_nome,
                   servico_duracao: d.servico_duracao,
                   inicio: inicio.toTimeString().slice(0, 5),

@@ -69,7 +69,7 @@ const DisponibilidadePage = () => {
     <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <Sidebar onToggle={handleSidebarToggle} />
       <div className="disponibilidade-container">
-        <h2>Disponibilidades</h2>
+        <h2>Disponibilidades - Todos os Profissionais</h2>
         {message && <div className={`floating-message ${messageType}`}>{message}</div>}
         <div className="disponibilidades-grid">
           {disponibilidades.map((disp, index) => (
