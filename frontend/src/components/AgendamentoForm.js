@@ -92,7 +92,7 @@ const AgendamentoForm = () => {
     const token = localStorage.getItem('token');
     const servicoDuracao = servicos.find(s => s.id === parseInt(agendamento.servico_id))?.duracao;
   
-    axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+    axios.get(`${API_BASE_URL}/web/disponibilidades/profissional/${profissionalId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(response => {

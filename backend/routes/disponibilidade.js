@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const disponibilidadeController = require('../controllers/disponibilidadeController');
 const authMiddleware = require('../middleware/authMiddleware');
+const botAuthMiddleware = require('../middleware/botAuthMiddleware');
 
 const db = require('../config/db');
 
@@ -10,10 +11,27 @@ router.post('/disponibilidades/verificar', authMiddleware, disponibilidadeContro
 
 router.post('/disponibilidades', authMiddleware, disponibilidadeController.createDisponibilidade);
 
-// Nova rota para buscar disponibilidades por profissional e intervalo de datas
-router.get('/disponibilidades/profissional/:profissional_id', authMiddleware, async (req, res) => {
+// Nova rota para buscar disponibilidades por profissional e intervalo de datas para web
+router.get('/web/disponibilidades/profissional/:profissional_id', authMiddleware, async (req, res) => {
   const { profissional_id } = req.params;
+  console.log("Profissional no API WEB: ", profissional_id);
 
+  try {
+    const [results] = await db.promise().query(
+      'SELECT * FROM disponibilidades WHERE profissional_id = ?',
+      [profissional_id]
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar disponibilidades:', error);
+    res.status(500).json({ error: 'Erro ao buscar disponibilidades' });
+  }
+});
+
+// Nova rota para buscar disponibilidades por profissional e intervalo de datas Para integrar com WhatsApp
+router.get('/bot/disponibilidades/profissional/:profissional_id', botAuthMiddleware, async (req, res) => {
+  const { profissional_id } = req.params;
+  console.log("Profissional no API Bot: ", profissional_id);
   try {
     const [results] = await db.promise().query(
       'SELECT * FROM disponibilidades WHERE profissional_id = ?',

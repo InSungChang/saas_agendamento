@@ -45,7 +45,7 @@ const DisponibilidadeForm = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (profissionalId && token) {
-      axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+      axios.get(`${API_BASE_URL}/web/disponibilidades/profissional/${profissionalId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(response => setDisponibilidades(response.data))
@@ -82,7 +82,7 @@ const DisponibilidadeForm = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Atualiza a lista de disponibilidades após a criação
-      const response = await axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+      const response = await axios.get(`${API_BASE_URL}/web/disponibilidades/profissional/${profissionalId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDisponibilidades(response.data);
@@ -103,7 +103,7 @@ const DisponibilidadeForm = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Atualiza a lista de disponibilidades após a exclusão
-      const response = await axios.get(`${API_BASE_URL}/disponibilidades/profissional/${profissionalId}`, {
+      const response = await axios.get(`${API_BASE_URL}/web/disponibilidades/profissional/${profissionalId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDisponibilidades(response.data);
