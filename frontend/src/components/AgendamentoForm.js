@@ -19,7 +19,7 @@ const AgendamentoForm = () => {
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const [loading, setLoading] = useState(false);
+  /* const [loading, setLoading] = useState(false); */
   const [diasExibicao, setDiasExibicao] = useState(7);
   /* const navigate = useNavigate(); */
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -211,9 +211,10 @@ const AgendamentoForm = () => {
     navigate('/dashboard');
   };
 
-  const handleSubmit = async (e) => {
+  /* const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    console.log("Oiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${API_BASE_URL}/agendamentos`, agendamento, {
@@ -232,7 +233,7 @@ const AgendamentoForm = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }; */
 
   return (
     <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
@@ -240,7 +241,8 @@ const AgendamentoForm = () => {
     <div className="agendamento-container">    
       <h1>Agendamento - Filtro Por Serviço + Profissional</h1>        
       {message && <div className={`floating-message ${messageType}`}>{message}</div>}
-      <form onSubmit={handleSubmit} className="agendamento-form">        
+      {/* <form onSubmit={handleSubmit} className="agendamento-form">         */}
+      <form className="agendamento-form">        
         <div className="agendamento-form-header">          
           <label>Cliente</label>        
           <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
@@ -289,7 +291,7 @@ const AgendamentoForm = () => {
             Exibir Disponibilidade
           </button>
 
-          <button className="sair-button" type="button" onClick={handleCancel} disabled={loading}>Sair</button>
+          <button className="sair-button" type="button" onClick={handleCancel} >Sair</button>
           </div>
         </div>
   
