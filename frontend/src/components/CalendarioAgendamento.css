@@ -130,7 +130,8 @@
   padding: 0.4em 0.9em;
 }
 
-.sair-button {
+.sair-button,
+.atualizar-button {
   background-color: #7965a6;
   color: white;
   padding: 12px;
