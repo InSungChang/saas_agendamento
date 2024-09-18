@@ -13,6 +13,7 @@ const userRoutes = require('./routes/user');
 const disponibilidadeRoutes = require('./routes/disponibilidade');
 const agendamentoRoutes = require('./routes/agendamento');
 const cancelamentoRoutes = require('./routes/cancelamento');
+const botRoutes = require('./routes/botRoutes');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.json());
 
+app.use('/api', botRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', clienteRoutes);
 app.use('/api', usuarioRoutes);

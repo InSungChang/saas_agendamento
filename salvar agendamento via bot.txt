@@ -1,0 +1,445 @@
+preciso agora armazenar a data e horário na tabela agendamentos via bot, segue trecho do código onde tem a lógica para verificação antes de gravação na tabela pelo web. lembrando, precisamos criar um novo API de post para bot, usando botAuthMiddleware para novo API e também inserir nova rota chamado /bot/ para diferenciar rota que já existe para web. segue código do bot.js para ajuste e outros códigos que faz tratamento via web para compreender a lógica do projeto. lembrando a pasta raiz do bot.js não é a mesma pasta raiz dos códigos utilizados para tratamento via web.
+tem um variável chamado cliente_id que faz parte de variáveis obrigatórios para salvar horário na tabela agendamentos, preciso verificar número do celular do cliente para na tabela de clientes se já existe cadastro e caso não exista, salvar como novo cliente e finalizar agendamento, caso cliente tenha cadastro, utilizar Id do cliente para finalizar agendamento. lembrando, para salvar novo cliente na tabela clientes, precisa salvar empresa_id, telefone e nome que aparece no app whastapp e no final do nome adicionar "- Via Bot".
+
+bot.js:
+require('dotenv').config();
+const { Client } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
+const axios = require('axios');
+const whatsappService = require('./whatsappService');
+const { response } = require('express');
+
+const client = new Client();
+
+const conversationState = {};
+
+let servicoDuracao = 0;
+
+client.on('qr', (qr) => {
+    qrcode.generate(qr, { small: true });
+});
+
+client.on('ready', () => {
+    console.log('Client is ready!');
+});
+
+client.on('message', async (message) => {
+    const empresaId = await whatsappService.getEmpresaByWhatsapp(message.to);
+    if (!empresaId) {
+        await message.reply('Desculpe, não foi possível identificar sua empresa.');
+        return;
+    }
+
+    const userId = message.from;
+
+    if (message.body === '!servicos') {
+        const servicos = await getServicos(empresaId);
+        let response = 'Serviços disponíveis:\n';
+        servicos.forEach((servico, index) => {
+            response += `${index + 1}. ${servico.nome}\n`;
+        });
+        response += '\nPara selecionar um serviço, responda com o número correspondente.';
+        await message.reply(response);
+
+        conversationState[userId] = {
+            servicos: servicos,
+            step: 'escolhendo_servico'
+        };
+
+    } else if (/^\d+$/.test(message.body) && conversationState[userId]?.step === 'escolhendo_servico') {
+        const escolha = parseInt(message.body) - 1;
+        const servicos = conversationState[userId].servicos;
+
+        if (escolha >= 0 && escolha < servicos.length) {
+            const servicoEscolhido = servicos[escolha];
+            servicoDuracao = servicoEscolhido.duracao;
+            const profissionais = await getProfissionais(empresaId, servicoEscolhido.id);
+
+            let response = 'Profissionais disponíveis:\n';
+            profissionais.forEach((profissional, index) => {
+                response += `${index + 1}. ${profissional.nome}\n`;
+            });
+            response += '\nPara selecionar um profissional, responda com o número correspondente.';
+            await message.reply(response);
+
+            conversationState[userId] = {
+                ...conversationState[userId],
+                profissionais: profissionais,
+                servicoEscolhido: servicoEscolhido,
+                step: 'escolhendo_profissional'
+            };
+        } else {
+            await message.reply('Por favor, escolha um número válido de serviço.');
+        }
+    } else if (/^\d+$/.test(message.body) && conversationState[userId]?.step === 'escolhendo_profissional') {
+        const escolha = parseInt(message.body) - 1;
+        const profissionais = conversationState[userId].profissionais;
+
+        if (escolha >= 0 && escolha < profissionais.length) {
+            const profissionalEscolhido = profissionais[escolha];
+            /* const servicoEscolhido = conversationState[userId].servicoEscolhido; */
+
+            const disponibilidades = await getDisponibilidades(empresaId, profissionalEscolhido.id, servicoDuracao);
+            const mensagemDisponibilidades = exibirDisponibilidades(disponibilidades);
+            /* await message.reply(mensagemDisponibilidades); */
+
+            console.log("Retorno do API Disponibilidades: ", disponibilidades);
+            console.log("Formatado e filtrado horário: ", mensagemDisponibilidades);
+
+            let response = mensagemDisponibilidades;
+            response += 'Para agendar, responda com a data e horário desejados no formato "DD/MM/YYYY HH:MM".';
+            await message.reply(response);
+
+            conversationState[userId] = {
+                ...conversationState[userId],
+                profissionalEscolhido: profissionalEscolhido,
+                disponibilidades: mensagemDisponibilidades,
+                step: 'escolhendo_horario'
+            };
+        } else {
+            await message.reply('Por favor, escolha um número válido de profissional.');
+        }
+    } else if (conversationState[userId]?.step === 'escolhendo_horario') {
+        // Implementar lógica para validar e agendar o horário escolhido
+        // ...
+    } else {
+        await message.reply('Comando não reconhecido. Digite !servicos para começar.');
+    }
+});
+
+async function getServicos(empresaId) {
+    try {
+        const response = await axios.get(`http://localhost:5000/api/servicos/${empresaId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar serviços:', error);
+        return [];
+    }
+}
+
+async function getProfissionais(empresaId, servicoId) {
+    try {
+        const botToken = process.env.BOT_API_TOKEN;
+        const response = await axios.get(`http://localhost:5000/api/profissionais-por-servico/${servicoId}?empresa_id=${empresaId}`, {
+            headers: { 'Authorization': `Bearer ${botToken}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar disponibilidades:', error.response ? error.response.data : error.message);
+        return [];
+    }
+}
+
+async function getDisponibilidades(empresaId, profissionalId, servicoDuracao) {
+    try {
+      const botToken = process.env.BOT_API_TOKEN;
+      console.log("Serviço Duração no bot getdisponibilidades: ", servicoDuracao);
+      const response = await axios.get(`http://localhost:5000/api/bot/disponibilidades/profissional/${profissionalId}?empresa_id=${empresaId}&servico_duracao=${servicoDuracao}`, {
+        headers: { 'Authorization': `Bearer ${botToken}` }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar disponibilidades:', error.response ? error.response.data : error.message);
+      return [];
+    }
+}
+
+function exibirDisponibilidades(disponibilidades) {
+    let response = 'Disponibilidades:\n\n';
+    disponibilidades.forEach(dia => {
+      response += `${dia.data} (${dia.diaSemana}):\n`;
+      dia.horarios.forEach(horario => {
+        if (!horario.ocupado) {
+          response += `  ${horario.inicio} - ${horario.fim}\n`;
+        }
+      });
+      response += '\n';
+    });
+    return response;
+}
+
+/* function formatarDisponibilidades(disponibilidades, dias, servicoDuracao) {
+    if (!disponibilidades || disponibilidades.length === 0) {
+        return [];
+    }
+
+    const hoje = new Date();
+    const disponibilidadesFormatadas = [];
+    const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+    for (let i = 0; i < dias; i++) {
+        const data = new Date(hoje);
+        data.setDate(hoje.getDate() + i);
+        const diaSemana = diasSemana[data.getDay()];
+
+        const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
+
+        if (disponibilidadesDoDia.length > 0) {
+            const horariosDistribuidos = distribuirHorarios(disponibilidadesDoDia[0], servicoDuracao);
+            
+            disponibilidadesFormatadas.push({
+                data: data.toISOString().split('T')[0],
+                diaSemana: diaSemana,
+                horarios: horariosDistribuidos
+            });
+        }
+    }
+
+    return disponibilidadesFormatadas;
+} */
+
+/* function distribuirHorarios(disponibilidade, servicoDuracao) {
+    const horarios = [];
+    const inicio = new Date(`2000-01-01T${disponibilidade.hora_inicio}`);
+    const fim = new Date(`2000-01-01T${disponibilidade.hora_fim}`);
+
+    while (inicio < fim) {
+        const horarioFim = new Date(inicio.getTime() + servicoDuracao * 60000);
+        if (horarioFim <= fim) {
+            horarios.push({
+                inicio: inicio.toTimeString().slice(0, 5),
+                fim: horarioFim.toTimeString().slice(0, 5),
+                ocupado: false // Assumindo que não está ocupado inicialmente
+            });
+        }
+        inicio.setTime(inicio.getTime() + servicoDuracao * 60000);
+    }
+
+    return horarios;
+} */
+
+client.initialize();
+
+server.js:
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/auth');
+const clienteRoutes = require('./routes/cliente');
+const usuarioRoutes = require('./routes/usuario');
+const empresaRoutes = require('./routes/empresa');
+const servicoRoutes = require('./routes/servico');
+const profissionalServicoRoutes = require('./routes/profissionalServico');
+const profissionalRoutes = require('./routes/profissional');
+const userRoutes = require('./routes/user');
+const disponibilidadeRoutes = require('./routes/disponibilidade');
+const agendamentoRoutes = require('./routes/agendamento');
+const cancelamentoRoutes = require('./routes/cancelamento');
+
+const app = express();
+
+app.use((req, res, next) => {
+    console.log(`Requisição recebida: ${req.method} ${req.path}`);
+    next();
+});
+
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api', clienteRoutes);
+app.use('/api', usuarioRoutes);
+app.use('/api', empresaRoutes);
+app.use('/api', servicoRoutes);
+app.use('/api', userRoutes);
+app.use('/api', disponibilidadeRoutes);
+app.use('/api', agendamentoRoutes);
+app.use('/api', cancelamentoRoutes);
+
+app.use('/api/web', profissionalServicoRoutes);
+app.use('/api', profissionalRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
+
+agendamentoController.js:
+const db = require('../config/db');
+const Agendamento = require('../models/agendamento');
+
+// Função para verificar conflitos de agendamento
+const verificarConflitoAgendamento = async (empresa_id, profissional_id, data_horario_agendamento, servico_id) => {
+  const [result] = await db.promise().query(
+    `SELECT * FROM agendamentos 
+     WHERE empresa_id = ? 
+     AND profissional_id = ? 
+     AND (
+       (? < TIMESTAMPADD(MINUTE, (SELECT duracao FROM servicos WHERE id = agendamentos.servico_id), data_horario_agendamento)) 
+       AND 
+       (TIMESTAMPADD(MINUTE, (SELECT duracao FROM servicos WHERE id = ?), ?) > data_horario_agendamento)
+     )`,
+    [empresa_id, profissional_id, data_horario_agendamento, servico_id, data_horario_agendamento]
+  );
+/*   console.log('Resultado da verificação: ', result); */  
+  return result.length > 0;
+};
+
+/* Serve para WEB e com ChatBot */
+exports.createAgendamento = async (req, res) => {
+  const { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
+
+  // Verificar se todos os campos obrigatórios foram fornecidos
+  if (!empresa_id || !cliente_id || !profissional_id || !servico_id || !data_horario_agendamento) {
+    return res.status(400).send({ message: 'Todos os campos são obrigatórios.' });
+  }
+
+  try {
+    // Verificar se já existe um conflito de agendamento
+    const conflito = await verificarConflitoAgendamento(empresa_id, profissional_id, data_horario_agendamento, servico_id);
+    if (conflito) {
+      return res.status(400).send({ message: 'Horário já reservado. Por favor, escolha outro horário.' });
+    }
+
+    const novoAgendamento = { empresa_id, cliente_id, profissional_id, servico_id, data_horario_agendamento, status };
+    const result = await Agendamento.create(novoAgendamento);
+    res.status(201).send({ message: 'Agendamento criado com sucesso', agendamentoId: result.insertId });
+  } catch (err) {
+    res.status(500).send({ message: 'Erro ao criar agendamento', error: err.message });
+  }
+};
+
+exports.getAgendamentosByProfissional = async (req, res) => {
+  const { profissionalId } = req.params;
+  const empresa_id = req.user.empresa_id; // Assumindo que o ID da empresa está armazenado no token do usuário
+  
+  try {
+    const [results] = await db.promise().query(
+      `SELECT a.id, a.data_horario_agendamento, a.cliente_id, a.servico_id, a.profissional_id, c.nome AS cliente_nome, s.nome AS servico_nome, s.duracao AS servico_duracao
+       FROM agendamentos a
+       JOIN clientes c ON a.cliente_id = c.id
+       JOIN servicos s ON a.servico_id = s.id
+       WHERE a.profissional_id = ? AND a.empresa_id = ?`,
+      [profissionalId, empresa_id]
+    );
+    res.json(results);
+    console.log('Retorno do sql: ', results);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos por profissional:', error);
+    res.status(500).json({ error: 'Erro ao buscar agendamentos por profissional' });
+  }
+};
+
+
+exports.getAgendamentos = async (req, res) => {
+  const empresa_id = req.user.empresa_id;
+  try {
+    const [results] = await db.promise().query('SELECT * FROM agendamentos WHERE empresa_id = ?', [empresa_id]);
+    res.json(results);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos:', error);
+    res.status(500).json({ error: 'Erro ao buscar agendamentos' });
+  }
+};
+
+exports.updateAgendamento = async (req, res) => {
+  const { id } = req.params;
+  const { cliente_id, profissional_id, servico_id, data_horario_agendamento, status } = req.body;
+
+  try {
+    const [result] = await db.promise().query(
+      'UPDATE agendamentos SET cliente_id = ?, profissional_id = ?, servico_id = ?, data_horario_agendamento = ?, status = ? WHERE id = ?',
+      [cliente_id, profissional_id, servico_id, data_horario_agendamento, status, id]
+    );
+    
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Agendamento atualizado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar agendamento:', error);
+    res.status(500).json({ error: 'Erro ao atualizar agendamento' });
+  }
+};
+
+exports.deleteAgendamento = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.promise().query('DELETE FROM agendamentos WHERE id = ?', [id]);
+
+    if (result.affectedRows > 0) {
+      res.json({ message: 'Agendamento deletado com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao deletar agendamento:', error);
+    res.status(500).json({ error: 'Erro ao deletar agendamento' });
+  }
+};
+
+agendamento.js:
+const express = require('express');
+const router = express.Router();
+const agendamentoController = require('../controllers/agendamentoController');
+const authMiddleware = require('../middleware/authMiddleware');
+const db = require('../config/db');
+
+router.post('/agendamentos', authMiddleware, agendamentoController.createAgendamento);
+router.get('/agendamentos', authMiddleware, agendamentoController.getAgendamentos);
+router.put('/agendamentos/:id', authMiddleware, agendamentoController.updateAgendamento);
+router.delete('/agendamentos/:id', authMiddleware, agendamentoController.deleteAgendamento);
+router.get('/agendamentos/profissional/:profissionalId', authMiddleware, agendamentoController.getAgendamentosByProfissional);
+
+router.get('/agendamentos/servico/:servico_id', authMiddleware, async (req, res) => {
+    const { servico_id } = req.params;
+    try {
+      const [results] = await db.promise().query(
+        `SELECT a.*, c.nome as cliente_nome, s.nome as servico_nome, s.duracao as servico_duracao
+         FROM agendamentos a
+         JOIN clientes c ON a.cliente_id = c.id
+         JOIN servicos s ON a.servico_id = s.id
+         WHERE a.servico_id = ?`,
+        [servico_id]
+      );
+      res.json(results);
+    } catch (error) {
+      console.error('Erro ao buscar agendamentos por serviço:', error);
+      res.status(500).json({ error: 'Erro ao buscar agendamentos por serviço' });
+    }
+    });
+
+module.exports = router;
+
+e abaixo trecho do código onde efetuamos gravação de horário na tabela agendamentos via web para você compreender a parte lógica de chamada de funções e API:
+  const handleSelecionarHorario = async (data, horario) => {
+    console.log(`Horário selecionado: ${data} ${horario.inicio} - ${horario.fim}`);
+    // Criando o objeto agendamento com os dados necessários
+    const novoAgendamento = {
+      empresa_id: `${empresa.id}`,
+      cliente_id: agendamento.cliente_id,
+      profissional_id: agendamento.profissional_id,
+      servico_id: agendamento.servico_id,
+      data_horario_agendamento: `${data} ${horario.inicio}`,
+      status: 'agendado'
+    };
+
+    console.log('Antes do erro: ', novoAgendamento);
+
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Dentro do try: ', novoAgendamento);
+      const response = await axios.post(`${API_BASE_URL}/agendamentos`, novoAgendamento, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log(response.data);
+      setMessage('Agendamento realizado com sucesso!');
+      setMessageType('success');
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setMessage(error.response.data.message || 'Dados inválidos ou conflito de horário.');
+        setMessageType('error');
+      } else {
+        console.error('Erro ao realizar agendamento:', error);
+        setMessage('Erro ao realizar agendamento.');
+        setMessageType('error');
+      }
+    }
+
+  };
+
