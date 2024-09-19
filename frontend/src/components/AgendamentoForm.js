@@ -97,6 +97,8 @@ const AgendamentoForm = () => {
     })
       .then(response => {
         console.log('Dados recebidos:', response.data);
+        console.log('diasExibicao:', diasExibicao);
+        console.log('servicoDuracao:', servicoDuracao);
         const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao, servicoDuracao);
         console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
   

@@ -10,6 +10,10 @@ quando fizer duplo clique no handleDateSelect abrir um modal, somente quando est
 6) exibir uma grade de horário disponível do dia, deverá consultar disponibilidade do profissional (usar API disponibilidade.js para exibir grade horizontal), travar os horários agendado da tabela agendamentos e mostrar horário disponível para selecionar horário (usar lógica do código AgendamentoForm.js da função carregarDisponibilidades), para selecionar horário, quero uma forma de clicar horário inicial e horário final na grade horizontal exibida do dia conforme a regra explicada. para exibir hora:minuto da grade, você deverá consultar da tabela de serviços, somar horário inicial + a duração do serviço escolhido que está na tabela de servicos (usar lógica do código AgendamentoForm.js da função carregarDisponibilidades).
 7) salvar na tabela agendamentos seguindo regra do createAgendamento do código agendamentoController.js
 
+Fiz teste e até o item 4 está funcionando corretamente, mas mesmo assim, favor analisar todos os itens antes de proseguir.
+
+Após análise dos códigos, preciso fazer todos os itens acima funcionando. o item 6 tem a parte de exibir grade, favor utilizar o exemplo mostrado na nossa conversa incial e incorporar no código AgendamentoModal.js
+
 CalendarioAgendamento.js:
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import FullCalendar from '@fullcalendar/react';
@@ -23,19 +27,22 @@ import { useNavigate } from 'react-router-dom';
 import CalendarioAgendamentoForm from './CalendarioAgendamentoForm';
 import { AuthContext } from '../AuthContext'; // Importe o AuthContext
 import useInterval from './useInterval'; // Certifique-se de ter um hook useInterval implementado
+import AgendamentoModal from './AgendamentoModal';
 
 const CalendarioAgendamento = () => {
   const [eventos, setEventos] = useState([]);
   const [profissionais, setProfissionais] = useState([]);
-  const [setProfissionalSelecionado] = useState('');
+  const [profissionalSelecionado, setProfissionalSelecionado] = useState('');
   const [servicos, setServicos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [currentTimeEvent, setCurrentTimeEvent] = useState(null);
   const [horaInicial, setHoraInicial] = useState('08:00:00');
   const [horaFinal, setHoraFinal] = useState('19:00:00');
   const [showAgendamentoForm, setShowAgendamentoForm] = useState(false);
+  const [showAgendamentoModal, setShowAgendamentoModal] = useState(false);
   const navigate = useNavigate();
   const [loading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const [eventoSelecionado, setEventoSelecionado] = useState(null);
   const [showEventoModal, setShowEventoModal] = useState(false);
@@ -183,8 +190,6 @@ const CalendarioAgendamento = () => {
     }
   };
 
-  
-
   const carregarEventosPorProfissional = async (profissionalId) => {
     try {
       const token = localStorage.getItem('token');
@@ -198,43 +203,18 @@ const CalendarioAgendamento = () => {
     }
   };
 
-  
-
   const obterCorProfissional = (profissionalId) => {
     const cores = ['#FF5733', '#33FF57', '#3357FF', '#FF33F1', '#33FFF1'];
     return cores[profissionalId % cores.length];
   };
 
   const handleDateSelect = (selectInfo) => {
-    const title = prompt('Digite o nome do cliente e o serviço:');
-    if (title) {
-        const startTime = prompt('Digite o horário de início (HH:MM):', '08:00');
-        const endTime = prompt('Digite o horário de término (HH:MM):', '09:00');
-
-        if (startTime && endTime) {
-            const startDateTime = new Date(selectInfo.startStr);
-            const endDateTime = new Date(selectInfo.endStr);
-
-            // Ajustar as horas e minutos
-            const [startHour, startMinute] = startTime.split(':').map(Number);
-            const [endHour, endMinute] = endTime.split(':').map(Number);
-
-            startDateTime.setHours(startHour, startMinute);
-            endDateTime.setHours(endHour, endMinute);
-
-            const novoEvento = {
-                title,
-                start: startDateTime.toISOString(),
-                end: endDateTime.toISOString(),
-                allDay: selectInfo.allDay
-            };
-
-            setEventos([...eventos, novoEvento]);
-        }
+    if (selectInfo.view.type === 'timeGridDay') {
+        setShowAgendamentoModal(true);
+        setSelectedDate(selectInfo.startStr);
     }
     selectInfo.view.calendar.unselect();
-};
-
+  };
 
   const handleEventDrop = (dropInfo) => {
     console.log('Evento movido:', dropInfo.event);
@@ -351,6 +331,13 @@ const CalendarioAgendamento = () => {
             )}
         </div>
       )}
+      
+      <AgendamentoModal
+        show={showAgendamentoModal}
+        onClose={() => setShowAgendamentoModal(false)}
+        selectedDate={selectedDate}
+      />
+
     </div>
   );
 };
@@ -1432,3 +1419,242 @@ exports.deleteAgendamento = async (req, res) => {
     res.status(500).json({ error: 'Erro ao deletar agendamento' });
   }
 };
+
+AgendamentoModal.js:
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './AgendamentoModal.css';
+
+const AgendamentoModal = ({ show, onClose, selectedDate }) => {
+    const [clientes, setClientes] = useState([]);
+    const [servicos, setServicos] = useState([]);
+    const [profissionais, setProfissionais] = useState([]);
+    const [disponibilidades, setDisponibilidades] = useState([]);
+    const [agendamento, setAgendamento] = useState({
+        cliente_id: '',
+        servico_id: '',
+        profissional_id: '',
+        data_horario_agendamento: selectedDate
+    });
+    
+    const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            axios.get(`${API_BASE_URL}/clientes`, { headers: { Authorization: `Bearer ${token}` } })
+                .then(response => setClientes(response.data))
+                .catch(error => console.error('Erro ao carregar clientes:', error));
+
+            axios.get(`${API_BASE_URL}/servicos`, { headers: { Authorization: `Bearer ${token}` } })
+                .then(response => setServicos(response.data))
+                .catch(error => console.error('Erro ao carregar serviços:', error));
+        }
+    }, []);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setAgendamento({ ...agendamento, [name]: value });
+
+        if (name === 'servico_id') {
+            carregarProfissionaisPorServico(value);
+        }
+
+        if (name === 'profissional_id') {
+            carregarDisponibilidades(value);
+        }
+    };
+
+    const carregarProfissionaisPorServico = (servicoId) => {
+        const token = localStorage.getItem('token');
+        axios.get(`${API_BASE_URL}/web/profissionais-por-servico/${servicoId}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(response => setProfissionais(response.data))
+            .catch(error => console.error('Erro ao carregar profissionais por serviço:', error));
+    };
+
+    const carregarDisponibilidades = (profissionalId) => {
+        const token = localStorage.getItem('token');
+        axios.get(`${API_BASE_URL}/web/disponibilidades/profissional/${profissionalId}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(response => setDisponibilidades(response.data))
+            .catch(error => console.error('Erro ao carregar disponibilidades:', error));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_BASE_URL}/agendamentos`, agendamento, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert('Agendamento realizado com sucesso!');
+            onClose();
+        } catch (err) {
+            console.error('Erro ao realizar agendamento:', err);
+            alert('Erro ao realizar agendamento. Por favor, tente novamente.');
+        }
+    };
+
+    if (!show) {
+        return null;
+    }
+
+    return (
+        <div className={`modal ${show ? 'show' : ''}`}>
+            <div className="modal-content">
+                <span className="close" onClick={onClose}>×</span>
+                <form onSubmit={handleSubmit} className="agendamento-form">
+                    <label>Cliente</label>
+                    <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
+                        <option value="">Selecione um cliente</option>
+                        {clientes.map(cliente => (
+                            <option key={cliente.id} value={cliente.id}>{cliente.nome}</option>
+                        ))}
+                    </select>
+    
+                    <label>Serviço</label>
+                    <select name="servico_id" value={agendamento.servico_id} onChange={handleChange} required>
+                        <option value="">Selecione um serviço</option>
+                        {servicos.map(servico => (
+                            <option key={servico.id} value={servico.id}>{servico.nome}</option>
+                        ))}
+                    </select>
+    
+                    <label>Profissional</label>
+                    <select name="profissional_id" value={agendamento.profissional_id} onChange={handleChange} required>
+                        <option value="">Selecione um profissional</option>
+                        {profissionais.map(profissional => (
+                            <option key={profissional.id} value={profissional.id}>{profissional.nome}</option>
+                        ))}
+                    </select>
+    
+                    <label>Data e Hora</label>
+                    <input type="datetime-local" name="data_horario_agendamento" value={agendamento.data_horario_agendamento} onChange={handleChange} required />
+    
+                    <button type="submit" className="agendar-button">Agendar</button>
+                    <button type="button" className="fechar-button" onClick={onClose}>Fechar</button>
+                </form>
+            </div>
+        </div>
+    );
+        
+};
+
+export default AgendamentoModal;
+
+AgendamentoModal.css:
+.modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 100%;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.agendamento-form label {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.agendamento-form select,
+.agendamento-form input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #D3D3D3;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.agendar-button {
+    padding: 10px 20px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    background-color: #4caf50;
+    color: white;
+}
+
+.agendar-button:hover {
+    background-color: #45a049;
+}
+
+.fechar-button {
+    padding: 10px 20px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    background-color: #f44336;
+    color: white;
+}
+
+.fechar-button:hover {
+    background-color: #d32f2f;
+}
+
+segue exemplo de como exibir grade do item 6, mas tem que adaptar a lógica como foi explicado no início deste arquivo.
+
+import React from 'react';
+
+const TimeGrid = () => {
+  const morningHours = ['8:00', '8:30', '9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30'];
+  const afternoonHours = ['13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30'];
+
+  const getBackgroundColor = (time) => {
+    if (time === '11:00' || time === '11:30' || time === '13:30' || time === '14:00' || time === '17:30' || time === '18:00' || time === '18:30') {
+      return 'bg-red-200';
+    } else if (time === '12:30') {
+      return 'bg-blue-200';
+    }
+    return 'bg-gray-100';
+  };
+
+  const renderTimeSlots = (hours, cols) => (
+    <div className={`grid grid-cols-${cols} gap-px mt-2`}>
+      {hours.map((time) => (
+        <div
+          key={time}
+          className={`cursor-pointer border border-dotted border-gray-300 h-12 ${getBackgroundColor(time)} flex items-center justify-center`}
+        >
+          <span className="text-xs">{time}</span>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="p-4">
+      <span className="text-lg font-semibold">Horários</span>
+      {renderTimeSlots(morningHours, 10)}
+      {renderTimeSlots(afternoonHours, 12)}
+    </div>
+  );
+};
+
+export default TimeGrid;

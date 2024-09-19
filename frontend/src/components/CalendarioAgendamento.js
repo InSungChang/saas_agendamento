@@ -193,8 +193,8 @@ const CalendarioAgendamento = () => {
 
   const handleDateSelect = (selectInfo) => {
     if (selectInfo.view.type === 'timeGridDay') {
-        setShowAgendamentoModal(true);
-        setSelectedDate(selectInfo.startStr);
+      setSelectedDate(selectInfo.startStr);
+      setShowAgendamentoModal(true);
     }
     selectInfo.view.calendar.unselect();
   };
@@ -295,6 +295,13 @@ const CalendarioAgendamento = () => {
           nowIndicator={true}
         />
       </div>
+      {showAgendamentoModal && (
+        <AgendamentoModal
+          show={showAgendamentoModal}
+          onClose={() => setShowAgendamentoModal(false)}
+          selectedDate={selectedDate}
+        />
+      )}
       {showEventoModal && (
         <div className="evento-modal">
             <h2>Detalhes do Agendamento</h2>
@@ -312,15 +319,8 @@ const CalendarioAgendamento = () => {
                 <button onClick={() => setShowConfirmacaoCancelamento(false)} className="cancelar-button">Não</button>
               </div>
             )}
-        </div>
-      )}
-      
-      <AgendamentoModal
-        show={showAgendamentoModal}
-        onClose={() => setShowAgendamentoModal(false)}
-        selectedDate={selectedDate}
-      />
-
+        </div>        
+      )}         
     </div>
   );
 };

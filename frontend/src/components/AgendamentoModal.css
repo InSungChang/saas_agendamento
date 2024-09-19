@@ -18,6 +18,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     max-width: 500px;
     width: 100%;
+    position: relative;
 }
 
 .close {
@@ -42,6 +43,25 @@
     border-radius: 4px;
     box-sizing: border-box;
     transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.horario-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.horario {
+    padding: 10px;
+    border: 1px solid #ccc;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.horario.ocupado {
+    background-color: #f8d7da;
+    cursor: not-allowed;
 }
 
 .agendar-button {
@@ -73,4 +93,3 @@
 .fechar-button:hover {
     background-color: #d32f2f;
 }
-
