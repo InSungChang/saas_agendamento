@@ -1,7 +1,7 @@
+AgendamentoModal.js:
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './AgendamentoModal.css';
-import { formatDate } from './Funcoes.js';
 
 const AgendamentoModal = ({ show, onClose, selectedDate }) => {
     const [message, setMessage] = useState('');
@@ -20,9 +20,7 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
         horarioFinal: ''
     });
 
-    let formattedDate = formatDate(selectedDate);
-
-    console.log("Data do calendário: ", formattedDate);
+    console.log("Data do calendário: ", selectedDate);
 
     const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -220,8 +218,6 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
             <div className="modal-content">
                 <span className="close" onClick={onClose}>×</span>
                 <form onSubmit={handleSubmit} className="agendamento-form">
-                    <label>Data Selecionada</label>
-                    <input type="text" value={formattedDate} readOnly />
                     <label>Cliente</label>
                     <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
                         <option value="">Selecione um cliente</option>

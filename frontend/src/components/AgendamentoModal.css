@@ -3,12 +3,27 @@
     justify-content: center;
     align-items: center;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
+    top: 50%;
+    left: 25%;
+    transform: translate(-50%, -50%);
+    width: 29%;
+    max-height: 100%;
+    overflow-y: auto;
     height: 100%;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1000;
+}
+
+/* Estilização para mostrar o modal */
+.modal.show {
+    display: block;
+}
+
+/* Estilização para esconder o modal */
+.modal {
+    display: none;
 }
 
 .modal-content {
@@ -16,7 +31,7 @@
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-width: 500px;
+    max-width: 340px;
     width: 100%;
     position: relative;
 }

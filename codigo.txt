@@ -3,7 +3,7 @@ import axios from 'axios';
 import './CalendarioAgendamentoForm.css';
 import { useNavigate } from 'react-router-dom';
 
-const AgendamentoForm = ({ onClose }) => {
+const AgendamentoForm = () => {
   const [clientes, setClientes] = useState([]);
   const [servicos, setServicos] = useState([]);
   const [profissionais, setProfissionais] = useState([]);
@@ -224,7 +224,7 @@ const AgendamentoForm = ({ onClose }) => {
     <div className="agendamento-container">    
       {message && <div className={`floating-message ${messageType}`}>{message}</div>}
       <form onSubmit={handleSubmit} className="agendamento-form">        
-        <div className="agendamento-form-header">
+        <div className="agendamento-form-header">          
           <label>Cliente</label>        
           <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>
             <option value="">Selecione um cliente</option>
@@ -272,7 +272,6 @@ const AgendamentoForm = ({ onClose }) => {
             >
               Exibir Disponibilidade
             </button>
-            <button type="button" className="close-button" onClick={onClose}>Fechar</button>          
           </div>
 
         </div>
