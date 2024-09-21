@@ -116,7 +116,7 @@ const DisponibilidadeForm = () => {
   return (
     <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
     <Sidebar onToggle={handleSidebarToggle} />
-    <div className="disponibilidade-container">
+    <div className="disponibilidadeForm-container">
       {message && <div className={`floating-message ${messageType}`}>{message}</div>}
       <h1>Cadastro de disponibilidade</h1>
       <form onSubmit={handleSubmit} className="disponibilidade-form">

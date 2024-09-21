@@ -1,4 +1,4 @@
-.modal {
+.agendamentoModal {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -17,12 +17,12 @@
 }
 
 /* Estilização para mostrar o modal */
-.modal.show {
+.agendamentoModal.show {
     display: block;
 }
 
 /* Estilização para esconder o modal */
-.modal {
+.agendamentoModalmodal {
     display: none;
 }
 

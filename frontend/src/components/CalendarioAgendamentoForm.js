@@ -221,9 +221,10 @@ const AgendamentoForm = ({ onClose }) => {
   };
 
   return (
-    <div className="agendamento-container">    
+    <div className="calendarioAgendamentoForm-container">    
       {message && <div className={`floating-message ${messageType}`}>{message}</div>}
       <form onSubmit={handleSubmit} className="agendamento-form">        
+        <span className="close" onClick={onClose}>×</span>
         <div className="agendamento-form-header">
           <label>Cliente</label>        
           <select name="cliente_id" value={agendamento.cliente_id} onChange={handleChange} required>

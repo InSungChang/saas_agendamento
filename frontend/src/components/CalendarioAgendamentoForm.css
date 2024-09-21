@@ -1,34 +1,37 @@
-/* AgendamentoForm.css */
-
-/* Estilizando o container principal */
-.agendamento-container {
+/* Estilos para o modal de agendamento */
+.calendarioAgendamentoForm-container {
   display: flex;
   justify-content: center;
   align-items: center;
   position: fixed;
-  top: 55%;
-  left: 15%;
+  top: 60%;
+  left: 25%;
   transform: translate(-50%, -50%);
+  width: 29%;
+  max-height: 100%;
   overflow-y: auto;
   height: 100%;
+  padding: 20px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   background-color: rgba(0, 0, 0, 0.5);
-  font-family: Arial, sans-serif;
-  padding: 25px;
-  flex-direction: column;
-  transition: margin-left 0.3s ease;
+  z-index: 1000;
+  border-radius: 8px;
 }
 
-/* Estilizando o formulário */
 .agendamento-form {
   background-color: #FFFFFF;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 15px;
+  margin-top: 70px;
   width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+}
+
+.agendamento-form-header{
+  margin-top: 25px;
 }
 
 /* Label e select */

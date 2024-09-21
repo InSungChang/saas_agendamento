@@ -1,14 +1,16 @@
 /* Geral */
 .cadastro-profissional-servico-container {
   font-family: Arial, sans-serif;
-  background-color: #F5F5F5;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.5);
   color: #333;
-  padding: 50px;
-  min-height: 100vh;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: margin-left 0.3s ease;
+  overflow-y: auto;
+  margin-top: 0px;
+  padding-top: 20px;
 }
 
 /* Sidebar aberto */
@@ -24,9 +26,9 @@
 
 /* Título do formulário */
 .cadastro-profissional-servico-container h1 {
-  color: #512da8;
-  margin-top: 20px;
-  font-size: 1.75rem;
+  color: #333;
+  /* Texto em cinza escuro */
+  font-size: 28px;
   text-align: center;
 }
 

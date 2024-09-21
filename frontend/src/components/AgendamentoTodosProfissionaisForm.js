@@ -248,7 +248,7 @@ const AgendamentoTodosProfissionaisForm = () => {
   return (
     <div className={`form-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <Sidebar onToggle={handleSidebarToggle} />
-      <div className="agendamento-container">      
+      <div className="agendamentoTodosProfissionaisForm-container">      
         <h1>Agendamento - Filtro Por Serviço</h1>
         {message && <div className={`floating-message ${messageType}`}>{message}</div>}
         <form onSubmit={handleSubmit} className="agendamento-form">        

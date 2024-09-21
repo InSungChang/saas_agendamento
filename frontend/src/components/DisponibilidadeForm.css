@@ -1,16 +1,16 @@
 /* Geral */
-.disponibilidade-container {
+.disponibilidadeForm-container {
   font-family: Arial, sans-serif;
-  background-color: #F5F5F5;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.5);
   color: #333;
-  padding: 50px;
-  min-height: 100vh;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y: auto; /* para corrigir perda visual na parte superior da tela*/
-  max-height: 100vh; /* Ou uma altura máxima específica */
-  transition: margin-left 0.3s ease;
+  overflow-y: auto;
+  margin-top: 180px;
+  padding-top: 20px;
 }
 
 /* Sidebar aberto */
@@ -26,9 +26,9 @@
 
 /* Título do formulário */
 .disponibilidade-container h1 {
-  color: #512da8;
-  margin-top: 10px;
-  font-size: 1.75rem;
+  color: #333;
+  /* Texto em cinza escuro */
+  font-size: 28px;
   text-align: center;
 }
 
@@ -88,8 +88,8 @@
 }
 
 /* Botões */
-.disponibilidade-container .criar-button,
-.disponibilidade-container .sair-button {
+.disponibilidadeForm-container .criar-button,
+.disponibilidadeForm-container .sair-button {
   background-color: #7965a6;
   color: white;
   padding: 12px;

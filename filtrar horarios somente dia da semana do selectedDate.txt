@@ -1,3 +1,7 @@
+preciso ajustar código, quando chamar formatarDisponibilidades(response.data, diasExibicao, servicoDuracao), no lugar do diasExibicao, enviar dia da semana do selectedDate e na formatarDisponibilidades, gerar disponibilidadesFormatadas somente o mesmo dia da semana do selectedDate do variável disponibilidades (filtrar os horários do dia da semana do selectedDate do disponibilidades).
+
+AgendamentoModal.js:
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './AgendamentoModal.css';
@@ -79,10 +83,7 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
             console.log('Dados recebidos:', response.data);
             console.log('diasExibicao:', diasExibicao);
             console.log('servicoDuracao:', servicoDuracao);
-            // Obter o dia da semana de selectedDate
-            const diaSemanaSelectedDate = new Date(selectedDate).getDay();
-
-            const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diaSemanaSelectedDate, servicoDuracao);
+            const disponibilidadesFormatadas = formatarDisponibilidades(response.data, diasExibicao, servicoDuracao);
             console.log('Disponibilidades formatadas:', disponibilidadesFormatadas);
     
             // Filtrar disponibilidades baseado em agendamentos existentes
@@ -142,7 +143,7 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
         });
     };           
 
-    const formatarDisponibilidades = (disponibilidades, diaSemanaSelectedDate, servicoDuracao) => {
+    const formatarDisponibilidades = (disponibilidades, dias, servicoDuracao) => {
         if (!disponibilidades || disponibilidades.length === 0) {
           return [];
         }
@@ -150,22 +151,8 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
         const hoje = new Date();
         const disponibilidadesFormatadas = [];
         const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-
-        const diaSemana = diasSemana[diaSemanaSelectedDate];
       
-        const disponibilidadesDoDia = disponibilidades.filter(d => d.dia_semana === diaSemana);
-
-        if (disponibilidadesDoDia.length > 0) {
-          const horariosDistribuidos = distribuirHorarios(disponibilidadesDoDia[0], servicoDuracao);
-  
-          disponibilidadesFormatadas.push({
-              data: new Date().toISOString().split('T')[0], // Ajuste conforme necessário
-              diaSemana: diaSemana,
-              horarios: horariosDistribuidos
-          });
-        }
-
-        /* for (let i = 0; i < dias; i++) {
+        for (let i = 0; i < dias; i++) {
             const data = new Date(hoje);
             data.setDate(hoje.getDate() + i);
             const diaSemana = diasSemana[data.getDay()];
@@ -175,16 +162,15 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
             if (disponibilidadesDoDia.length > 0) {
             const horariosDistribuidos = distribuirHorarios(disponibilidadesDoDia[0], servicoDuracao);
             
-              disponibilidadesFormatadas.push({
+            disponibilidadesFormatadas.push({
                 data: data.toISOString().split('T')[0],
                 diaSemana: diaSemana,
                 horarios: horariosDistribuidos
-              });
-            }
-       } */
+            });
+        }
+       }
       
        return disponibilidadesFormatadas;
-       
     };    
 
     const distribuirHorarios = (disponibilidade, servicoDuracao) => {
@@ -234,7 +220,7 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
     }
 
     return (
-        <div className={`agendamentoModal ${show ? 'show' : ''}`}>
+        <div className={`modal ${show ? 'show' : ''}`}>
             <div className="modal-content">
                 <span className="close" onClick={onClose}>×</span>
                 <form onSubmit={handleSubmit} className="agendamento-form">
@@ -290,3 +276,5 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
 };
 
 export default AgendamentoModal;
+
+
