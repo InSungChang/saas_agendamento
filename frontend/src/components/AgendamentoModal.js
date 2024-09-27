@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import './AgendamentoModal.css';
-import { formatDate } from './Funcoes.js';
+import { formatDate, formatarDataHora, formatarData } from './Funcoes.js';
+import { AuthContext } from '../AuthContext';
+import { parseISO } from 'date-fns';
 
 const AgendamentoModal = ({ show, onClose, selectedDate }) => {
     const [message, setMessage] = useState('');
@@ -19,10 +21,18 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
         horarioInicial: '',
         horarioFinal: ''
     });
+    const [horarioSelecionado, setHorarioSelecionado] = useState(null);
+    const { empresa } = useContext(AuthContext);
 
-    let formattedDate = formatDate(selectedDate);
 
+    let formattedDate = formatDate(selectedDate); 
     console.log("Data do calendário: ", formattedDate);
+
+    const ehHoje = (data) => {
+      const hoje = new Date();
+      const dataSelecionada = new Date(data);
+      return dataSelecionada.toDateString() === hoje.toDateString();
+    };
 
     const API_BASE_URL = process.env.REACT_APP_API_URL;
 
@@ -111,36 +121,75 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
     };
               
     const filtrarHorarios = (disponibilidades, agendamentos) => {
-        return disponibilidades.map(dia => {
-          const horariosFiltrados = dia.horarios.map(horario => {
-            const horarioInicio = new Date(`${dia.data}T${horario.inicio}`);
-            const horarioFim = new Date(`${dia.data}T${horario.fim}`);
+      const agora = new Date();
       
-            const agendamentoConflito = agendamentos.find(ag => {
-              const agendamentoInicio = new Date(ag.data_horario_agendamento);
-              const agendamentoFim = new Date(ag.data_horario_agendamento);
-              agendamentoFim.setMinutes(agendamentoFim.getMinutes() + ag.servico_duracao);
-      
-              return (
-                (agendamentoInicio < horarioFim) && 
-                (agendamentoFim > horarioInicio)
-              );
-            });
-      
-            return {
-              ...horario,
-              ocupado: Boolean(agendamentoConflito),
-              cliente_nome: agendamentoConflito ? agendamentoConflito.cliente_nome : null,
-              servico_nome: agendamentoConflito ? agendamentoConflito.servico_nome : null
-            };
+      return disponibilidades.map(dia => {
+          /* const diaData = new Date(dia.data); */
+          const diaData = parseISO(dia.data);
+          const ehHoje = diaData.toDateString() === agora.toDateString();
+          
+          console.log("diaData",diaData);
+          console.log("dia.data",dia.data);
+          console.log("diaData.toDateString()", diaData.toDateString());
+          console.log("agora.toDateString()", agora.toDateString());
+          const horariosFiltrados = dia.horarios.filter(horario => {
+              const horarioInicio = new Date(`${dia.data}T${horario.inicio}`);
+              const horarioFim = new Date(`${dia.data}T${horario.fim}`);
+              console.log("horarioFim",horarioFim);
+              console.log("agora",agora);
+              console.log("ehHoje",ehHoje);
+              
+              // Filtra horários passados apenas para o dia atual
+              if (ehHoje && horarioFim <= agora) {
+                  return false;
+              }
+              
+              return true;
+          }).map(horario => {
+              const horarioInicio = new Date(`${dia.data}T${horario.inicio}`);
+              const horarioFim = new Date(`${dia.data}T${horario.fim}`);
+              
+              const agendamentoConflito = agendamentos.find(ag => {
+                  const agendamentoInicio = new Date(ag.data_horario_agendamento);
+                  const agendamentoFim = new Date(ag.data_horario_agendamento);
+                  agendamentoFim.setMinutes(agendamentoFim.getMinutes() + ag.servico_duracao);
+                  
+                  return (agendamentoInicio < horarioFim) && (agendamentoFim > horarioInicio);
+              });
+              
+              return {
+                  ...horario,
+                  ocupado: Boolean(agendamentoConflito),
+                  cliente_nome: agendamentoConflito ? agendamentoConflito.cliente_nome : null,
+                  servico_nome: agendamentoConflito ? agendamentoConflito.servico_nome : null
+              };
           });
-      
+          
           return {
-            ...dia,
-            horarios: horariosFiltrados
+              ...dia,
+              horarios: horariosFiltrados
           };
-        });
-    };           
+      });
+    };
+
+    useEffect(() => {
+      const token = localStorage.getItem('token');
+      if (token && agendamento.profissional_id) {
+          axios.get(`${API_BASE_URL}/agendamentos/profissional/${agendamento.profissional_id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+          })
+          .then(response => {
+              const agendamentosExistentes = response.data;
+              const disponibilidadesFiltradas = filtrarHorarios(disponibilidades, agendamentosExistentes);
+              setDisponibilidades(disponibilidadesFiltradas);
+          })
+          .catch(error => {
+              console.error('Erro ao carregar agendamentos:', error);
+              setMessage('Erro ao carregar agendamentos. Por favor, tente novamente.');
+              setMessageType('error');
+          });
+      }
+    }, [agendamento.profissional_id, selectedDate]);
 
     const formatarDisponibilidades = (disponibilidades, diaSemanaSelectedDate, servicoDuracao) => {
         if (!disponibilidades || disponibilidades.length === 0) {
@@ -157,9 +206,11 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
 
         if (disponibilidadesDoDia.length > 0) {
           const horariosDistribuidos = distribuirHorarios(disponibilidadesDoDia[0], servicoDuracao);
-  
+          const dataAtual = new Date();
+          const dataFormatada = formatarData(dataAtual);
           disponibilidadesFormatadas.push({
-              data: new Date().toISOString().split('T')[0], // Ajuste conforme necessário
+              /* data: new Date().toISOString().split('T')[0], // Ajuste conforme necessário */
+              data: dataFormatada,
               diaSemana: diaSemana,
               horarios: horariosDistribuidos
           });
@@ -208,24 +259,54 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
     
     const handleHorarioClick = (inicio, fim) => {
         setAgendamento({ ...agendamento, horarioInicial: inicio, horarioFinal: fim });
+        setHorarioSelecionado(inicio);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!agendamento.horarioInicial || !agendamento.horarioFinal) {
+          setMessage('Por favor, selecione um horário.');
+          setMessageType('error');
+          return;
+        }
+
+        const dataHoraFormatada = formatarDataHora(formattedDate, agendamento.horarioInicial);
+
+        console.log("dataHoraFormatada", dataHoraFormatada);
+
+        // Criando o objeto agendamento com os dados necessários
+        const novoAgendamento = {
+          empresa_id: `${empresa.id}`, // Use optional chaining in case empresa is undefined
+          cliente_id: agendamento.cliente_id,
+          profissional_id: agendamento.profissional_id,
+          servico_id: agendamento.servico_id,
+          data_horario_agendamento: dataHoraFormatada,
+          status: 'agendado'
+        };
+
+        console.log('Antes do erro: ', novoAgendamento);
+
         try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_BASE_URL}/agendamentos`, {
-                ...agendamento,
-                data_horario_agendamento: `${agendamento.data} ${agendamento.horarioInicial}`,
-                data_horario_final: `${agendamento.data} ${agendamento.horarioFinal}`,
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            alert('Agendamento realizado com sucesso!');
-            onClose();
-        } catch (err) {
-            console.error('Erro ao realizar agendamento:', err);
-            alert('Erro ao realizar agendamento. Por favor, tente novamente.');
+          const token = localStorage.getItem('token');
+          console.log('Dentro do try: ', novoAgendamento);
+          const response = await axios.post(`${API_BASE_URL}/agendamentos`, novoAgendamento, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          console.log(response.data);
+          setMessage('Agendamento realizado com sucesso!');
+          setMessageType('success');
+        } catch (error) {
+          if (error.response && error.response.status === 400) {
+            setMessage(error.response.data.message || 'Dados inválidos ou conflito de horário.');
+            setMessageType('error');
+          } else {
+            console.error('Erro ao realizar agendamento:', error);
+            setMessage('Erro ao realizar agendamento.');
+            setMessageType('error');
+          }
         }
     };
 
@@ -265,12 +346,17 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
                     </select>
     
                     <label>Horário Disponível</label>
+                    {ehHoje(selectedDate) && (
+                        <p className="info-message">
+                            Horários anteriores ao momento atual não são exibidos.
+                        </p>
+                    )}
                     <div className="horario-grid">
                         {disponibilidades.length > 0 ? (
                             disponibilidades.map(dia => dia.horarios.map((horario, index) => (
                                 <div 
                                     key={index}
-                                    className={`horario ${horario.ocupado ? 'ocupado' : ''}`} 
+                                    className={`horario ${horario.ocupado ? 'ocupado' : ''} ${horario.inicio === horarioSelecionado ? 'selecionado' : ''}`} 
                                     onClick={() => !horario.ocupado && handleHorarioClick(horario.inicio, horario.fim)}
                                 >
                                     {horario.inicio} - {horario.fim}
@@ -279,10 +365,9 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
                         ) : (
                             <p>Não há horários disponíveis para o dia selecionado.</p>
                         )}
-                    </div>
-    
-                    <button type="submit" className="agendar-button">Agendar</button>
-                    <button type="button" className="fechar-button" onClick={onClose}>Fechar</button>
+                    </div>   
+                  <button type="submit" className="agendar-button">Agendar</button>
+                  <button type="button" className="fechar-button" onClick={onClose}>Fechar</button>
                 </form>
             </div>
         </div>

@@ -108,3 +108,17 @@
 .fechar-button:hover {
     background-color: #d32f2f;
 }
+
+.horario.selecionado {
+    background-color: #45a049;
+}
+
+.info-message {
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #666;
+}
