@@ -36,6 +36,17 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
 
     const API_BASE_URL = process.env.REACT_APP_API_URL;
 
+    const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+
+    const ConfirmationModal = ({ onClose }) => (
+      <div className="confirmation-modal">
+          <div className="modal-content">
+              <p>Agendamento realizado com sucesso!</p>
+              <button onClick={onClose}>Fechar</button>
+          </div>
+      </div>
+    );
+
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -298,6 +309,8 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
           console.log(response.data);
           setMessage('Agendamento realizado com sucesso!');
           setMessageType('success');
+          // Mostrar modal de confirmação
+          setShowConfirmationModal(true);
         } catch (error) {
           if (error.response && error.response.status === 400) {
             setMessage(error.response.data.message || 'Dados inválidos ou conflito de horário.');
@@ -318,6 +331,7 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
         <div className={`agendamentoModal ${show ? 'show' : ''}`}>
             <div className="modal-content">
                 <span className="close" onClick={onClose}>×</span>
+                {message && <div className={`floating-message ${messageType}`}>{message}</div>}
                 <form onSubmit={handleSubmit} className="agendamento-form">
                     <label>Data Selecionada</label>
                     <input type="text" value={formattedDate} readOnly />
@@ -370,6 +384,7 @@ const AgendamentoModal = ({ show, onClose, selectedDate }) => {
                   <button type="button" className="fechar-button" onClick={onClose}>Fechar</button>
                 </form>
             </div>
+            {showConfirmationModal && <ConfirmationModal onClose={() => setShowConfirmationModal(false)} />}
         </div>
     );
 };

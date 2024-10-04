@@ -195,6 +195,7 @@ const CalendarioAgendamento = () => {
     if (selectInfo.view.type === 'timeGridDay') {
       setSelectedDate(selectInfo.startStr);
       setShowAgendamentoModal(true);
+      
     }
     selectInfo.view.calendar.unselect();
   };
