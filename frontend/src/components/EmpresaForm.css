@@ -2,8 +2,7 @@
 .cadastro-empresas-container {
   font-family: Arial, sans-serif;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  background-color: rgba(0, 0, 0, 0.5);
-  color: #333;
+  background-color: rgba(0, 0, 0, 0.1);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -26,7 +25,7 @@
 
 /* Título do formulário */
 .cadastro-empresas-container h1 {
-  color: #333;
+  color: #000;
   /* Texto em cinza escuro */
   margin-top: 20px;
   font-size: 28px;
@@ -35,7 +34,6 @@
 
 /* Formulário de cadastro */
 .cadastro-form {
-  background-color: #FFFFFF;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
@@ -77,7 +75,7 @@
 /* Botões */
 .cadastro-empresas-container .criar-button,
 .cadastro-empresas-container .sair-button {
-  background-color: #7965a6;
+  background-color: #3a3a3a;
   color: white;
   padding: 12px;
   border: none;
@@ -91,7 +89,7 @@
 
 .cadastro-empresas-container .criar-button:hover,
 .cadastro-empresas-container .sair-button:hover {
-  background-color: #512da8;
+  background-color: #000;
   transform: scale(1.05);
 }
 

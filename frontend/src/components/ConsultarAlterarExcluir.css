@@ -1,7 +1,7 @@
 /* Estilo geral da página */
 .alterar-container {
   font-family: Arial, sans-serif;
-  background-color: #F5F5F5; /* Rosa Claro */
+  background-color: rgba(0, 0, 0, 0.1);
   color: #333; /* Texto em cinza escuro */
   padding: 50px;
   display: flex;
@@ -26,7 +26,7 @@
 
 /* Título do formulário */
 .alterar-container h1 {
-  color: #512da8; /* Cor-de-rosa intenso */
+  color: #000; /* Cor-de-rosa intenso */
   margin-top: 0px;
   padding-top: 30px;
   font-size: 1.75rem;
@@ -85,7 +85,7 @@
   width: 100%;
   padding: 12px;
   margin-bottom: 20px;
-  border: 1px solid #D3D3D3; /* Cinza Escuro */
+  border: 1px solid #D3D3D3;
   border-radius: 4px;
   box-sizing: border-box;
   font-size: 0.875rem;
@@ -93,7 +93,7 @@
 
 /* Botão de envio */
 .alterar-container .atualizar-button {
-  background-color: #7965a6; /* Cor-de-rosa intenso */
+  background-color: #3a3a3a; /* Cor-de-rosa intenso */
   color: #fff;
   border: none;
   padding: 12px;
@@ -109,18 +109,18 @@
 }
 
 .alterar-container .atualizar-button:hover {
-  background-color: #512da8;
+  background-color: #000;
   transform: scale(1.05);
 }
 
 .alterar-container .atualizar-button:active {
   transform: scale(0.95);
-  background-color: #512da8;
+  background-color: #3a3a3a;
 }
 
 /* Botão cancelar */
 .alterar-container .cancel-button {
-  background-color: #7965a6; /* Laranja suave */
+  background-color: #3a3a3a; /* Laranja suave */
   color: #fff;
   padding: 12px;
   border: none;
@@ -135,19 +135,19 @@
 }
 
 .alterar-container .cancel-button:hover {
-  background-color: #512da8;
+  background-color: #000;
   transform: scale(1.05);
 }
 
 .alterar-container .cancel-button:active {
   transform: scale(0.95);
-  background-color: #512da8;
+  background-color: #3a3a3a;
 }
 
 /* Botão excluir */
 .alterar-container .delete-button {
-  background-color: #ffc1e3; /* Rosa claro */
-  color: #ff0000; /* Vermelho */
+  background-color: #3a3a3a; /* Rosa claro */
+  color: #fff; /* Vermelho */
   padding: 12px;
   border: none;
   border-radius: 4px;
@@ -161,7 +161,7 @@
 }
 
 .alterar-container .delete-button:hover {
-  background-color: #ffb3d6;
+  background-color: #000;
   transform: scale(1.05);
 }
 

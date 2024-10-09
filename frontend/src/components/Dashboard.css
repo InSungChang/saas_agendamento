@@ -1,7 +1,24 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
+}
+
+body {
+  background: #bae5f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100vh;
+}
+
 /* Layout principal do dashboard */
 .dashboard-layout {
   display: flex;
 }
+
 
 /* Container de conteúdo */
 .dashboard-content {
@@ -19,7 +36,7 @@
 
 .dashboard-content p{
   text-align: center;
-  color: #512da8;
+  color: #000;
   font-weight: 900;
 }
 
@@ -38,10 +55,8 @@
   margin-left: 50px;
 }
 
-
-
 .logout-button {
-  background-color: #512da8; /* Cor principal */
+  background-color: #3a3a3a; /* Cor principal */
   color: #fff; /* Cor do texto */
   border: none; /* Sem borda */
   border-radius: 8px; /* Bordas arredondadas */
@@ -56,19 +71,19 @@
 
 /* Efeito ao passar o mouse */
 .logout-button:hover {
-  background-color: #341d6a; /* Cor mais escura no hover */
+  background-color: #000; /* Cor mais escura no hover */
   transform: scale(1.05); /* Leve aumento no tamanho */
 }
 
 /* Efeito de clique */
 .logout-button:active {
   transform: scale(0.95); /* Leve redução no tamanho ao clicar */
-  background-color: #2a144f; /* Cor ainda mais escura ao clicar */
+  background-color: #000; /* Cor ainda mais escura ao clicar */
 }
 
 /* Foco no botão (acessibilidade) */
 .logout-button:focus {
-  outline: 2px solid #7965a6; /* Borda de foco */
+  outline: 2px solid #3a3a3a; /* Borda de foco */
   outline-offset: 4px; /* Espaçamento da borda */
 }
 

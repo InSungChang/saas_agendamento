@@ -23,7 +23,7 @@
 .back-button {
   margin-top: 20px;
   padding: 10px 20px;
-  background-color: #007bff;
+  background-color: #3a3a3a;
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -31,7 +31,7 @@
 }
 
 .back-button:hover {
-  background-color: #0056b3;
+  background-color: #000;
 }
 
 @media (max-width: 480px) {
@@ -106,13 +106,13 @@
 
 /* Novo estilo para botões de horários disponíveis */
 .disponibilidade-item button:not(.ocupado) {
-  background-color: #4CAF50;
+  background-color: #68d7ff;
   /* Verde */
   color: white;
 }
 
 /* Novo estilo hover para botões de horários disponíveis */
 .disponibilidade-item button:not(.ocupado):hover {
-  background-color: #45a049;
+  background-color: #0ebefe;
   /* Verde mais escuro no hover */
 }

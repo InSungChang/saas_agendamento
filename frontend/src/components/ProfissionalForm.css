@@ -1,7 +1,7 @@
 .cadastro-profissionais-container {
   font-family: Arial, sans-serif;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.1);
   color: #333;
   padding: 20px;
   display: flex;
@@ -70,7 +70,7 @@
 
 .cadastro-profissionais-container .criar-button,
 .cadastro-profissionais-container .sair-button {
-  background-color: #7965a6;
+  background-color: #3a3a3a;
   color: white;
   padding: 12px;
   border: none;
@@ -84,7 +84,7 @@
 
 .cadastro-profissionais-container .criar-button:hover,
 .cadastro-profissionais-container .sair-button:hover {
-  background-color: #512da8;
+  background-color: #000;
   transform: scale(1.05);
 }
 

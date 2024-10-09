@@ -4,7 +4,7 @@
 .agendamentoForm-container {
   font-family: Arial, sans-serif;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.1);
   color: #333;
   padding: 20px;
   display: flex;
@@ -104,9 +104,9 @@
 }
 
 /* Botões */
-.agendamento-container .exibir-disponibilidade-button,
-.agendamento-container .sair-button {
-  background-color: #7965a6;
+.agendamentoForm-container .exibir-disponibilidade-button,
+.agendamentoForm-container .sair-button {
+  background-color: #3a3a3a;
   color: white;
   padding: 12px;
   border: none;
@@ -118,9 +118,9 @@
   transition: background-color 0.3s, transform 0.3s;
 }
 
-.agendamento-container .exibir-disponibilidade-button:hover,
-.agendamento-container .sair-button:hover {
-  background-color: #512da8;
+.agendamentoForm-container .exibir-disponibilidade-button:hover,
+.agendamentoForm-container .sair-button:hover {
+  background-color: #000;
   transform: scale(1.05);
 }
 
@@ -136,12 +136,12 @@
 }
 
 .agendar-button {
-  background-color: #1976d2;
+  background-color: #000;
   color: white;
 }
 
 .agendar-button:disabled {
-  background-color: #90caf9;
+  background-color: #3a3a3a;
 }
 
 /* .sair-button {
@@ -179,7 +179,7 @@
 .exibir-disponibilidade-button {
   width: 100%;
   padding: 10px 20px;
-  background-color: #4caf50;
+  background-color: #fccdcd;
   color: white;
   border: none;
   border-radius: 4px;
@@ -190,7 +190,7 @@
 }
 
 .exibir-disponibilidade-button:hover {
-  background-color: #45a049;
+  background-color: #fccdcd;
 }
 
 .disponibilidade-container {
@@ -200,7 +200,7 @@
 .voltar-button {
   padding: 10px 20px;
   margin-top: 20px;
-  background-color: #2196F3;
+  background-color: #3a3a3a;
   color: white;
   border: none;
   border-radius: 4px;
@@ -209,7 +209,7 @@
 }
 
 .voltar-button:hover {
-  background-color: #0b7dda;
+  background-color: #000;
 }
 
 @media (max-width: 480px) {

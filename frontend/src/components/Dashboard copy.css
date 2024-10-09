@@ -13,7 +13,7 @@
 }
 
 .dashboard-container h1 {
-  color: #512da8;
+  color: #000;
   margin-top: 10px;
   font-size: 1.75rem;
   text-align: center;
@@ -44,7 +44,7 @@ nav ul li {
 
 nav a {
   display: block;
-  background-color: #7965a6;
+  background-color: #3a3a3a;
   color: #fff;
   text-decoration: none;
   padding: 0.75rem 0.5rem;
@@ -55,12 +55,12 @@ nav a {
 }
 
 nav a:hover {
-  background-color: #512da8;
+  background-color: #000;
 }
 
 /* Botão de logout estilizado */
 .logout-button {
-  background-color: #512da8; /* Cor principal */
+  background-color: #3a3a3a; /* Cor principal */
   color: #fff; /* Cor do texto */
   border: none; /* Sem borda */
   border-radius: 8px; /* Bordas arredondadas */
@@ -75,7 +75,7 @@ nav a:hover {
 
 /* Efeito ao passar o mouse */
 .logout-button:hover {
-  background-color: #341d6a; /* Cor mais escura no hover */
+  background-color: #000; /* Cor mais escura no hover */
   transform: scale(1.05); /* Leve aumento no tamanho */
 }
 
@@ -87,7 +87,7 @@ nav a:hover {
 
 /* Foco no botão (acessibilidade) */
 .logout-button:focus {
-  outline: 2px solid #7965a6; /* Borda de foco */
+  outline: 2px solid #3a3a3a; /* Borda de foco */
   outline-offset: 4px; /* Espaçamento da borda */
 }
 
