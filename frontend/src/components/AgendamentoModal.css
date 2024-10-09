@@ -86,12 +86,12 @@
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    background-color: #4caf50;
+    background-color: #3a3a3a;
     color: white;
 }
 
 .agendar-button:hover {
-    background-color: #45a049;
+    background-color: #000;
 }
 
 .fechar-button {
@@ -101,16 +101,16 @@
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    background-color: #f44336;
+    background-color: #3a3a3a;
     color: white;
 }
 
 .fechar-button:hover {
-    background-color: #d32f2f;
+    background-color: #000;
 }
 
 .horario.selecionado {
-    background-color: #45a049;
+    background-color: #bae5f4;
 }
 
 .info-message {

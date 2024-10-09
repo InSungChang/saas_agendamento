@@ -3,6 +3,7 @@
 .calendario-container {
   display: flex;
   height: 100vh;
+  background-color: #d6eded;
 }
 
 .lista-profissionais {
@@ -48,13 +49,13 @@
 }
 
 .fc .fc-button-primary {
-  background-color: #4CAF50;
-  border-color: #4CAF50;
+  background-color: #3a3a3a;
+  border-color: #a7a6a6;
 }
 
 .fc .fc-button-primary:hover {
-  background-color: #45a049;
-  border-color: #45a049;
+  background-color: #3a3a3a;
+  border-color: #a7a6a6;
 }
 
 .fc .fc-col-header-cell-cushion {
@@ -132,7 +133,7 @@
 
 .sair-button,
 .atualizar-button {
-  background-color: #7965a6;
+  background-color: #3a3a3a;
   color: white;
   padding: 12px;
   border: none;
@@ -144,11 +145,11 @@
 }
 
 .sair-button:hover {
-  background-color: #512da8;
+  background-color: #000;
 }
 
 .agendar-button {
-  background-color: #4CAF50;
+  background-color: #3a3a3a;
   color: white;
   padding: 12px;
   border: none;
@@ -160,7 +161,7 @@
 }
 
 .agendar-button:hover {
-  background-color: #45a049;
+  background-color: #000;
 }
 
 .agendamento-modal button {
@@ -168,7 +169,7 @@
   width: 100%;
   padding: 8px;
   margin-top: 10px;
-  background-color: #4CAF50;
+  background-color: #3a3a3a;
   color: white;
   border: none;
   border-radius: 4px;
@@ -176,11 +177,11 @@
 }
 
 .agendamento-modal button:hover {
-  background-color: #45a049;
+  background-color: #000;
 }
 
 .current-time-line {
-  border-top: 2px solid red;
+  border-top: 2px solid #3a3a3a;
   /* Ajuste a largura e a cor da linha conforme necessário */
   width: 100%;
   position: absolute;
@@ -202,7 +203,7 @@
         border-width: 1px 0 0px;
         position: absolute;
         top: -1px;
-        border-color: red !important;
+        border-color: #3a3a3a !important;
       }
 
       &::before {
@@ -236,7 +237,7 @@
 .evento-modal .fechar-button {
   margin-top: 10px;
   padding: 5px 10px;
-  background-color: #4CAF50;
+  background-color: #3a3a3a;
   color: white;
   border: none;
   border-radius: 4px;
@@ -244,11 +245,11 @@
 }
 
 .evento-modal .fechar-button:hover {
-  background-color: #45a049;
+  background-color: #000;
 }
 
 .cancelar-button {
-  background-color: #f44336;
+  background-color: #3a3a3a;
   margin: 5px;
   padding: 5px 10px;
   color: white;
