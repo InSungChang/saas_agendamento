@@ -50,12 +50,12 @@
 
 .fc .fc-button-primary {
   background-color: #3a3a3a;
-  border-color: #a7a6a6;
+  border-color: #000;
 }
 
 .fc .fc-button-primary:hover {
   background-color: #3a3a3a;
-  border-color: #a7a6a6;
+  border-color: #000;
 }
 
 .fc .fc-col-header-cell-cushion {
@@ -81,6 +81,10 @@
 
 .fc-day-today {
   background-color: #f0fff4 !important;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+  border: 1px solid #8b8b8b;
 }
 
 .legenda {
